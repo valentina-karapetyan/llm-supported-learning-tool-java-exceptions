@@ -101,92 +101,104 @@ export const diagnosticTask: Task = {
 };
 
 // --- 2. Transfer task (baseline) ---
+//
+// Deliberately NOT a renamed copy of the diagnostic. The diagnostic throws
+// on the very first statement in the try block (nothing runs before it) —
+// if this task just relabeled the same shape ("loadProfile" instead of
+// "first", etc.), a learner could match the surface pattern without ever
+// engaging with the rule. Here one statement genuinely succeeds *before*
+// the throw, which is the one extra wrinkle the diagnostic doesn't have:
+// the learner has to track that "runs fine" and "gets skipped" can both
+// happen in the same try block, on either side of the failing line.
 
 export const transferTaskBaseline: Task = {
   id: "m1-transfer",
   moduleId: "module-1",
-  caseLabel: "Case file: The Interrupted Load",
+  caseLabel: "Case file: The Almost-Saved Form",
   title: "Trace the Execution — Transfer",
-  learningObjective: "Apply the same rule to a new scenario with different method and output names.",
+  learningObjective: "Apply the same rule to a new scenario where something succeeds before the failure.",
   misconception:
     "Assuming execution continues with later statements in the same try block after an exception is thrown.",
-  code: `void load() {
+  code: `void submitForm() {
     try {
-        loadProfile();
-        showDashboard();
-        System.out.println("ready");
-    } catch (IOException e) {
-        System.out.println("loading failed");
+        System.out.println("validating form");
+        saveToDatabase();
+        System.out.println("form saved");
+    } catch (DatabaseException e) {
+        System.out.println("save failed");
     }
 }
-// Assume loadProfile() throws IOException.`,
+// Assume saveToDatabase() throws DatabaseException.`,
   question: "Drag the events into the order they actually occur.",
   answer: {
     type: "execution_trace",
     data: {
       cards: [
-        { id: "t1", label: "`loadProfile()` starts" },
-        { id: "t2", label: "An exception is thrown inside `loadProfile()`" },
-        { id: "t3", label: "`showDashboard()` starts" },
-        { id: "t4", label: '"ready" is printed' },
-        { id: "t5", label: "The matching `catch` block runs" },
+        { id: "t1", label: '"validating form" is printed' },
+        { id: "t2", label: "`saveToDatabase()` throws DatabaseException" },
+        { id: "t3", label: '"form saved" is printed' },
+        { id: "t4", label: "The matching `catch` block runs" },
       ],
-      correctOrder: ["t1", "t2", "t5"],
+      // "validating form" DOES print — it runs before the failure. Only
+      // "form saved" is skipped, since it comes after the throwing line.
+      correctOrder: ["t1", "t2", "t4"],
     },
   },
   feedback: {
-    correctTitle: "Correct — same rule, new scenario.",
+    correctTitle: "Correct — same rule, a new shape.",
     correctExplanation:
-      "loadProfile() throws before showDashboard() gets a chance to run, so Java jumps straight to the catch block, exactly as before.",
-    incorrectTitle: "Check the control flow again.",
+      '"validating form" prints fine — the failure happens one line later, inside saveToDatabase(). Once it throws, "form saved" never runs; control goes straight to the catch block.',
+    incorrectTitle: "Check exactly where the exception happens this time.",
     incorrectExplanation:
-      'showDashboard() and "ready" never execute — loadProfile()\'s exception sends control straight to the catch block, skipping the rest of the try block.',
+      '"validating form" does print — that line runs before anything goes wrong. But saveToDatabase() throws right after it, so "form saved" is skipped and control moves straight to the catch block.',
     keyRule:
-      "An exception interrupts the remaining statements in the current try block and transfers control to a matching catch clause.",
+      "An exception interrupts the remaining statements in the current try block and transfers control to a matching catch clause — everything before the failing line still runs normally.",
   },
   supportContent: {
     hint: {
       supportType: "hint",
       title: "A nudge",
-      content: "Which method call comes right after the one that fails? Does it get a chance to start?",
+      content:
+        "This time something runs successfully before the failure. Find the exact line that throws, then think about what comes only after it.",
     },
     step_by_step: {
       supportType: "step_by_step",
       title: "Step by step",
       content:
-        '1. loadProfile() runs and throws IOException.\n2. Java abandons the rest of the try block immediately.\n3. showDashboard() and the "ready" message never run.\n4. The catch (IOException e) block runs and prints "loading failed".',
-      keyRule: "An exception interrupts the remaining statements in the current try block.",
+        '1. "validating form" prints — nothing has gone wrong yet.\n2. saveToDatabase() runs and throws DatabaseException.\n3. Java abandons the rest of the try block immediately: "form saved" never prints.\n4. The catch (DatabaseException e) block runs and prints "save failed".',
+      keyRule: "Everything before the failing line still runs; everything after it in the same try block does not.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
       title: "In simple terms",
       content:
-        "Same idea as before: once one step in the list fails, Java stops going through the list and jumps to the backup plan.",
+        "Same checklist idea as before — this time the first item on the list is fine, then the second item fails. Java completes the fine item, then stops and skips straight to the backup plan.",
     },
     similar_example: {
       supportType: "similar_example",
       title: "A similar example",
-      content: `void save() {
+      content: `void publishComment() {
     try {
-        validateInput();
-        writeToDisk();
-        System.out.println("saved");
-    } catch (ValidationException e) {
-        System.out.println("save aborted");
+        System.out.println("checking comment length");
+        saveComment();
+        System.out.println("comment saved");
+    } catch (StorageException e) {
+        System.out.println("comment rejected");
     }
 }
-// If validateInput() throws, writeToDisk() and "saved" never run.`,
+// If saveComment() throws, "comment saved" never runs — but
+// "checking comment length" already printed by then.`,
     },
   },
-  articulationPrompt: "In one sentence — what do loadProfile() and first() from before have in common?",
+  articulationPrompt: 'In one sentence — why does "validating form" still print here, but "form saved" doesn\'t?',
   isTransferTask: true,
   replayScript: [
     { lineNumber: 2, state: "active" }, //     try {
-    { lineNumber: 3, state: "throws" }, //         loadProfile();
-    { lineNumber: 4, state: "skipped" }, //         showDashboard();
-    { lineNumber: 5, state: "skipped" }, //         System.out.println("ready");
-    { lineNumber: 6, state: "handled" }, //     } catch (IOException e) {
-    { lineNumber: 7, state: "handled" }, //         System.out.println("loading failed");
+    { lineNumber: 3, state: "active" }, //         System.out.println("validating form");
+    { lineNumber: 4, state: "throws" }, //         saveToDatabase();
+    { lineNumber: 5, state: "skipped" }, //         System.out.println("form saved");
+    { lineNumber: 6, state: "handled" }, //     } catch (DatabaseException e) {
+    { lineNumber: 7, state: "handled" }, //         System.out.println("save failed");
   ],
 };
 
@@ -194,9 +206,11 @@ export const transferTaskBaseline: Task = {
 //
 // Per the build spec's "flow-adaptive transfer retry": if the diagnostic was
 // answered correctly with "high" confidence, this variant is served instead
-// of the baseline — same rule, slightly less obvious because the failing
-// call is one line deeper into the try block instead of the very first
-// statement.
+// of the baseline — same rule, one notch harder than the baseline: instead
+// of a single statement getting skipped after the throw, there's a run of
+// several (a println, a method call, another println), which makes it
+// easier to lose track of exactly how much gets skipped, not just whether
+// something does.
 
 export const transferTaskStretch: Task = {
   id: "m1-transfer-stretch",

@@ -35,9 +35,21 @@ export interface CatchOrderTaskProps {
   disabled?: boolean;
 }
 
+function shuffledIds(clauses: { id: string }[]): string[] {
+  const ids = clauses.map((c) => c.id);
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+  }
+  return ids;
+}
+
 export function CatchOrderTask({ data, onSubmit, disabled }: CatchOrderTaskProps) {
   const clauseMap = new Map(data.clauses.map((c) => [c.id, c]));
-  const [order, setOrder] = useState<string[]>(() => data.clauses.map((c) => c.id));
+  // Shuffled on mount rather than shown in authored order — content authors
+  // shouldn't have to remember to scramble `clauses` themselves, and a
+  // learner shouldn't be able to infer anything from the initial order.
+  const [order, setOrder] = useState<string[]>(() => shuffledIds(data.clauses));
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(

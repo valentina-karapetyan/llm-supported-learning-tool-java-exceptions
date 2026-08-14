@@ -6,7 +6,9 @@ No accounts, no backend, no leaderboards, no timers. A learner works through sho
 
 ## Status
 
-Module 1 — **"Trace the Execution"** — is built completely and end-to-end: Welcome → Module Map → Task (diagnostic) → Feedback (with the animated control-flow replay) → AI Support → Transfer Task (with the one-retry and flow-adaptive variant swap) → Module Completion → Concept Journal. Modules 2–4 are scaffolded as locked "coming soon" cards on the Module Map — the architecture is ready to extend, but no task content has been authored for them yet (see "Adding a module" below).
+Module 1 — **"Trace the Execution"** — and Module 2 — **"Catch Order & Specificity"** — are built completely and end-to-end: Welcome → Module Map → Task (diagnostic) → Feedback → AI Support → Transfer Task (with the one-retry, and for Module 1 the flow-adaptive variant swap) → Module Completion → Concept Journal. Modules 3–4 are scaffolded as locked "coming soon" cards on the Module Map — the architecture is ready to extend, but no task content has been authored for them yet (see "Adding a module" below).
+
+Module 1's tasks are runtime control-flow traces, so their Feedback screen shows the animated `ExecutionReplay`. Module 2's tasks (`catch_order`) are about a static/compile-time ordering rule, not "what happens when this runs" — they have no `replayScript`, and `FeedbackCard` falls back to a plain code block for them instead of showing an animation that wouldn't mean anything. Module 2 also doesn't have a high-confidence "stretch" transfer variant yet (optional per the build spec, not required).
 
 ## Install & run
 
@@ -24,6 +26,7 @@ src/
 ├── types/content.ts            # Task, Feedback, LlmSupportResponse, SupportType, ReplayStep, ...
 ├── content/
 │   ├── module1-trace-execution.ts   # all Module 1 task content (diagnostic + 2 transfer variants)
+│   ├── module2-catch-order.ts       # all Module 2 task content (diagnostic + 1 transfer task)
 │   └── modules.ts                   # module list + lookup helpers (getTaskById, getTransferTask, ...)
 ├── llm/llmSupportService.ts    # mock-first, swappable LLM support interface (see below)
 ├── state/
@@ -65,6 +68,9 @@ All progress is stored client-side under the `exception-flow-lab-progress` `loca
 ## Design choices worth knowing about (deviations/extensions vs. the raw build spec)
 
 - **Skip-detection UI (`ExecutionTraceTask`)**: cards start in a shuffled "Doesn't happen" pool; the learner sorts them into an ordered "This happens" sequence via drag **or** always-visible ▲/▼/"move" buttons — no interaction depends solely on drag-and-drop.
-- **Transfer retry content**: the spec's "one retry with a new comparable version" is served using the *other* authored Module 1 transfer variant (baseline ↔ stretch) rather than a fourth authored task — the two variants already teach the same rule from a slightly different angle, so the retry reuses that instead of requiring new content.
+- **Transfer task ≠ renamed diagnostic**: Module 1's baseline transfer task originally reused the diagnostic's exact shape (throw on the first try-statement, two things skipped) with only method/variable names changed — that let a learner pattern-match the surface without engaging with the rule, so it was rebuilt with a genuinely different shape (one statement succeeds *before* the throw). The high-confidence "stretch" variant is different again (several things skipped instead of one). Same principle applied to Module 2: its transfer task uses an unrelated scenario (JSON parsing vs. file I/O) and a different exception hierarchy, not just renamed classes.
+- **Transfer retry content**: the spec's "one retry with a new comparable version" is served using the *other* authored transfer variant (baseline ↔ stretch) where one exists, rather than a new authored task per retry. Module 1 has both variants, so its retry genuinely shows a different case. Module 2 only has a baseline (no stretch variant authored yet — see `getComparableRetryTask` in `content/modules.ts`), so its retry currently re-serves the same task; the copy on that screen ("look at it again") is deliberately worded to stay honest either way instead of promising a "different scenario" it might not deliver.
+- **ExecutionReplay is optional, not universal**: it only renders when a `Task` has a non-empty `replayScript`. Module 1's tasks are runtime traces, so they all have one. Module 2's `catch_order` tasks test a static/compile-time rule (catch clause order), where "replay the execution" doesn't mean anything — `FeedbackCard` falls back to a plain `CodeBlock` for those instead of showing an animation with nothing real to animate.
 - **ExecutionReplay's "arrow"**: implemented as a callout banner that fades in under the code block at the throw→catch moment, rather than a literal animated SVG path between two lines — simpler and more robust for a handful of short snippets; upgradeable later if wanted.
 - **Progressive hint fading**: computed from the last two *completed* tasks in the current module; with fewer than two, it defaults to expanded (not enough signal to fade yet).
+- **AnswerDiff on the Feedback screen**: shown only when the answer was wrong. It compares the learner's raw structured response against the authored correct answer (per `TaskType` — sequence diff, order diff, set diff, or single-choice diff) so a learner can see *what* was mis-sorted/mis-selected. This exists on top of the base spec because "wrong" alone wasn't informative enough on its own — it does **not** grade or check anything the learner wrote in the reflection box; that box is never graded, per the spec's explicit "No AI-based correctness grading, ever" rule, which stays in force.

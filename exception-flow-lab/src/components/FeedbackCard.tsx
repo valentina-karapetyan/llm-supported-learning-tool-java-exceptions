@@ -3,8 +3,16 @@
 // Screen D (Feedback). Shows correctness, the learner's own articulation
 // next to the key rule, and the ExecutionReplay visualizer directly under
 // the key rule card, per the build spec.
+//
+// ExecutionReplay only renders when a task actually has a replayScript.
+// Module 1's tasks are runtime control-flow traces, so they all have one —
+// but not every TaskType is about runtime order (e.g. Module 2's catch_order
+// tasks are about a static/compile-time ordering rule, not "what happens
+// when this runs"), so a task can reasonably omit it and just show its
+// plain code instead of an animation that wouldn't mean anything.
 
 import type { Feedback, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
+import { CodeBlock } from "./CodeBlock";
 import { ExecutionReplay } from "./ExecutionReplay";
 import { AnswerDiff } from "./AnswerDiff";
 import styles from "./FeedbackCard.module.css";
@@ -53,7 +61,7 @@ export function FeedbackCard({ feedback, wasCorrect, articulationText, code, rep
         <p className={styles.ruleText}>{feedback.keyRule}</p>
       </div>
 
-      <ExecutionReplay code={code} replayScript={replayScript} />
+      {replayScript.length > 0 ? <ExecutionReplay code={code} replayScript={replayScript} /> : <CodeBlock code={code} />}
     </div>
   );
 }

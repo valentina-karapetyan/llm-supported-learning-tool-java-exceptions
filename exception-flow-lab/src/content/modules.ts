@@ -1,14 +1,13 @@
 // src/content/modules.ts
 //
-// Module definitions + a content lookup. Per the build spec's build order,
-// only Module 1 has authored task content right now. Modules 2–4 are listed
-// as locked/"coming soon" placeholders on the Module Map so the screen's
-// shape is right, without inventing task content that hasn't been authored
-// or validated yet (the spec is explicit that Module 1 must work end-to-end
-// before any other module is even started).
+// Module definitions + a content lookup. Modules 1 and 2 have authored task
+// content; 3 and 4 are listed as locked/"coming soon" placeholders on the
+// Module Map so the screen's shape is right, without inventing task content
+// that hasn't been authored or validated yet.
 
 import type { Module, Task } from "../types/content";
 import { diagnosticTask, transferTaskBaseline, module1Tasks } from "./module1-trace-execution";
+import { module2Tasks } from "./module2-catch-order";
 
 export const module1: Module = {
   id: "module-1",
@@ -20,12 +19,12 @@ export const module1: Module = {
   available: true,
 };
 
-const module2Placeholder: Module = {
+export const module2: Module = {
   id: "module-2",
   title: "Catch Order & Specificity",
   description: "Which catch clause actually runs when several could match?",
-  taskIds: [],
-  available: false,
+  taskIds: ["m2-diagnostic", "m2-transfer"],
+  available: true,
 };
 
 const module3Placeholder: Module = {
@@ -44,9 +43,9 @@ const module4Placeholder: Module = {
   available: false,
 };
 
-export const modules: Module[] = [module1, module2Placeholder, module3Placeholder, module4Placeholder];
+export const modules: Module[] = [module1, module2, module3Placeholder, module4Placeholder];
 
-const allTasks: Task[] = [...module1Tasks];
+const allTasks: Task[] = [...module1Tasks, ...module2Tasks];
 
 export function getModuleById(moduleId: string): Module | undefined {
   return modules.find((m) => m.id === moduleId);
@@ -82,6 +81,11 @@ export function getTransferTask(module: Module, diagnosticHighConfidenceCorrect:
  * the learner has *not* just seen, rather than requiring a third authored
  * task. This is a deliberate build choice, not something the spec spells
  * out explicitly.
+ *
+ * Module 2 doesn't have a second variant yet (no high-confidence stretch
+ * task authored — see module2-catch-order.ts), so this returns undefined
+ * for it and the caller's fallback re-serves the same task on retry. Not a
+ * bug: just a module that hasn't gotten that optional refinement yet.
  */
 export function getComparableRetryTask(justAttempted: Task): Task | undefined {
   if (justAttempted.id === transferTaskBaseline.id) {

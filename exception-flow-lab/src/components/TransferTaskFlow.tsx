@@ -25,7 +25,7 @@ export function TransferTaskFlow({ task, attempt, onSubmit }: TransferTaskFlowPr
       eyebrow={
         <p className={styles.eyebrow}>
           {attempt > 1
-            ? "One more try — here's a comparable case. Same rule, different scenario."
+            ? "One more try — same rule as before. Look at it again."
             : "Transfer task — apply the same rule to a new case."}
         </p>
       }
