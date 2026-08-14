@@ -1,0 +1,9 @@
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(15, 155, 142, 0.08);
+  border: 1px solid rgba(15, 155, 142, 0.25);
+  border-radius: var(--radius-control);
+  font-size: 0.85rem;
+  color: var(--color-text);
+}

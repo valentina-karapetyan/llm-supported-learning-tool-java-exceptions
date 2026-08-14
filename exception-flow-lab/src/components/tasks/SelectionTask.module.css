@@ -1,0 +1,151 @@
+/* Shared styles for the four selection-style task components:
+   StatementSelectionTask, CallChainTask, HandlerSelectionTask,
+   HandlerRefactoringTask. They're visually similar enough (a list of
+   selectable option cards + a submit button) that one stylesheet avoids
+   duplicating four near-identical CSS Modules. */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  text-align: left;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  cursor: pointer;
+  font: inherit;
+  color: var(--color-text);
+}
+
+.option:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.optionSelected {
+  border-color: var(--color-primary);
+  background: rgba(43, 36, 112, 0.05);
+}
+
+.option:disabled {
+  cursor: default;
+}
+
+.optionMarker {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+.optionMarkerCheckbox {
+  border-radius: 4px;
+}
+
+.optionSelected .optionMarker {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+}
+
+.optionBody {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.optionLabel {
+  font-size: 0.95rem;
+}
+
+.optionCode {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 0.85rem;
+  background: #1c1c22;
+  color: #e4e4ec;
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.rationale {
+  margin: var(--space-1) 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  border-top: 1px dashed var(--color-border);
+  padding-top: var(--space-1);
+}
+
+.rationaleCorrect {
+  color: var(--color-success);
+}
+
+.rationaleIncorrect {
+  color: var(--color-error);
+}
+
+.resultBadge {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  align-self: center;
+}
+
+.badgeCorrect {
+  color: var(--color-success);
+}
+
+.badgeIncorrect {
+  color: var(--color-error);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.primaryButton {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.primaryButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

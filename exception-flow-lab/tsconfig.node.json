@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    // composite requires emit, but nothing should actually need these
+    // outputs — keep them out from under vite.config.ts instead of letting
+    // `tsc -b` drop vite.config.js/.d.ts next to the source file.
+    "outDir": "node_modules/.tsc-out/node",
+    "tsBuildInfoFile": "node_modules/.tsc-out/node.tsbuildinfo"
+  },
+  "include": ["vite.config.ts"]
+}

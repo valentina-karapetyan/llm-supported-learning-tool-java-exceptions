@@ -1,0 +1,113 @@
+.wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.collapsedToggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.subheading {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.supportButton {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.supportButton:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.supportButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.supportButtonUsed {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.responses {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.responseCard {
+  background: var(--color-bg);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-control);
+  padding: var(--space-3);
+}
+
+.responseTitle {
+  margin: 0 0 var(--space-1);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.responseContent {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.responseKeyRule {
+  margin: var(--space-2) 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.backLink {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: var(--space-1) 0;
+}
+
+.backLink:hover {
+  color: var(--color-primary);
+}

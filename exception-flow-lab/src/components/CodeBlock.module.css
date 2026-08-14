@@ -1,0 +1,88 @@
+.wrapper {
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: #1c1c22;
+}
+
+.caption {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pre {
+  margin: 0;
+  padding: var(--space-3) 0;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 1px var(--space-3);
+  color: #e4e4ec;
+  white-space: pre;
+  transition: background-color 0.4s ease, opacity 0.4s ease, color 0.4s ease;
+}
+
+.lineNumber {
+  flex: 0 0 auto;
+  width: 1.75rem;
+  text-align: right;
+  color: #6f6f80;
+  user-select: none;
+}
+
+.lineText {
+  flex: 1 1 auto;
+}
+
+.lineBadge {
+  flex: 0 0 auto;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #d8d8e2;
+}
+
+/* Replay states, applied by ExecutionReplay via CodeBlock's lineStates prop */
+
+.active {
+  background-color: rgba(15, 155, 142, 0.22);
+}
+
+.throws {
+  background-color: rgba(198, 91, 91, 0.32);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.throws .lineBadge {
+  background: var(--color-error);
+  color: white;
+}
+
+.skipped {
+  opacity: 0.4;
+}
+
+.handled {
+  background-color: rgba(43, 36, 112, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line {
+    transition: none;
+  }
+}

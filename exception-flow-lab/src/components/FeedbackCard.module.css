@@ -1,0 +1,94 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.banner {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.bannerCorrect {
+  background: rgba(47, 143, 91, 0.1);
+  border: 1px solid rgba(47, 143, 91, 0.3);
+}
+
+.bannerIncorrect {
+  background: rgba(198, 91, 91, 0.08);
+  border: 1px solid rgba(198, 91, 91, 0.3);
+}
+
+.bannerIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.bannerCorrect .bannerIcon {
+  color: var(--color-success);
+}
+
+.bannerIncorrect .bannerIcon {
+  color: var(--color-error);
+}
+
+.bannerTitle {
+  margin: 0 0 var(--space-1);
+  font-size: 1.1rem;
+}
+
+.bannerExplanation {
+  margin: 0;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.ruleCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.articulationEcho {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.articulationLabel {
+  margin: 0 0 var(--space-1);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.articulationText {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-text);
+}
+
+.ruleLabel {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.ruleText {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
