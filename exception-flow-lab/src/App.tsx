@@ -61,7 +61,13 @@ export default function App() {
     setProgress(recordTaskAttempt(progress, screen.moduleId, taskProgress, moduleCompleted));
     dispatch({
       type: "SUBMIT_TASK",
-      result: { wasCorrect, confidence: submission.confidence, articulationText: submission.articulationText, attempt: screen.attempt },
+      result: {
+        wasCorrect,
+        confidence: submission.confidence,
+        articulationText: submission.articulationText,
+        attempt: screen.attempt,
+        response: submission.response,
+      },
     });
   }
 
@@ -181,6 +187,8 @@ export default function App() {
               articulationText={screen.result.articulationText}
               code={task.code}
               replayScript={task.replayScript}
+              answer={task.answer}
+              response={screen.result.response}
             />
             <div className={styles.feedbackActions}>
               <button type="button" className={styles.secondaryButton} onClick={handleRequestSupport}>

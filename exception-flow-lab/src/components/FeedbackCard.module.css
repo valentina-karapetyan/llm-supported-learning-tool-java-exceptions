@@ -48,6 +48,26 @@
   line-height: 1.5;
 }
 
+.diffCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.diffLabel {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-error);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
 .ruleCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
