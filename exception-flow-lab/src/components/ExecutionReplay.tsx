@@ -73,6 +73,13 @@ export function ExecutionReplay({ code, replayScript }: ExecutionReplayProps) {
   const showJumpCallout = firstHandledIndex >= 0 && revealCount > firstHandledIndex;
   const animationDone = revealCount >= replayScript.length;
 
+  // Self-guard: an empty script has nothing to animate. Callers should
+  // prefer `hasReplayScript(task)` to decide whether to render this
+  // component at all, but this keeps ExecutionReplay itself from ever
+  // showing a "Watch it happen" heading with a live Replay button over a
+  // code block that never actually highlights anything.
+  if (replayScript.length === 0) return null;
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>

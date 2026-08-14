@@ -14,21 +14,21 @@ import styles from "./TransferTaskFlow.module.css";
 export interface TransferTaskFlowProps {
   task: Task;
   attempt: number;
+  // Whether this retry actually serves a different task than the previous
+  // attempt (true for modules with a stretch variant authored, like Module
+  // 1; undefined/false otherwise, e.g. Module 2). Lets the copy stay
+  // accurate instead of promising "a different case" it might not deliver.
+  isDistinctRetryVariant?: boolean;
   onSubmit: (submission: TaskSubmission) => void;
 }
 
-export function TransferTaskFlow({ task, attempt, onSubmit }: TransferTaskFlowProps) {
-  return (
-    <TaskScreen
-      task={task}
-      onSubmit={onSubmit}
-      eyebrow={
-        <p className={styles.eyebrow}>
-          {attempt > 1
-            ? "One more try — same rule as before. Look at it again."
-            : "Transfer task — apply the same rule to a new case."}
-        </p>
-      }
-    />
-  );
+export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubmit }: TransferTaskFlowProps) {
+  const eyebrowText =
+    attempt > 1
+      ? isDistinctRetryVariant
+        ? "One more try — here's a genuinely different case. Same rule."
+        : "One more try — look at it again. Same rule as before."
+      : "Transfer task — apply the same rule to a new case.";
+
+  return <TaskScreen task={task} onSubmit={onSubmit} eyebrow={<p className={styles.eyebrow}>{eyebrowText}</p>} />;
 }

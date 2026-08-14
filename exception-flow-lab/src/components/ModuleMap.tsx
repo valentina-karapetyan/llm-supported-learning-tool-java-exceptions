@@ -1,8 +1,8 @@
 // src/components/ModuleMap.tsx
 //
-// Screen B. Only Module 1 has authored content right now — the other
-// modules render as locked "coming soon" cards so the map's shape is
-// right without inventing task content that hasn't been authored.
+// Screen B. Modules 1 and 2 have authored content; Modules 3–4 render as
+// locked "coming soon" cards (module.available === false) so the map's
+// shape is right without inventing task content that hasn't been authored.
 
 import type { Module } from "../types/content";
 import type { AppProgress } from "../state/progressStore";

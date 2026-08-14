@@ -9,7 +9,7 @@
 // panel opens collapsed ("Need help? ▾") instead of expanded. It's a
 // nudge, never a lock — every button is still one click away once expanded.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { LlmSupportResponse, SupportType, Task } from "../types/content";
 import { SUPPORT_TYPE_ORDER } from "../types/content";
 import { llmSupportService } from "../llm/llmSupportService";
@@ -18,6 +18,11 @@ import styles from "./AiSupportPanel.module.css";
 export interface AiSupportPanelProps {
   task: Task;
   collapsedByDefault: boolean;
+  // What was already unlocked on an earlier visit to this task's support
+  // panel (from progressStore) — without this, closing and reopening the
+  // panel for the same task would silently relock everything and lose the
+  // learner's place, even though their progress was already recorded.
+  initialRequested: SupportType[];
   onBack: (requestedInOrder: SupportType[]) => void;
 }
 
@@ -28,11 +33,26 @@ const BUTTON_LABEL: Record<SupportType, string> = {
   similar_example: "Similar example",
 };
 
-export function AiSupportPanel({ task, collapsedByDefault, onBack }: AiSupportPanelProps) {
-  const [expanded, setExpanded] = useState(!collapsedByDefault);
-  const [requested, setRequested] = useState<SupportType[]>([]);
+export function AiSupportPanel({ task, collapsedByDefault, initialRequested, onBack }: AiSupportPanelProps) {
+  // Already having unlocked buttons from a prior visit implies the panel
+  // was expanded then too, regardless of the fading heuristic.
+  const [expanded, setExpanded] = useState(!collapsedByDefault || initialRequested.length > 0);
+  const [requested, setRequested] = useState<SupportType[]>(initialRequested);
   const [responses, setResponses] = useState<Partial<Record<SupportType, LlmSupportResponse>>>({});
   const [loading, setLoading] = useState<SupportType | null>(null);
+
+  // Re-fetch content for anything already unlocked on a previous visit, so
+  // reopening shows it again instead of an unlocked-but-empty button.
+  useEffect(() => {
+    initialRequested.forEach((type) => {
+      llmSupportService.getSupport(task, type).then((response) => {
+        setResponses((prev) => ({ ...prev, [type]: response }));
+      });
+    });
+    // Intentionally runs once on mount only — initialRequested is a snapshot
+    // of progress as of opening the panel, not something to resync on.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function isUnlocked(index: number): boolean {
     if (index === 0) return true;

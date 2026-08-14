@@ -25,7 +25,12 @@ export type ScreenState =
   | { screen: "welcome" }
   | { screen: "module_map" }
   | { screen: "concept_journal" }
-  | { screen: "task"; moduleId: string; stage: TaskStage; taskId: string; attempt: number }
+  // `retryIsDistinctVariant` is only ever set (by RETRY_TRANSFER) when
+  // stage === "transfer" && attempt > 1 — it tells the Transfer Task screen
+  // whether the retry actually serves a different case (Module 1, which has
+  // a stretch variant to swap in) or the identical task again (Module 2,
+  // which doesn't have one yet), so the copy shown can stay honest either way.
+  | { screen: "task"; moduleId: string; stage: TaskStage; taskId: string; attempt: number; retryIsDistinctVariant?: boolean }
   | { screen: "feedback"; moduleId: string; stage: TaskStage; taskId: string; result: SubmissionResult }
   | { screen: "ai_support"; moduleId: string; stage: TaskStage; taskId: string; result: SubmissionResult }
   | { screen: "module_completion"; moduleId: string };
@@ -37,7 +42,7 @@ export type ScreenAction =
   | { type: "REQUEST_SUPPORT" }
   | { type: "CLOSE_SUPPORT" }
   | { type: "CONTINUE_FROM_DIAGNOSTIC"; transferTaskId: string }
-  | { type: "RETRY_TRANSFER"; retryTaskId: string }
+  | { type: "RETRY_TRANSFER"; retryTaskId: string; isDistinctVariant: boolean }
   | { type: "COMPLETE_MODULE" }
   | { type: "VIEW_JOURNAL" }
   | { type: "BACK_TO_MAP" }
@@ -127,6 +132,7 @@ export function screenReducer(state: ScreenState, action: ScreenAction): ScreenS
         stage: "transfer",
         taskId: action.retryTaskId,
         attempt: 2,
+        retryIsDistinctVariant: action.isDistinctVariant,
       };
     }
 

@@ -6,7 +6,7 @@
 // that hasn't been authored or validated yet.
 
 import type { Module, Task } from "../types/content";
-import { diagnosticTask, transferTaskBaseline, module1Tasks } from "./module1-trace-execution";
+import { module1Tasks } from "./module1-trace-execution";
 import { module2Tasks } from "./module2-catch-order";
 
 export const module1: Module = {
@@ -76,25 +76,28 @@ export function getTransferTask(module: Module, diagnosticHighConfidenceCorrect:
 
 /**
  * The "comparable version" served on the one allowed transfer retry (spec
- * §11). Module 1 authors exactly two transfer-task variants (baseline and
- * stretch) that teach the same rule — so the retry reuses whichever variant
+ * §11): whichever transfer-task variant (baseline ↔ transferVariantForHighConfidence)
  * the learner has *not* just seen, rather than requiring a third authored
- * task. This is a deliberate build choice, not something the spec spells
- * out explicitly.
+ * task. Generalized off `justAttempted.moduleId` — same pattern as
+ * `getTransferTask` above — so it works for any module as soon as that
+ * module's baseline task gets a `transferVariantForHighConfidence` wired
+ * up, with no per-module edit needed here.
  *
- * Module 2 doesn't have a second variant yet (no high-confidence stretch
- * task authored — see module2-catch-order.ts), so this returns undefined
- * for it and the caller's fallback re-serves the same task on retry. Not a
- * bug: just a module that hasn't gotten that optional refinement yet.
+ * Modules without a second variant authored yet (module 2, currently) just
+ * return undefined, and the caller's fallback re-serves the same task on
+ * retry. Not a bug — a module that hasn't gotten that optional refinement.
  */
 export function getComparableRetryTask(justAttempted: Task): Task | undefined {
-  if (justAttempted.id === transferTaskBaseline.id) {
-    return transferTaskBaseline.transferVariantForHighConfidence;
+  const module = getModuleById(justAttempted.moduleId);
+  if (!module) return undefined;
+  const baseline = getTaskById(module.taskIds[1]);
+  if (!baseline) return undefined;
+
+  if (justAttempted.id === baseline.id) {
+    return baseline.transferVariantForHighConfidence;
   }
-  if (transferTaskBaseline.transferVariantForHighConfidence && justAttempted.id === transferTaskBaseline.transferVariantForHighConfidence.id) {
-    return transferTaskBaseline;
+  if (baseline.transferVariantForHighConfidence?.id === justAttempted.id) {
+    return baseline;
   }
   return undefined;
 }
-
-export { diagnosticTask };

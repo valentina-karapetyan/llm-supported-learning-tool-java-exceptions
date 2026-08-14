@@ -105,8 +105,9 @@ export default function App() {
     if ((screen.screen !== "feedback" && screen.screen !== "ai_support") || screen.stage !== "transfer") return;
     const currentTask = getTaskById(screen.taskId);
     if (!currentTask) return;
-    const retryTask = getComparableRetryTask(currentTask) ?? currentTask;
-    dispatch({ type: "RETRY_TRANSFER", retryTaskId: retryTask.id });
+    const comparableTask = getComparableRetryTask(currentTask);
+    const retryTask = comparableTask ?? currentTask;
+    dispatch({ type: "RETRY_TRANSFER", retryTaskId: retryTask.id, isDistinctVariant: Boolean(comparableTask) });
   }
 
   function handleCompleteModule() {
@@ -170,7 +171,12 @@ export default function App() {
         return screen.stage === "diagnostic" ? (
           <TaskScreen task={task} onSubmit={handleTaskSubmit} />
         ) : (
-          <TransferTaskFlow task={task} attempt={screen.attempt} onSubmit={handleTaskSubmit} />
+          <TransferTaskFlow
+            task={task}
+            attempt={screen.attempt}
+            isDistinctRetryVariant={screen.retryIsDistinctVariant}
+            onSubmit={handleTaskSubmit}
+          />
         );
       }
 
@@ -179,6 +185,10 @@ export default function App() {
         if (!task) return null;
         const canFinish = screen.stage === "transfer" && (screen.result.wasCorrect || screen.result.attempt >= 2);
         const canRetry = screen.stage === "transfer" && !screen.result.wasCorrect && screen.result.attempt === 1;
+        // Only promise "a comparable case" if one is actually authored for
+        // this task — otherwise the retry re-serves the identical task, and
+        // the button says so instead of overclaiming.
+        const retryLabel = canRetry && getComparableRetryTask(task) ? "Try a comparable case" : "Try again";
         return (
           <div className={styles.feedbackWrapper}>
             <FeedbackCard
@@ -201,7 +211,7 @@ export default function App() {
               )}
               {canRetry && (
                 <button type="button" className={styles.primaryButton} onClick={handleRetryTransfer}>
-                  Try a comparable case
+                  {retryLabel}
                 </button>
               )}
               {canFinish && (
@@ -217,10 +227,13 @@ export default function App() {
       case "ai_support": {
         const task = getTaskById(screen.taskId);
         if (!task) return null;
+        const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
+        const existingTaskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
         return (
           <AiSupportPanel
             task={task}
             collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
+            initialRequested={existingTaskProgress?.supportRequested ?? []}
             onBack={handleCloseSupport}
           />
         );

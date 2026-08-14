@@ -6,6 +6,7 @@
 // end-to-end here.
 
 import type { Task } from "../types/content";
+import { SUPPORT_TITLES } from "../types/content";
 
 // --- 1. Diagnostic task ---
 
@@ -56,26 +57,26 @@ export const diagnosticTask: Task = {
   supportContent: {
     hint: {
       supportType: "hint",
-      title: "A nudge",
+      title: SUPPORT_TITLES.hint,
       content:
         "Look at exactly where the exception is thrown. What normally happens to code that comes *after* the point where something goes wrong?",
     },
     step_by_step: {
       supportType: "step_by_step",
-      title: "Step by step",
+      title: SUPPORT_TITLES.step_by_step,
       content:
         "1. first() runs and throws SomeException.\n2. Java immediately stops executing the try block — it does not finish first()'s remaining code or move on to second().\n3. Java looks for a catch clause matching SomeException.\n4. The catch (SomeException e) block runs and prints \"error\".",
       keyRule: "An exception interrupts the remaining statements in the current try block.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
-      title: "In simple terms",
+      title: SUPPORT_TITLES.simpler_explanation,
       content:
         'Think of the try block as a checklist. If something goes wrong on one item, Java doesn\'t keep ticking off the rest of the list — it jumps straight to the "if something goes wrong" plan (the catch block).',
     },
     similar_example: {
       supportType: "similar_example",
-      title: "A similar example",
+      title: SUPPORT_TITLES.similar_example,
       content: `void checkout() {
     try {
         validateCart();
@@ -157,26 +158,26 @@ export const transferTaskBaseline: Task = {
   supportContent: {
     hint: {
       supportType: "hint",
-      title: "A nudge",
+      title: SUPPORT_TITLES.hint,
       content:
         "This time something runs successfully before the failure. Find the exact line that throws, then think about what comes only after it.",
     },
     step_by_step: {
       supportType: "step_by_step",
-      title: "Step by step",
+      title: SUPPORT_TITLES.step_by_step,
       content:
         '1. "validating form" prints — nothing has gone wrong yet.\n2. saveToDatabase() runs and throws DatabaseException.\n3. Java abandons the rest of the try block immediately: "form saved" never prints.\n4. The catch (DatabaseException e) block runs and prints "save failed".',
       keyRule: "Everything before the failing line still runs; everything after it in the same try block does not.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
-      title: "In simple terms",
+      title: SUPPORT_TITLES.simpler_explanation,
       content:
         "Same checklist idea as before — this time the first item on the list is fine, then the second item fails. Java completes the fine item, then stops and skips straight to the backup plan.",
     },
     similar_example: {
       supportType: "similar_example",
-      title: "A similar example",
+      title: SUPPORT_TITLES.similar_example,
       content: `void publishComment() {
     try {
         System.out.println("checking comment length");
@@ -258,34 +259,39 @@ export const transferTaskStretch: Task = {
   supportContent: {
     hint: {
       supportType: "hint",
-      title: "A nudge",
+      title: SUPPORT_TITLES.hint,
       content:
         "Not every line in the try block is equally risky — find the exact line that throws, then think about what comes only before it.",
     },
     step_by_step: {
       supportType: "step_by_step",
-      title: "Step by step",
+      title: SUPPORT_TITLES.step_by_step,
       content:
         '1. "checking stock" prints — this happens before anything risky.\n2. reserveStock() runs and throws StockException.\n3. Java abandons the rest of the try block: "stock reserved" and emailReceipt() never happen.\n4. catch (StockException e) runs and prints "out of stock".',
       keyRule: "Everything before the failing line still runs; everything after it in the same try block does not.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
-      title: "In simple terms",
+      title: SUPPORT_TITLES.simpler_explanation,
       content:
         "The checklist analogy still holds — some items on the list are fine, and then one item fails. Java completes the fine items, then stops at the failure and skips straight to the backup plan.",
     },
     similar_example: {
       supportType: "similar_example",
-      title: "A similar example",
+      title: SUPPORT_TITLES.similar_example,
       content: `void publishPost() {
-    System.out.println("draft saved");
-    validateContent(); // throws here
-    System.out.println("content ok");
-    notifyFollowers();
+    try {
+        System.out.println("draft saved");
+        validateContent(); // throws here
+        System.out.println("content ok");
+        notifyFollowers();
+    } catch (ValidationException e) {
+        System.out.println("publish blocked");
+    }
 }
-// "draft saved" already printed before this snippet's try block starts;
-// once validateContent() throws, everything after it inside the try is skipped.`,
+// "draft saved" prints fine — the failure is one call later, inside
+// validateContent(). Everything after it inside the try, including
+// notifyFollowers(), is skipped.`,
     },
   },
   articulationPrompt: 'In one sentence — why does "checking stock" still print, but "stock reserved" doesn\'t?',

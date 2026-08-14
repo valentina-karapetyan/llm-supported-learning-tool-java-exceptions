@@ -5,7 +5,7 @@
 // drag + always-visible ▲/▼ button pattern, so no interaction depends
 // solely on drag-and-drop.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -27,6 +27,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { CatchOrderData } from "../../types/content";
 import { InlineCode } from "../InlineCode";
+import { shuffledIds } from "./shuffle";
 import styles from "./CatchOrderTask.module.css";
 
 export interface CatchOrderTaskProps {
@@ -35,17 +36,8 @@ export interface CatchOrderTaskProps {
   disabled?: boolean;
 }
 
-function shuffledIds(clauses: { id: string }[]): string[] {
-  const ids = clauses.map((c) => c.id);
-  for (let i = ids.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-  }
-  return ids;
-}
-
 export function CatchOrderTask({ data, onSubmit, disabled }: CatchOrderTaskProps) {
-  const clauseMap = new Map(data.clauses.map((c) => [c.id, c]));
+  const clauseMap = useMemo(() => new Map(data.clauses.map((c) => [c.id, c])), [data.clauses]);
   // Shuffled on mount rather than shown in authored order — content authors
   // shouldn't have to remember to scramble `clauses` themselves, and a
   // learner shouldn't be able to infer anything from the initial order.
@@ -61,6 +53,11 @@ export function CatchOrderTask({ data, onSubmit, disabled }: CatchOrderTaskProps
     if (disabled) return;
     setOrder((prev) => {
       const index = prev.indexOf(id);
+      // Guard index === -1 explicitly (mirrors handleDragEnd below) — without
+      // it, an id no longer in `prev` silently resolves to newIndex 0 and
+      // arrayMove treats an id-not-found -1 as "from the end", splicing out
+      // an unrelated clause instead of no-op'ing.
+      if (index === -1) return prev;
       const newIndex = index + direction;
       if (newIndex < 0 || newIndex >= prev.length) return prev;
       return arrayMove(prev, index, newIndex);

@@ -15,6 +15,7 @@
 // validated"), that's a later refinement, not a requirement.
 
 import type { Task } from "../types/content";
+import { SUPPORT_TITLES } from "../types/content";
 
 // --- 1. Diagnostic task ---
 
@@ -62,42 +63,42 @@ export const module2DiagnosticTask: Task = {
   supportContent: {
     hint: {
       supportType: "hint",
-      title: "A nudge",
+      title: SUPPORT_TITLES.hint,
       content: "Which of these three exception types is a subtype of another one in the list? Where does the most specific one need to go?",
     },
     step_by_step: {
       supportType: "step_by_step",
-      title: "Step by step",
+      title: SUPPORT_TITLES.step_by_step,
       content:
         "1. FileNotFoundException extends IOException, and IOException extends Exception — so they form a chain, most specific to least.\n2. Java checks catch clauses in the order they're written and stops at the first match.\n3. If Exception came first, it would catch a FileNotFoundException too — so the FileNotFoundException clause after it could never run.\n4. So the order has to go narrowest to broadest: FileNotFoundException, then IOException, then Exception.",
       keyRule: "The most specific exception type must be listed before its more general supertypes.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
-      title: "In simple terms",
+      title: SUPPORT_TITLES.simpler_explanation,
       content:
         'Think of it like a lost-and-found: if you check the general "anything" box first, you\'ll never get to the specific "red backpack" box, because the general box already took it. The most specific box has to be checked first.',
     },
     similar_example: {
       supportType: "similar_example",
-      title: "A similar example",
+      title: SUPPORT_TITLES.similar_example,
       content: `try {
     connectToServer();
-} catch (SocketTimeoutException e) {
-    System.out.println("connection timed out");
+} catch (SocketException e) {
+    System.out.println("connection lost");
 } catch (IOException e) {
     System.out.println("connection failed");
 } catch (Exception e) {
     System.out.println("something else went wrong");
 }
-// SocketTimeoutException extends IOException extends Exception —
+// SocketException extends IOException extends Exception —
 // so it has to be listed first, IOException next, Exception last.`,
     },
   },
   articulationPrompt: "In one sentence — why can't `catch (Exception e)` come before `catch (FileNotFoundException e)`?",
-  // Not a runtime trace — catch order is a static/compile-time rule, so
-  // there's nothing here for ExecutionReplay to animate.
-  replayScript: [],
+  // No replayScript — catch order is a static/compile-time rule, so there's
+  // nothing here for ExecutionReplay to animate. FeedbackCard shows a plain
+  // code block instead (see hasReplayScript in types/content.ts).
 };
 
 // --- 2. Transfer task ---
@@ -116,21 +117,21 @@ export const module2TransferTask: Task = {
     "Assuming catch clause order doesn't matter, or that a general Exception catch can safely be listed before a more specific exception type.",
   code: `void parseInput() {
     try {
-        parseJson();
+        parseXml();
         System.out.println("parsed successfully");
     }
     // catch clauses go here, in the order you choose
 }
-// parseJson() can throw JsonParseException.
+// parseXml() can throw SAXParseException.
 // Class hierarchy:
-// JsonParseException extends ParseException extends Exception.`,
+// SAXParseException extends SAXException extends Exception.`,
   question: "Put the catch clauses in the order they need to appear below the try block.",
   answer: {
     type: "catch_order",
     data: {
       clauses: [
-        { id: "d1", label: "catch (ParseException e)" },
-        { id: "d2", label: "catch (JsonParseException e)" },
+        { id: "d1", label: "catch (SAXException e)" },
+        { id: "d2", label: "catch (SAXParseException e)" },
         { id: "d3", label: "catch (Exception e)" },
       ],
       correctOrder: ["d2", "d1", "d3"],
@@ -139,50 +140,49 @@ export const module2TransferTask: Task = {
   feedback: {
     correctTitle: "Correct — same rule, new hierarchy.",
     correctExplanation:
-      "JsonParseException is the most specific type, so it goes first, then its parent ParseException, then Exception last — exactly the same shape as before, just different names.",
+      "SAXParseException is the most specific type, so it goes first, then its parent SAXException, then Exception last — exactly the same shape as before, just different names.",
     incorrectTitle: "Check the hierarchy again.",
     incorrectExplanation:
-      "JsonParseException extends ParseException, which extends Exception. Whichever of these is listed first has to be the most specific one — otherwise a broader clause would catch it before the narrower one ever gets a chance.",
+      "SAXParseException extends SAXException, which extends Exception. Whichever of these is listed first has to be the most specific one — otherwise a broader clause would catch it before the narrower one ever gets a chance.",
     keyRule:
       "Catch clauses are checked top-to-bottom; the most specific exception type must be listed before its more general supertypes, or the compiler rejects the now-unreachable clause.",
   },
   supportContent: {
     hint: {
       supportType: "hint",
-      title: "A nudge",
+      title: SUPPORT_TITLES.hint,
       content: "Same question as before, new names: which type here is the most specific one? Which is the most general?",
     },
     step_by_step: {
       supportType: "step_by_step",
-      title: "Step by step",
+      title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. JsonParseException extends ParseException, and ParseException extends Exception.\n2. Java checks each catch clause in order and stops at the first match.\n3. If a broader clause came first, the narrower one after it could never run.\n4. So the order has to go narrowest to broadest: JsonParseException, then ParseException, then Exception.",
+        "1. SAXParseException extends SAXException, and SAXException extends Exception.\n2. Java checks each catch clause in order and stops at the first match.\n3. If a broader clause came first, the narrower one after it could never run.\n4. So the order has to go narrowest to broadest: SAXParseException, then SAXException, then Exception.",
       keyRule: "The most specific exception type must be listed before its more general supertypes.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
-      title: "In simple terms",
+      title: SUPPORT_TITLES.simpler_explanation,
       content: "Same lost-and-found idea: check the most specific box first, or the general box swallows everything before you get there.",
     },
     similar_example: {
       supportType: "similar_example",
-      title: "A similar example",
+      title: SUPPORT_TITLES.similar_example,
       content: `try {
-    parseDate(input);
-} catch (DateTimeParseException e) {
-    System.out.println("bad date format");
-} catch (IllegalArgumentException e) {
-    System.out.println("invalid input");
+    lookupUser(username);
+} catch (NameNotFoundException e) {
+    System.out.println("user not found");
+} catch (NamingException e) {
+    System.out.println("directory error");
 } catch (Exception e) {
     System.out.println("unexpected error");
 }
-// DateTimeParseException extends IllegalArgumentException extends Exception —
+// NameNotFoundException extends NamingException extends Exception —
 // narrowest first, broadest last, same as always.`,
     },
   },
-  articulationPrompt: "In one sentence — what do JsonParseException and FileNotFoundException from before have in common?",
+  articulationPrompt: "In one sentence — what do SAXParseException and FileNotFoundException from before have in common?",
   isTransferTask: true,
-  replayScript: [],
 };
 
 export const module2Tasks: Task[] = [module2DiagnosticTask, module2TransferTask];

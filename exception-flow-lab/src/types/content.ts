@@ -144,9 +144,35 @@ export interface Task {
   feedback: Feedback;
   supportContent: Record<SupportType, LlmSupportResponse>;
   articulationPrompt: string; // e.g. "Why do you think `second()` never runs?"
-  replayScript: ReplayStep[]; // drives ExecutionReplay, authored by hand per task
+  // Drives ExecutionReplay, authored by hand per task. Optional and omitted
+  // entirely for tasks that aren't runtime control-flow traces (e.g. a
+  // catch_order task tests a static/compile-time rule — there's nothing to
+  // "replay"). Use `hasReplayScript(task)` rather than checking
+  // `.length > 0` ad hoc at call sites.
+  replayScript?: ReplayStep[];
   isTransferTask?: boolean;
   transferVariantForHighConfidence?: Task; // swapped in for the "flow-adaptive transfer retry", see build spec §2
+}
+
+/** Canonical, reused title per SupportType — content files reference this
+ * instead of retyping "A nudge" / "Step by step" / etc. per task, so a
+ * wording change can't drift between tasks. */
+export const SUPPORT_TITLES: Record<SupportType, string> = {
+  hint: "A nudge",
+  step_by_step: "Step by step",
+  simpler_explanation: "In simple terms",
+  similar_example: "A similar example",
+};
+
+/** True when a replayScript is non-empty and worth animating. Centralizes the
+ * "does this task have a runtime replay" check so callers don't each
+ * reimplement `.length > 0` (and so `undefined` and `[]` are treated the
+ * same). Takes the array directly (not a `Task`) so calling it on a plain
+ * local variable — `hasReplayScript(replayScript)` — actually narrows that
+ * variable's type in the branch that follows; wrapping it in a fresh object
+ * literal would not. */
+export function hasReplayScript(replayScript: ReplayStep[] | undefined): replayScript is ReplayStep[] {
+  return Boolean(replayScript && replayScript.length > 0);
 }
 
 export interface Module {

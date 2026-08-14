@@ -12,6 +12,7 @@
 // plain code instead of an animation that wouldn't mean anything.
 
 import type { Feedback, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
+import { hasReplayScript } from "../types/content";
 import { CodeBlock } from "./CodeBlock";
 import { ExecutionReplay } from "./ExecutionReplay";
 import { AnswerDiff } from "./AnswerDiff";
@@ -22,7 +23,7 @@ export interface FeedbackCardProps {
   wasCorrect: boolean;
   articulationText: string;
   code: string;
-  replayScript: ReplayStep[];
+  replayScript?: ReplayStep[];
   answer: TaskAnswerData;
   response: TaskResponseData;
 }
@@ -61,7 +62,14 @@ export function FeedbackCard({ feedback, wasCorrect, articulationText, code, rep
         <p className={styles.ruleText}>{feedback.keyRule}</p>
       </div>
 
-      {replayScript.length > 0 ? <ExecutionReplay code={code} replayScript={replayScript} /> : <CodeBlock code={code} />}
+      {hasReplayScript(replayScript) ? (
+        <ExecutionReplay code={code} replayScript={replayScript} />
+      ) : (
+        <div className={styles.staticCodeSection}>
+          <h3 className={styles.staticCodeHeading}>The code</h3>
+          <CodeBlock code={code} />
+        </div>
+      )}
     </div>
   );
 }

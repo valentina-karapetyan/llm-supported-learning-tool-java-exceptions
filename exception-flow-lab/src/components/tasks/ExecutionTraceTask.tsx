@@ -13,7 +13,7 @@
 // are plain, always-enabled buttons, fully Tab + Enter/Space operable,
 // independent of drag support entirely.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -37,6 +37,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { ExecutionTraceData } from "../../types/content";
 import { InlineCode } from "../InlineCode";
+import { shuffledIds } from "./shuffle";
 import styles from "./ExecutionTraceTask.module.css";
 
 export interface ExecutionTraceTaskProps {
@@ -48,17 +49,8 @@ export interface ExecutionTraceTaskProps {
 type ContainerId = "sequence" | "doesntHappen";
 type Containers = Record<ContainerId, string[]>;
 
-function shuffledIds(cards: { id: string }[]): string[] {
-  const ids = cards.map((c) => c.id);
-  for (let i = ids.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-  }
-  return ids;
-}
-
 export function ExecutionTraceTask({ data, onSubmit, disabled }: ExecutionTraceTaskProps) {
-  const cardMap = new Map(data.cards.map((c) => [c.id, c]));
+  const cardMap = useMemo(() => new Map(data.cards.map((c) => [c.id, c])), [data.cards]);
   const [containers, setContainers] = useState<Containers>(() => ({
     sequence: [],
     doesntHappen: shuffledIds(data.cards),
