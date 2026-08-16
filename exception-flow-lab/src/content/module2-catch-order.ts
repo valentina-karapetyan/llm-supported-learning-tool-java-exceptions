@@ -97,8 +97,23 @@ export const module2DiagnosticTask: Task = {
   },
   articulationPrompt: "In one sentence — why can't `catch (Exception e)` come before `catch (FileNotFoundException e)`?",
   // No replayScript — catch order is a static/compile-time rule, so there's
-  // nothing here for ExecutionReplay to animate. FeedbackCard shows a plain
-  // code block instead (see hasReplayScript in types/content.ts).
+  // nothing here for ExecutionReplay to animate. FeedbackCard shows
+  // resolvedCode instead (see hasReplayScript in types/content.ts).
+  resolvedCode: `void loadConfig() {
+    try {
+        readConfigFile();
+        System.out.println("config loaded");
+    } catch (FileNotFoundException e) {
+        System.out.println("config file missing");
+    } catch (IOException e) {
+        System.out.println("could not read config file");
+    } catch (Exception e) {
+        System.out.println("unexpected error loading config");
+    }
+}
+// readConfigFile() can throw FileNotFoundException.
+// Class hierarchy:
+// FileNotFoundException extends IOException extends Exception.`,
 };
 
 // --- 2. Transfer task ---
@@ -183,6 +198,21 @@ export const module2TransferTask: Task = {
   },
   articulationPrompt: "In one sentence — what do SAXParseException and FileNotFoundException from before have in common?",
   isTransferTask: true,
+  resolvedCode: `void parseInput() {
+    try {
+        parseXml();
+        System.out.println("parsed successfully");
+    } catch (SAXParseException e) {
+        System.out.println("malformed XML");
+    } catch (SAXException e) {
+        System.out.println("XML parsing error");
+    } catch (Exception e) {
+        System.out.println("unexpected error");
+    }
+}
+// parseXml() can throw SAXParseException.
+// Class hierarchy:
+// SAXParseException extends SAXException extends Exception.`,
 };
 
 export const module2Tasks: Task[] = [module2DiagnosticTask, module2TransferTask];

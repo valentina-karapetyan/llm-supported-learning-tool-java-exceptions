@@ -197,6 +197,7 @@ export default function App() {
               articulationText={screen.result.articulationText}
               code={task.code}
               replayScript={task.replayScript}
+              resolvedCode={task.resolvedCode}
               answer={task.answer}
               response={screen.result.response}
             />
