@@ -17,6 +17,9 @@
 
   --font-body: "Inter", system-ui, -apple-system, sans-serif;
   --font-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* Serif for headlines only — an editorial "case notes" register, kept
+     apart from the sans body text and monospace code/meta labels. */
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
 
   --radius-card: 12px;
   --radius-control: 8px;
@@ -50,6 +53,11 @@ body {
 
 button {
   font-family: inherit;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
 code,

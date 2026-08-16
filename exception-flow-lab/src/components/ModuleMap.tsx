@@ -30,12 +30,13 @@ export function ModuleMap({ modules, progress, onSelectModule, onViewJournal }: 
           Concept Journal →
         </button>
       </div>
-      <div className={styles.grid}>
-        {modules.map((module) => (
+      <div className={styles.list}>
+        {modules.map((module, i) => (
           <ModuleCard
             key={module.id}
             module={module}
             state={stateFor(module.id)}
+            index={i + 1}
             onSelect={() => module.available && onSelectModule(module.id)}
           />
         ))}

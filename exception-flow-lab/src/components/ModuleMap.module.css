@@ -31,8 +31,7 @@
   text-decoration: underline;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--space-3);
+.list {
+  display: flex;
+  flex-direction: column;
 }
