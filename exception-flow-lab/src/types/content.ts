@@ -150,6 +150,13 @@ export interface Task {
   // "replay"). Use `hasReplayScript(task)` rather than checking
   // `.length > 0` ad hoc at call sites.
   replayScript?: ReplayStep[];
+  // The "solved" version of `code`, authored by hand, shown on the Feedback
+  // screen instead of the plain `code` for tasks with no replayScript (a
+  // runtime trace already shows the resolution via ExecutionReplay; a static
+  // task like catch_order needs this instead, or the Feedback screen would
+  // just re-show the same unfinished snippet with its "fill this in" comment
+  // still sitting there unresolved). Falls back to `code` when omitted.
+  resolvedCode?: string;
   isTransferTask?: boolean;
   transferVariantForHighConfidence?: Task; // swapped in for the "flow-adaptive transfer retry", see build spec §2
 }

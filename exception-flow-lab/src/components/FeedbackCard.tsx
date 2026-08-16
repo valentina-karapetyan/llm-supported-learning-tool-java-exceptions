@@ -24,11 +24,23 @@ export interface FeedbackCardProps {
   articulationText: string;
   code: string;
   replayScript?: ReplayStep[];
+  // Hand-authored "solved" code, shown instead of the plain (still-blank)
+  // `code` for tasks with no replayScript. Falls back to `code` if absent.
+  resolvedCode?: string;
   answer: TaskAnswerData;
   response: TaskResponseData;
 }
 
-export function FeedbackCard({ feedback, wasCorrect, articulationText, code, replayScript, answer, response }: FeedbackCardProps) {
+export function FeedbackCard({
+  feedback,
+  wasCorrect,
+  articulationText,
+  code,
+  replayScript,
+  resolvedCode,
+  answer,
+  response,
+}: FeedbackCardProps) {
   const title = wasCorrect ? feedback.correctTitle : feedback.incorrectTitle;
   const explanation = wasCorrect ? feedback.correctExplanation : feedback.incorrectExplanation;
 
@@ -67,7 +79,7 @@ export function FeedbackCard({ feedback, wasCorrect, articulationText, code, rep
       ) : (
         <div className={styles.staticCodeSection}>
           <h3 className={styles.staticCodeHeading}>The code</h3>
-          <CodeBlock code={code} />
+          <CodeBlock code={resolvedCode ?? code} />
         </div>
       )}
     </div>
