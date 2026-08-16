@@ -1,5 +1,5 @@
 .wrapper {
-  max-width: 640px;
+  max-width: 600px;
   margin: var(--space-6) auto;
   display: flex;
   flex-direction: column;
@@ -7,42 +7,64 @@
   text-align: left;
 }
 
-.eyebrow {
+.meta {
   margin: 0;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-family: var(--font-code);
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
   color: var(--color-accent);
 }
 
 .title {
-  margin: 0;
-  font-size: 2rem;
+  margin: var(--space-1) 0 0;
+  font-size: 2.1rem;
   line-height: 1.2;
-  color: var(--color-primary);
+  color: var(--color-text);
 }
 
 .lede {
   margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.lede code {
   color: var(--color-text);
 }
 
-.list {
+.rows {
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rowLabel {
   margin: 0;
-  padding-left: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--color-text-muted);
-  font-size: 0.95rem;
+}
+
+.rowBody {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
 }
 
 .startButton {
   align-self: flex-start;
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
   background: var(--color-primary);
   color: white;
   border: none;
@@ -54,4 +76,11 @@
 
 .startButton:hover {
   background: var(--color-primary-hover);
+}
+
+@media (max-width: 480px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
 }
