@@ -13,6 +13,7 @@ import { useState } from "react";
 import type { ConfidenceLevel, Task, TaskResponseData } from "../types/content";
 import type { TaskStage } from "../state/screenReducer";
 import { CodeBlock } from "./CodeBlock";
+import { ExceptionHierarchy } from "./ExceptionHierarchy";
 import { TaskRenderer } from "./TaskRenderer";
 import { ConfidenceSelector } from "./ConfidenceSelector";
 import { ArticulationBox } from "./ArticulationBox";
@@ -55,6 +56,14 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
   // only makes sense while the task is still the thing on screen.
   const showIntro = task.moduleId === "module-1" && step === "answering";
 
+  // Case 2's own orientation sentence (build spec's Case 2 revision) —
+  // orients the learner to "this needs reordering" without explaining the
+  // specificity rule itself, which would give the answer away. Scoped to
+  // catch_order tasks specifically (the reordering interaction) rather than
+  // every module-2 task, since the transfer tasks ask a different kind of
+  // question and get their framing from `task.question` instead.
+  const showCatchOrderIntro = task.moduleId === "module-2" && task.answer.type === "catch_order" && step === "answering";
+
   function handleAnswerSubmit(r: TaskResponseData) {
     setResponse(r);
     setStep("confidence");
@@ -81,7 +90,13 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
           The code below is executed once. Predict which events occur during this execution and place them in the order they happen.
         </p>
       )}
+      {showCatchOrderIntro && (
+        <p className={styles.intro}>
+          The code below needs catch clauses for related exception types. Arrange them into an order that results in valid Java code.
+        </p>
+      )}
       <CodeBlock code={task.code} />
+      {task.hierarchy && <ExceptionHierarchy nodes={task.hierarchy} />}
 
       {/* The task question ("Drag the events...") only makes sense while the
           task itself is still on screen — once the learner has submitted an

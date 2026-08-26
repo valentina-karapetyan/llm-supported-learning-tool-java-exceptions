@@ -15,9 +15,10 @@ export interface TransferTaskFlowProps {
   task: Task;
   attempt: number;
   // Whether this retry actually serves a different task than the previous
-  // attempt (true for modules with a stretch variant authored, like Module
-  // 1; undefined/false otherwise, e.g. Module 2). Lets the copy stay
-  // accurate instead of promising "a different case" it might not deliver.
+  // attempt (true when the task being retried has a transferVariantForHighConfidence
+  // or retryVariant authored — see getComparableRetryTask; undefined/false
+  // otherwise). Lets the copy stay accurate instead of promising "a
+  // different case" it might not deliver.
   isDistinctRetryVariant?: boolean;
   onSubmit: (submission: TaskSubmission) => void;
   onBackToMap: () => void;

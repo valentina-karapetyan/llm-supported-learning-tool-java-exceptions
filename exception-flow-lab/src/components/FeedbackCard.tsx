@@ -11,10 +11,11 @@
 // when this runs"), so a task can reasonably omit it and just show its
 // plain code instead of an animation that wouldn't mean anything.
 
-import type { Feedback, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
+import type { Feedback, HierarchyNode, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
 import { hasReplayScript } from "../types/content";
 import { CodeBlock } from "./CodeBlock";
 import { ExecutionReplay } from "./ExecutionReplay";
+import { ExceptionHierarchy } from "./ExceptionHierarchy";
 import { AnswerDiff } from "./AnswerDiff";
 import { InlineCode } from "./InlineCode";
 import styles from "./FeedbackCard.module.css";
@@ -28,6 +29,9 @@ export interface FeedbackCardProps {
   // Hand-authored "solved" code, shown instead of the plain (still-blank)
   // `code` for tasks with no replayScript. Falls back to `code` if absent.
   resolvedCode?: string;
+  // Shown separately below the code, never spliced into it — see
+  // Task.hierarchy. Optional; most tasks omit it.
+  hierarchy?: HierarchyNode[];
   answer: TaskAnswerData;
   response: TaskResponseData;
 }
@@ -39,6 +43,7 @@ export function FeedbackCard({
   code,
   replayScript,
   resolvedCode,
+  hierarchy,
   answer,
   response,
 }: FeedbackCardProps) {
@@ -94,6 +99,7 @@ export function FeedbackCard({
           <CodeBlock code={resolvedCode ?? code} />
         </div>
       )}
+      {hierarchy && <ExceptionHierarchy nodes={hierarchy} />}
     </div>
   );
 }
