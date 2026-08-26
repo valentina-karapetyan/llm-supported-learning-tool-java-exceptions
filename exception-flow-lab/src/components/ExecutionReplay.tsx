@@ -69,6 +69,14 @@ export function ExecutionReplay({ code, replayScript }: ExecutionReplayProps) {
     return map;
   }, [replayScript, revealCount]);
 
+  const lineBadgeLabels = useMemo(() => {
+    const map: Partial<Record<number, string>> = {};
+    for (const step of replayScript.slice(0, revealCount)) {
+      if (step.badgeLabel) map[step.lineNumber] = step.badgeLabel;
+    }
+    return map;
+  }, [replayScript, revealCount]);
+
   const firstHandledIndex = replayScript.findIndex((s) => s.state === "handled");
   const showJumpCallout = firstHandledIndex >= 0 && revealCount > firstHandledIndex;
   const animationDone = revealCount >= replayScript.length;
@@ -95,9 +103,9 @@ export function ExecutionReplay({ code, replayScript }: ExecutionReplayProps) {
           </button>
         )}
       </div>
-      <CodeBlock code={code} lineStates={lineStates} />
+      <CodeBlock code={code} lineStates={lineStates} lineBadgeLabels={lineBadgeLabels} />
       <div className={[styles.callout, showJumpCallout ? styles.calloutVisible : ""].join(" ")} aria-live="polite">
-        {showJumpCallout ? "⤷ control jumps straight to the matching catch block" : ""}
+        {showJumpCallout ? "⤷ control jumps straight to the matching catch clause" : ""}
       </div>
     </div>
   );

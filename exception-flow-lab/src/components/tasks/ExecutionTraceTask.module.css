@@ -5,13 +5,19 @@
 }
 
 .zones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.destinationZones {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
 }
 
 @media (max-width: 720px) {
-  .zones {
+  .destinationZones {
     grid-template-columns: 1fr;
   }
 }
@@ -54,7 +60,12 @@
 }
 
 .card {
+  /* wrap, not nowrap: a sequence card can carry up to five small buttons
+     (reorder, back to sort, doesn't-happen) — on a narrower destination
+     column that row wraps onto its own line under the label instead of
+     overflowing the card. */
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   background: var(--color-bg);
@@ -84,7 +95,8 @@
 }
 
 .cardLabel {
-  flex: 1 1 auto;
+  flex: 1 1 140px;
+  min-width: 110px;
   font-size: 0.9rem;
 }
 
@@ -96,9 +108,12 @@
 }
 
 .cardControls {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  margin-left: auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-1);
 }
 

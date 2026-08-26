@@ -10,6 +10,11 @@ import styles from "./CodeBlock.module.css";
 export interface CodeBlockProps {
   code: string;
   lineStates?: Partial<Record<number, ReplayLineState>>;
+  // Optional per-line override for the badge text, keyed the same way as
+  // `lineStates`. Falls back to the generic STATE_LABEL for that line's
+  // state when a line has no entry here — e.g. lets a "throws" step read
+  // "first() THROWS" instead of the generic, more ambiguous "throws here".
+  lineBadgeLabels?: Partial<Record<number, string>>;
   caption?: string;
 }
 
@@ -20,7 +25,7 @@ const STATE_LABEL: Record<ReplayLineState, string> = {
   handled: "handles it",
 };
 
-export function CodeBlock({ code, lineStates, caption }: CodeBlockProps) {
+export function CodeBlock({ code, lineStates, lineBadgeLabels, caption }: CodeBlockProps) {
   const lines = code.split("\n");
 
   return (
@@ -32,14 +37,17 @@ export function CodeBlock({ code, lineStates, caption }: CodeBlockProps) {
             const lineNumber = index + 1;
             const state = lineStates?.[lineNumber];
             const stateClass = state ? styles[state] : undefined;
+            const customBadge = lineBadgeLabels?.[lineNumber];
             return (
               <div key={lineNumber} className={[styles.line, stateClass].filter(Boolean).join(" ")}>
                 <span className={styles.lineNumber} aria-hidden="true">
                   {lineNumber}
                 </span>
-                <span className={styles.lineText}>{line || " "}</span>
+                <span className={styles.lineText}>{line || " "}</span>
                 {state && (state === "skipped" || state === "throws") && (
-                  <span className={styles.lineBadge}>{STATE_LABEL[state]}</span>
+                  <span className={[styles.lineBadge, customBadge ? styles.lineBadgeCustom : ""].join(" ")}>
+                    {customBadge ?? STATE_LABEL[state]}
+                  </span>
                 )}
               </div>
             );

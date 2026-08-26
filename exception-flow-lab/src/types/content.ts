@@ -38,6 +38,14 @@ export interface Feedback {
   incorrectTitle: string;
   incorrectExplanation: string;
   keyRule: string;
+  // Optional rule-based override for the incorrect-answer explanation,
+  // computed from the learner's actual submitted response instead of always
+  // showing the same static `incorrectExplanation` string. Still 100%
+  // predefined/hand-authored logic (never LLM-generated) — see
+  // module1-trace-execution.ts's diagnosticTask for the one task that
+  // currently supplies this. Falls back to `incorrectExplanation` when
+  // omitted, so every other task is unaffected.
+  getIncorrectExplanation?: (response: TaskResponseData) => string;
 }
 
 // --- Per-task-type answer shapes (concrete, replacing `unknown`) ---
@@ -129,6 +137,12 @@ export type ReplayLineState = "active" | "throws" | "skipped" | "handled";
 export interface ReplayStep {
   lineNumber: number; // 1-indexed line in `code`
   state: ReplayLineState;
+  // Optional override for the line's badge text (CodeBlock/ExecutionReplay),
+  // shown instead of the generic per-state label (e.g. "throws here"). Use
+  // this when the generic label would be ambiguous about *what* actually
+  // throws — e.g. a line reading `first();` throwing is really "first()
+  // throws", not "this line contains a throw statement".
+  badgeLabel?: string;
 }
 
 export interface Task {

@@ -16,6 +16,7 @@ import { hasReplayScript } from "../types/content";
 import { CodeBlock } from "./CodeBlock";
 import { ExecutionReplay } from "./ExecutionReplay";
 import { AnswerDiff } from "./AnswerDiff";
+import { InlineCode } from "./InlineCode";
 import styles from "./FeedbackCard.module.css";
 
 export interface FeedbackCardProps {
@@ -42,7 +43,14 @@ export function FeedbackCard({
   response,
 }: FeedbackCardProps) {
   const title = wasCorrect ? feedback.correctTitle : feedback.incorrectTitle;
-  const explanation = wasCorrect ? feedback.correctExplanation : feedback.incorrectExplanation;
+  // For a wrong answer, prefer the rule-based explanation computed from what
+  // the learner actually submitted (see Feedback.getIncorrectExplanation) —
+  // still 100% predefined copy, just selected by the learner's specific
+  // mistake instead of always showing the same generic sentence. Falls back
+  // to the static incorrectExplanation for every task that doesn't supply one.
+  const explanation = wasCorrect
+    ? feedback.correctExplanation
+    : (feedback.getIncorrectExplanation?.(response) ?? feedback.incorrectExplanation);
 
   return (
     <div className={styles.wrapper}>
@@ -52,7 +60,9 @@ export function FeedbackCard({
         </span>
         <div>
           <h2 className={styles.bannerTitle}>{title}</h2>
-          <p className={styles.bannerExplanation}>{explanation}</p>
+          <p className={styles.bannerExplanation}>
+            <InlineCode text={explanation} />
+          </p>
         </div>
       </div>
 
@@ -71,7 +81,9 @@ export function FeedbackCard({
           </div>
         )}
         <p className={styles.ruleLabel}>Key rule</p>
-        <p className={styles.ruleText}>{feedback.keyRule}</p>
+        <p className={styles.ruleText}>
+          <InlineCode text={feedback.keyRule} />
+        </p>
       </div>
 
       {hasReplayScript(replayScript) ? (
