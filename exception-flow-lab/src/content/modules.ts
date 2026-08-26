@@ -83,11 +83,18 @@ export function getTransferTask(module: Module, diagnosticHighConfidenceCorrect:
  * module's baseline task gets a `transferVariantForHighConfidence` wired
  * up, with no per-module edit needed here.
  *
- * Modules without a second variant authored yet (module 2, currently) just
- * return undefined, and the caller's fallback re-serves the same task on
- * retry. Not a bug — a module that hasn't gotten that optional refinement.
+ * Modules with neither a `retryVariant` nor a `transferVariantForHighConfidence`
+ * authored just return undefined here, and the caller's fallback re-serves
+ * the same task on retry. Not a bug — a module that hasn't gotten that
+ * optional refinement.
  */
 export function getComparableRetryTask(justAttempted: Task): Task | undefined {
+  // A task-specific retry variant (spec §11 — Case 2's "Try again" case)
+  // takes priority when authored: it exists specifically to differ from the
+  // baseline on a wrong answer, independent of the high-confidence swap
+  // below, so it applies regardless of *why* this is a retry.
+  if (justAttempted.retryVariant) return justAttempted.retryVariant;
+
   const module = getModuleById(justAttempted.moduleId);
   if (!module) return undefined;
   const baseline = getTaskById(module.taskIds[1]);
