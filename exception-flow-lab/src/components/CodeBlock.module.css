@@ -56,6 +56,13 @@
   color: #d8d8e2;
 }
 
+/* Custom badge text (e.g. "first() THROWS") authors a specific method name
+   in lowercase on purpose — skip the generic uppercase transform so it
+   doesn't get mangled into "FIRST() THROWS". */
+.lineBadgeCustom {
+  text-transform: none;
+}
+
 /* Replay states, applied by ExecutionReplay via CodeBlock's lineStates prop */
 
 .active {
