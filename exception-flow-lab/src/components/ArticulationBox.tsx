@@ -5,6 +5,7 @@
 // never sent anywhere — purely for the learner's own reflection, shown
 // back to them next to the key rule on the Feedback screen.
 
+import { InlineCode } from "./InlineCode";
 import styles from "./ArticulationBox.module.css";
 
 export interface ArticulationBoxProps {
@@ -18,16 +19,16 @@ export function ArticulationBox({ prompt, value, onChange }: ArticulationBoxProp
   return (
     <div className={styles.wrapper}>
       <label htmlFor={id} className={styles.label}>
-        {prompt}
-        <span className={styles.optional}> (optional — not graded, just for you)</span>
+        <InlineCode text={prompt} />
       </label>
+      <p className={styles.optional}>Optional — not graded.</p>
       <textarea
         id={id}
         className={styles.textarea}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={2}
-        placeholder="One sentence is plenty…"
+        placeholder="One sentence is enough…"
       />
     </div>
   );
