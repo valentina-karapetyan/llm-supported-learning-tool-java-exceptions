@@ -12,6 +12,7 @@ export type TaskType =
   | "statement_selection"
   | "call_chain"
   | "catch_order"
+  | "single_choice"
   | "handler_selection"
   | "handler_refactoring";
 
@@ -90,6 +91,24 @@ export interface CatchOrderData {
   correctOrder: string[]; // clause ids, most specific first
 }
 
+export interface SingleChoiceOption {
+  id: string;
+  label: string; // may contain `inline code`, rendered via InlineCode
+}
+
+// A plain single-select question with no per-option reveal — correctness is
+// decided and shown only on the Feedback screen, same as every other task
+// type. Distinct from HandlerSelectionData below: that shape's component
+// reveals a rationale per option immediately on selection (built for a
+// different, not-yet-authored flow), which would leak correctness before
+// the confidence step. Use this whenever a task just needs "pick one of N
+// options, then see feedback the normal way" — e.g. Case 2's "does this
+// code compile?" transfer task.
+export interface SingleChoiceData {
+  options: SingleChoiceOption[];
+  correctOptionId: string;
+}
+
 export interface HandlerOption {
   id: string;
   label: string;
@@ -117,6 +136,7 @@ export type TaskAnswerData =
   | { type: "statement_selection"; data: StatementSelectionData }
   | { type: "call_chain"; data: CallChainData }
   | { type: "catch_order"; data: CatchOrderData }
+  | { type: "single_choice"; data: SingleChoiceData }
   | { type: "handler_selection"; data: HandlerSelectionData }
   | { type: "handler_refactoring"; data: HandlerRefactoringData };
 
@@ -127,6 +147,7 @@ export type TaskResponseData =
   | { type: "statement_selection"; selectedIds: string[] }
   | { type: "call_chain"; selectedStepId: string }
   | { type: "catch_order"; order: string[] } // clause ids in the learner's chosen order
+  | { type: "single_choice"; selectedOptionId: string }
   | { type: "handler_selection"; selectedOptionId: string }
   | { type: "handler_refactoring"; selectedOptionId: string };
 
@@ -143,6 +164,20 @@ export interface ReplayStep {
   // throws — e.g. a line reading `first();` throwing is really "first()
   // throws", not "this line contains a throw statement".
   badgeLabel?: string;
+}
+
+// A class hierarchy shown as task information, entirely separate from any
+// code block (never spliced into the code itself or a trailing comment).
+// Ordered most general first: depth 0 is the root, and depth increases by 1
+// per level toward the most specific type. Rendered by ExceptionHierarchy
+// as a small indented list with a heading, e.g.
+//   Exception hierarchy
+//   `Exception`
+//   ↳ `IOException`
+//     ↳ `FileNotFoundException`
+export interface HierarchyNode {
+  label: string; // a class name, e.g. "FileNotFoundException" — rendered as code
+  depth: number;
 }
 
 export interface Task {
@@ -171,8 +206,21 @@ export interface Task {
   // just re-show the same unfinished snippet with its "fill this in" comment
   // still sitting there unresolved). Falls back to `code` when omitted.
   resolvedCode?: string;
+  // Shown below the code (see hasReplayScript comment above) as task
+  // information, not Java syntax — e.g. Case 2's "which exception types are
+  // related, and how" context. Optional; most tasks (e.g. every Module 1
+  // task) omit it entirely.
+  hierarchy?: HierarchyNode[];
   isTransferTask?: boolean;
   transferVariantForHighConfidence?: Task; // swapped in for the "flow-adaptive transfer retry", see build spec §2
+  // Served on the one allowed transfer retry (spec §11) when *this exact
+  // task* was just answered incorrectly — lets the retry test the same rule
+  // through a differently-shaped question instead of literally repeating
+  // itself. Distinct from transferVariantForHighConfidence above: that field
+  // is keyed off a *correct, high-confidence first attempt* (a trigger this
+  // module may not use); this one only ever appears after a wrong answer.
+  // See getComparableRetryTask in content/modules.ts for how the two combine.
+  retryVariant?: Task;
 }
 
 /** Canonical, reused title per SupportType — content files reference this

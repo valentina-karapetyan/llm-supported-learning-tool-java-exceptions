@@ -29,6 +29,8 @@ export function evaluateAnswer(answer: TaskAnswerData, response: TaskResponseDat
       return answer.type === "call_chain" && answer.data.correctHandlerStepId === response.selectedStepId;
     case "catch_order":
       return answer.type === "catch_order" && arraysEqual(answer.data.correctOrder, response.order);
+    case "single_choice":
+      return answer.type === "single_choice" && answer.data.correctOptionId === response.selectedOptionId;
     case "handler_selection": {
       if (answer.type !== "handler_selection") return false;
       const option = answer.data.options.find((o) => o.id === response.selectedOptionId);

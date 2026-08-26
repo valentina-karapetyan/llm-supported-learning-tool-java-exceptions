@@ -26,13 +26,13 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
     case "execution_trace": {
       if (response.type !== "execution_trace") return null;
       const labelOf = (id: string) => answer.data.cards.find((c) => c.id === id)?.label ?? id;
+      const doesntHappenIds = answer.data.cards.map((c) => c.id).filter((id) => !answer.data.correctOrder.includes(id));
       return (
-        <SequenceDiff
-          correctIds={answer.data.correctOrder}
-          yourIds={response.sequence}
+        <ExecutionTraceDiff
+          correctOrder={answer.data.correctOrder}
+          doesntHappenIds={doesntHappenIds}
+          yourSequence={response.sequence}
           labelOf={labelOf}
-          missingHint="You left these in “Doesn't happen” — they should have been in the sequence:"
-          extraHint="You put these in the sequence — they don't actually happen:"
         />
       );
     }
@@ -63,6 +63,15 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
       const correctStep = answer.data.steps.find((s) => s.id === answer.data.correctHandlerStepId);
       return (
         <SingleChoiceDiff yourLabel={step?.methodName ?? response.selectedStepId} correctLabel={correctStep?.methodName ?? "?"} />
+      );
+    }
+
+    case "single_choice": {
+      if (response.type !== "single_choice") return null;
+      const yourOption = answer.data.options.find((o) => o.id === response.selectedOptionId);
+      const correctOption = answer.data.options.find((o) => o.id === answer.data.correctOptionId);
+      return (
+        <SingleChoiceDiff yourLabel={yourOption?.label ?? response.selectedOptionId} correctLabel={correctOption?.label ?? "?"} />
       );
     }
 
@@ -123,35 +132,66 @@ function LabeledList({ title, ids, labelOf, matchAt }: LabeledListProps) {
   );
 }
 
-function SequenceDiff({
-  correctIds,
-  yourIds,
+// Dedicated to execution_trace: shows the two reference lists (what
+// actually happens, in order, and what doesn't) side by side, then the
+// learner's own submitted sequence marked up against the correct one, then
+// calls out exactly what was off — events that shouldn't be in the
+// sequence, events missing from it, or (if the set was right) just the
+// order. Never shows "(nothing)" for the learner's sequence unless they
+// truly submitted zero events as happening.
+function ExecutionTraceDiff({
+  correctOrder,
+  doesntHappenIds,
+  yourSequence,
   labelOf,
-  missingHint,
-  extraHint,
 }: {
-  correctIds: string[];
-  yourIds: string[];
+  correctOrder: string[];
+  doesntHappenIds: string[];
+  yourSequence: string[];
   labelOf: (id: string) => string;
-  missingHint: string;
-  extraHint: string;
 }) {
-  const missing = correctIds.filter((id) => !yourIds.includes(id));
-  const extra = yourIds.filter((id) => !correctIds.includes(id));
+  const missing = correctOrder.filter((id) => !yourSequence.includes(id));
+  const extra = yourSequence.filter((id) => !correctOrder.includes(id));
+  const rightSetWrongOrder =
+    missing.length === 0 && extra.length === 0 && !correctOrder.every((id, i) => yourSequence[i] === id);
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.columns}>
-        <LabeledList title="Correct sequence" ids={correctIds} labelOf={labelOf} />
-        <LabeledList
-          title="Your sequence"
-          ids={yourIds}
-          labelOf={labelOf}
-          matchAt={(index, id) => correctIds[index] === id}
-        />
+        <LabeledList title="Correct sequence" ids={correctOrder} labelOf={labelOf} />
+        <LabeledList title="Doesn't happen" ids={doesntHappenIds} labelOf={labelOf} />
       </div>
-      {missing.length > 0 && <DiffHint hint={missingHint} ids={missing} labelOf={labelOf} />}
-      {extra.length > 0 && <DiffHint hint={extraHint} ids={extra} labelOf={labelOf} />}
+
+      <div className={styles.column}>
+        <p className={styles.columnTitle}>Your answer — “This happens, in order”</p>
+        {yourSequence.length === 0 ? (
+          <p className={styles.empty}>(nothing — you didn't mark any event as happening)</p>
+        ) : (
+          <ol className={styles.list}>
+            {yourSequence.map((id, index) => {
+              const isMatch = correctOrder[index] === id;
+              return (
+                <li key={`${id}-${index}`} className={[styles.row, isMatch ? styles.rowMatch : styles.rowMismatch].join(" ")}>
+                  <span className={styles.rowMark}>{isMatch ? "✓" : "✗"}</span>
+                  <span>
+                    <InlineCode text={labelOf(id)} />
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </div>
+
+      {extra.length > 0 && (
+        <DiffHint hint="You placed these in “This happens” — they don't actually happen:" ids={extra} labelOf={labelOf} />
+      )}
+      {missing.length > 0 && (
+        <DiffHint hint="You left these out of “This happens” — they do happen:" ids={missing} labelOf={labelOf} />
+      )}
+      {rightSetWrongOrder && (
+        <p className={styles.orderHint}>You had the right three events — just not in the right order. Compare the positions above.</p>
+      )}
     </div>
   );
 }
