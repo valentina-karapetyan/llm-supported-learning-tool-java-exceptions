@@ -20,9 +20,10 @@ export interface TransferTaskFlowProps {
   // accurate instead of promising "a different case" it might not deliver.
   isDistinctRetryVariant?: boolean;
   onSubmit: (submission: TaskSubmission) => void;
+  onBackToMap: () => void;
 }
 
-export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubmit }: TransferTaskFlowProps) {
+export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubmit, onBackToMap }: TransferTaskFlowProps) {
   const eyebrowText =
     attempt > 1
       ? isDistinctRetryVariant
@@ -30,5 +31,13 @@ export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubm
         : "One more try — look at it again. Same rule as before."
       : "Transfer task — apply the same rule to a new case.";
 
-  return <TaskScreen task={task} onSubmit={onSubmit} eyebrow={<p className={styles.eyebrow}>{eyebrowText}</p>} />;
+  return (
+    <TaskScreen
+      task={task}
+      stage="transfer"
+      onSubmit={onSubmit}
+      onBackToMap={onBackToMap}
+      eyebrow={<p className={styles.eyebrow}>{eyebrowText}</p>}
+    />
+  );
 }

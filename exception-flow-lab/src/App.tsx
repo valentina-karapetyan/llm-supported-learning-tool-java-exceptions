@@ -8,7 +8,7 @@
 
 import { useReducer, useRef, useState } from "react";
 import { modules, getModuleById, getTaskById, getTransferTask, getComparableRetryTask } from "./content/modules";
-import { screenReducer, initialScreenState, type ScreenState } from "./state/screenReducer";
+import { screenReducer, initialScreenState, type ScreenState, type TaskStage } from "./state/screenReducer";
 import { loadProgress, recordTaskAttempt, resetProgress, shouldCollapseSupportPanel, type AppProgress, type TaskProgress } from "./state/progressStore";
 import { evaluateAnswer } from "./state/evaluateAnswer";
 import type { SupportType } from "./types/content";
@@ -20,7 +20,16 @@ import { FeedbackCard } from "./components/FeedbackCard";
 import { AiSupportPanel } from "./components/AiSupportPanel";
 import { CompletionScreen } from "./components/CompletionScreen";
 import { ConceptJournal } from "./components/ConceptJournal";
+import { CaseNav, type CaseProgressStage } from "./components/CaseNav";
 import styles from "./App.module.css";
+
+// Lightweight Case 1 progress indicator (build spec's Case 1 revision,
+// §10) — only authored/shown for module-1; every other module just gets the
+// plain "← Case files" link with no trail.
+function caseProgressStage(moduleId: string, stage: TaskStage): CaseProgressStage | undefined {
+  if (moduleId !== "module-1") return undefined;
+  return stage === "transfer" ? "transfer" : "feedback";
+}
 
 export default function App() {
   const [progress, setProgress] = useState<AppProgress>(() => loadProgress());
@@ -169,13 +178,14 @@ export default function App() {
         const task = getTaskById(screen.taskId);
         if (!task) return null;
         return screen.stage === "diagnostic" ? (
-          <TaskScreen task={task} onSubmit={handleTaskSubmit} />
+          <TaskScreen task={task} stage="diagnostic" onSubmit={handleTaskSubmit} onBackToMap={handleBackToMap} />
         ) : (
           <TransferTaskFlow
             task={task}
             attempt={screen.attempt}
             isDistinctRetryVariant={screen.retryIsDistinctVariant}
             onSubmit={handleTaskSubmit}
+            onBackToMap={handleBackToMap}
           />
         );
       }
@@ -191,6 +201,7 @@ export default function App() {
         const retryLabel = canRetry && getComparableRetryTask(task) ? "Try a comparable case" : "Try again";
         return (
           <div className={styles.feedbackWrapper}>
+            <CaseNav onBackToMap={handleBackToMap} progressStage={caseProgressStage(screen.moduleId, screen.stage)} />
             <FeedbackCard
               feedback={task.feedback}
               wasCorrect={screen.result.wasCorrect}
@@ -203,7 +214,7 @@ export default function App() {
             />
             <div className={styles.feedbackActions}>
               <button type="button" className={styles.secondaryButton} onClick={handleRequestSupport}>
-                Get AI support
+                Explain this another way
               </button>
               {screen.stage === "diagnostic" && (
                 <button type="button" className={styles.primaryButton} onClick={handleContinueFromDiagnostic}>
@@ -231,12 +242,15 @@ export default function App() {
         const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
         const existingTaskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
         return (
-          <AiSupportPanel
-            task={task}
-            collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
-            initialRequested={existingTaskProgress?.supportRequested ?? []}
-            onBack={handleCloseSupport}
-          />
+          <div className={styles.feedbackWrapper}>
+            <CaseNav onBackToMap={handleBackToMap} progressStage={caseProgressStage(screen.moduleId, screen.stage)} />
+            <AiSupportPanel
+              task={task}
+              collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
+              initialRequested={existingTaskProgress?.supportRequested ?? []}
+              onBack={handleCloseSupport}
+            />
+          </div>
         );
       }
 
