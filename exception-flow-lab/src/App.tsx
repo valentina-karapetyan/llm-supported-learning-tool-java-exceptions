@@ -209,6 +209,7 @@ export default function App() {
               code={task.code}
               replayScript={task.replayScript}
               resolvedCode={task.resolvedCode}
+              hierarchy={task.hierarchy}
               answer={task.answer}
               response={screen.result.response}
             />
