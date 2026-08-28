@@ -27,7 +27,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { CatchOrderData } from "../../types/content";
 import { InlineCode } from "../InlineCode";
-import { shuffledIds } from "./shuffle";
+import { shuffledIdsAvoiding } from "./shuffle";
 import styles from "./CatchOrderTask.module.css";
 
 export interface CatchOrderTaskProps {
@@ -38,10 +38,12 @@ export interface CatchOrderTaskProps {
 
 export function CatchOrderTask({ data, onSubmit, disabled }: CatchOrderTaskProps) {
   const clauseMap = useMemo(() => new Map(data.clauses.map((c) => [c.id, c])), [data.clauses]);
-  // Shuffled on mount rather than shown in authored order — content authors
-  // shouldn't have to remember to scramble `clauses` themselves, and a
-  // learner shouldn't be able to infer anything from the initial order.
-  const [order, setOrder] = useState<string[]>(() => shuffledIds(data.clauses));
+  // Shuffled on mount (and reshuffled on any later remount, e.g. a retry)
+  // rather than shown in authored order — content authors shouldn't have to
+  // remember to scramble `clauses` themselves, a learner shouldn't be able
+  // to infer anything from the initial order, and it must never start
+  // already correctly ordered, which would hand over the answer for free.
+  const [order, setOrder] = useState<string[]>(() => shuffledIdsAvoiding(data.clauses, data.correctOrder));
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
