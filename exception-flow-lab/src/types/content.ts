@@ -47,6 +47,13 @@ export interface Feedback {
   // currently supplies this. Falls back to `incorrectExplanation` when
   // omitted, so every other task is unaffected.
   getIncorrectExplanation?: (response: TaskResponseData) => string;
+  // Same idea as getIncorrectExplanation, but for the banner *title* —
+  // Module 3's diagnostic/retry tasks show a different headline depending
+  // on *which* wrong option was picked (e.g. "throwing and handling are
+  // separate steps" vs. "look at the type relationship"), not just a
+  // different explanation under one fixed headline. Falls back to
+  // `incorrectTitle` when omitted.
+  getIncorrectTitle?: (response: TaskResponseData) => string;
 }
 
 // --- Per-task-type answer shapes (concrete, replacing `unknown`) ---
@@ -107,6 +114,10 @@ export interface SingleChoiceOption {
 export interface SingleChoiceData {
   options: SingleChoiceOption[];
   correctOptionId: string;
+  // Overrides SingleChoiceTask's default "Submit answer" label — e.g.
+  // Module 3's diagnostic uses "Check my answer" instead. Optional so every
+  // existing single_choice task (all of Module 2) keeps the default.
+  submitLabel?: string;
 }
 
 export interface HandlerOption {
@@ -180,6 +191,29 @@ export interface HierarchyNode {
   depth: number;
 }
 
+// --- Case 3: call-chain trail + propagation trace (presentational only) ---
+//
+// Neither of these is an answer type — Module 3 answers via single_choice,
+// same as Module 2's transfer task. These just give the learner (trail,
+// pre-answer) and then the Feedback screen (trace, post-answer) a visual of
+// the call chain itself, which per-line code highlighting can't show since
+// propagation crosses method boundaries.
+
+export interface CallChainTrailStep {
+  methodName: string; // e.g. "readProfileFile()"
+  // Marks where the exception originates. Never marks where it's handled —
+  // figuring that out is the whole point of the task.
+  isOrigin?: boolean;
+}
+
+export type PropagationStepStatus = "throws" | "propagates" | "handled" | "uncaught";
+
+export interface PropagationStep {
+  methodName: string; // e.g. "readProfileFile()"
+  detail: string; // e.g. "throws FileNotFoundException", "no handler — propagates"
+  status: PropagationStepStatus;
+}
+
 export interface Task {
   id: string;
   moduleId: string;
@@ -211,6 +245,24 @@ export interface Task {
   // related, and how" context. Optional; most tasks (e.g. every Module 1
   // task) omit it entirely.
   hierarchy?: HierarchyNode[];
+  // Case 3's "start() → loadProfile() → readProfileFile()" visual, shown
+  // above the question (CallChainTrail component). Optional; omitted by
+  // every task outside Module 3.
+  callChainTrail?: CallChainTrailStep[];
+  // Case 3's main Feedback-screen visualization (PropagationReplay
+  // component): an animated vertical trace of the exception moving up the
+  // call chain to wherever it's handled. Takes priority over the
+  // hasReplayScript/resolvedCode fallback in FeedbackCard when present —
+  // see that component's branch order.
+  propagationTrace?: PropagationStep[];
+  // A short, content-authored sentence shown right under the title while
+  // the task is still being answered — orients the learner to the kind of
+  // interaction this is, without explaining the underlying rule. Generic
+  // successor to the module-1/module-2 hardcoded showIntro/
+  // showCatchOrderIntro conditionals in TaskScreen.tsx; new modules
+  // (starting with Module 3) should prefer this field over adding another
+  // hardcoded per-module conditional there.
+  orientationNote?: string;
   isTransferTask?: boolean;
   transferVariantForHighConfidence?: Task; // swapped in for the "flow-adaptive transfer retry", see build spec §2
   // Served on the one allowed transfer retry (spec §11) when *this exact
