@@ -1,13 +1,14 @@
 // src/content/modules.ts
 //
-// Module definitions + a content lookup. Modules 1 and 2 have authored task
-// content; 3 and 4 are listed as locked/"coming soon" placeholders on the
-// Module Map so the screen's shape is right, without inventing task content
-// that hasn't been authored or validated yet.
+// Module definitions + a content lookup. Modules 1, 2 and 3 have authored
+// task content; 4 is still listed as a locked/"coming soon" placeholder on
+// the Module Map so the screen's shape is right, without inventing task
+// content that hasn't been authored or validated yet.
 
 import type { Module, Task } from "../types/content";
 import { module1Tasks } from "./module1-trace-execution";
 import { module2Tasks } from "./module2-catch-order";
+import { module3Tasks } from "./module3-call-chains";
 
 export const module1: Module = {
   id: "module-1",
@@ -27,12 +28,14 @@ export const module2: Module = {
   available: true,
 };
 
-const module3Placeholder: Module = {
+export const module3: Module = {
   id: "module-3",
   title: "Call Chains & Propagation",
   description: "Where does an uncaught exception actually get handled?",
-  taskIds: [],
-  available: false,
+  // m3-transfer-retry is served on the one allowed transfer retry, not
+  // listed statically — see retryVariant.
+  taskIds: ["m3-diagnostic", "m3-transfer"],
+  available: true,
 };
 
 const module4Placeholder: Module = {
@@ -43,9 +46,9 @@ const module4Placeholder: Module = {
   available: false,
 };
 
-export const modules: Module[] = [module1, module2, module3Placeholder, module4Placeholder];
+export const modules: Module[] = [module1, module2, module3, module4Placeholder];
 
-const allTasks: Task[] = [...module1Tasks, ...module2Tasks];
+const allTasks: Task[] = [...module1Tasks, ...module2Tasks, ...module3Tasks];
 
 export function getModuleById(moduleId: string): Module | undefined {
   return modules.find((m) => m.id === moduleId);
