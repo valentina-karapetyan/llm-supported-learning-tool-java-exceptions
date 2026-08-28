@@ -11,10 +11,11 @@
 // when this runs"), so a task can reasonably omit it and just show its
 // plain code instead of an animation that wouldn't mean anything.
 
-import type { Feedback, HierarchyNode, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
+import type { Feedback, HierarchyNode, PropagationStep, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
 import { hasReplayScript } from "../types/content";
 import { CodeBlock } from "./CodeBlock";
 import { ExecutionReplay } from "./ExecutionReplay";
+import { PropagationReplay } from "./PropagationReplay";
 import { ExceptionHierarchy } from "./ExceptionHierarchy";
 import { AnswerDiff } from "./AnswerDiff";
 import { InlineCode } from "./InlineCode";
@@ -32,6 +33,10 @@ export interface FeedbackCardProps {
   // Shown separately below the code, never spliced into it — see
   // Task.hierarchy. Optional; most tasks omit it.
   hierarchy?: HierarchyNode[];
+  // Case 3's main visualization (PropagationReplay) — takes priority over
+  // the replayScript/resolvedCode fallback below when present. See
+  // Task.propagationTrace.
+  propagationTrace?: PropagationStep[];
   answer: TaskAnswerData;
   response: TaskResponseData;
 }
@@ -44,15 +49,17 @@ export function FeedbackCard({
   replayScript,
   resolvedCode,
   hierarchy,
+  propagationTrace,
   answer,
   response,
 }: FeedbackCardProps) {
-  const title = wasCorrect ? feedback.correctTitle : feedback.incorrectTitle;
-  // For a wrong answer, prefer the rule-based explanation computed from what
-  // the learner actually submitted (see Feedback.getIncorrectExplanation) —
-  // still 100% predefined copy, just selected by the learner's specific
-  // mistake instead of always showing the same generic sentence. Falls back
-  // to the static incorrectExplanation for every task that doesn't supply one.
+  // For a wrong answer, prefer the rule-based title/explanation computed
+  // from what the learner actually submitted (see Feedback.getIncorrectTitle
+  // / getIncorrectExplanation) — still 100% predefined copy, just selected
+  // by the learner's specific mistake instead of always showing the same
+  // generic banner. Falls back to the static incorrectTitle/incorrectExplanation
+  // for every task that doesn't supply one.
+  const title = wasCorrect ? feedback.correctTitle : (feedback.getIncorrectTitle?.(response) ?? feedback.incorrectTitle);
   const explanation = wasCorrect
     ? feedback.correctExplanation
     : (feedback.getIncorrectExplanation?.(response) ?? feedback.incorrectExplanation);
@@ -93,6 +100,8 @@ export function FeedbackCard({
 
       {hasReplayScript(replayScript) ? (
         <ExecutionReplay code={code} replayScript={replayScript} />
+      ) : propagationTrace && propagationTrace.length > 0 ? (
+        <PropagationReplay code={resolvedCode ?? code} trace={propagationTrace} />
       ) : (
         <div className={styles.staticCodeSection}>
           <h3 className={styles.staticCodeHeading}>The code</h3>

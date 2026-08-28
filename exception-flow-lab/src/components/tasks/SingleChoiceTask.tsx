@@ -55,7 +55,7 @@ export function SingleChoiceTask({ data, onSubmit, disabled }: SingleChoiceTaskP
           disabled={disabled || !selectedId}
           onClick={() => selectedId && onSubmit(selectedId)}
         >
-          Submit answer
+          {data.submitLabel ?? "Submit answer"}
         </button>
       </div>
     </div>

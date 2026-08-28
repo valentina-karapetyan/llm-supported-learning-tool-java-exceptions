@@ -14,10 +14,12 @@ import type { ConfidenceLevel, Task, TaskResponseData } from "../types/content";
 import type { TaskStage } from "../state/screenReducer";
 import { CodeBlock } from "./CodeBlock";
 import { ExceptionHierarchy } from "./ExceptionHierarchy";
+import { CallChainTrail } from "./CallChainTrail";
 import { TaskRenderer } from "./TaskRenderer";
 import { ConfidenceSelector } from "./ConfidenceSelector";
 import { ArticulationBox } from "./ArticulationBox";
 import { CaseNav, type CaseProgressStage } from "./CaseNav";
+import { InlineCode } from "./InlineCode";
 import styles from "./TaskScreen.module.css";
 
 export interface TaskSubmission {
@@ -42,11 +44,18 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
   const [confidence, setConfidence] = useState<ConfidenceLevel | null>(null);
   const [articulationText, setArticulationText] = useState("");
 
-  // Lightweight Case 1 progress indicator (build spec's Case 1 revision,
-  // §10) — only shown for module-1, which is the only module this trail was
-  // authored for; every other module renders the bar with no trail at all.
+  // Lightweight per-case progress indicator (build spec's Case 1 revision,
+  // §10), opted into by Module 1 and (per the Case 3 build) Module 3 —
+  // Module 2 deliberately kept the plain bar with no trail, so every other
+  // module (including it) renders with no trail at all.
   const progressStage: CaseProgressStage | undefined =
-    task.moduleId === "module-1" ? (stage === "transfer" ? "transfer" : step === "articulate" ? "reflection" : "prediction") : undefined;
+    task.moduleId === "module-1" || task.moduleId === "module-3"
+      ? stage === "transfer"
+        ? "transfer"
+        : step === "articulate"
+          ? "reflection"
+          : "prediction"
+      : undefined;
 
   // Framing sentence for the prediction step — says what the learner is
   // looking at ("code runs once, predict the events, order them") without
@@ -95,8 +104,13 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
           The code below needs catch clauses for related exception types. Arrange them into an order that results in valid Java code.
         </p>
       )}
+      {/* Generic orientation slot for any module (see Task.orientationNote) —
+          new modules should prefer authoring this over adding another
+          hardcoded showXIntro conditional like the two above. */}
+      {task.orientationNote && step === "answering" && <p className={styles.intro}>{task.orientationNote}</p>}
       <CodeBlock code={task.code} />
       {task.hierarchy && <ExceptionHierarchy nodes={task.hierarchy} />}
+      {task.callChainTrail && <CallChainTrail steps={task.callChainTrail} />}
 
       {/* The task question ("Drag the events...") only makes sense while the
           task itself is still on screen — once the learner has submitted an
@@ -104,7 +118,9 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
           stale and would misleadingly suggest the task is still active. */}
       {step === "answering" && (
         <>
-          <p className={styles.question}>{task.question}</p>
+          <p className={styles.question}>
+            <InlineCode text={task.question} />
+          </p>
           <TaskRenderer task={task} onSubmit={handleAnswerSubmit} />
         </>
       )}
