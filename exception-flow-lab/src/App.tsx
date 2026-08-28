@@ -23,11 +23,12 @@ import { ConceptJournal } from "./components/ConceptJournal";
 import { CaseNav, type CaseProgressStage } from "./components/CaseNav";
 import styles from "./App.module.css";
 
-// Lightweight Case 1 progress indicator (build spec's Case 1 revision,
-// §10) — only authored/shown for module-1; every other module just gets the
-// plain "← Case files" link with no trail.
+// Lightweight per-case progress indicator (build spec's Case 1 revision,
+// §10), opted into by Module 1 and (per the Case 3 build) Module 3; Module 2
+// deliberately kept its plain "← Case files" link with no trail, so it's
+// not included here.
 function caseProgressStage(moduleId: string, stage: TaskStage): CaseProgressStage | undefined {
-  if (moduleId !== "module-1") return undefined;
+  if (moduleId !== "module-1" && moduleId !== "module-3") return undefined;
   return stage === "transfer" ? "transfer" : "feedback";
 }
 
@@ -210,6 +211,7 @@ export default function App() {
               replayScript={task.replayScript}
               resolvedCode={task.resolvedCode}
               hierarchy={task.hierarchy}
+              propagationTrace={task.propagationTrace}
               answer={task.answer}
               response={screen.result.response}
             />
