@@ -1,0 +1,122 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heading {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.replayButton {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-radius: var(--radius-control);
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.replayButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.replayButton:not(:disabled):hover {
+  background: var(--color-bg);
+}
+
+.trace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--space-2);
+}
+
+.traceItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.arrow {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.arrowVisible {
+  opacity: 1;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.stepVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stepMethod {
+  font-family: var(--font-code);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.stepDetail {
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.detailThrows {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.detailPropagates {
+  color: var(--color-text-muted);
+}
+
+.detailHandled {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.detailUncaught {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step,
+  .arrow {
+    transition: none;
+  }
+}
