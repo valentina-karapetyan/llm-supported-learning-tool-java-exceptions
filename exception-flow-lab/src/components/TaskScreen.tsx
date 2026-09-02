@@ -73,13 +73,17 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
       )}
       {showCatchOrderIntro && (
         <p className={styles.intro}>
-          The code below needs catch clauses for related exception types. Arrange them into an order that results in valid Java code.
+          <InlineCode text="The code below needs `catch` clauses for related exception types. Arrange them into an order that results in valid Java code." />
         </p>
       )}
       {/* Generic orientation slot for any module (see Task.orientationNote) —
           new modules should prefer authoring this over adding another
           hardcoded showXIntro conditional like the one above. */}
-      {task.orientationNote && <p className={styles.intro}>{task.orientationNote}</p>}
+      {task.orientationNote && (
+        <p className={styles.intro}>
+          <InlineCode text={task.orientationNote} />
+        </p>
+      )}
       <CodeBlock code={task.code} />
       {task.hierarchy && <ExceptionHierarchy nodes={task.hierarchy} />}
       {task.callChainTrail && <CallChainTrail steps={task.callChainTrail} />}

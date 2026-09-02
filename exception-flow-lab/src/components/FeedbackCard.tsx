@@ -69,7 +69,9 @@ export function FeedbackCard({
           {wasCorrect ? "✓" : "↺"}
         </span>
         <div>
-          <h2 className={styles.bannerTitle}>{title}</h2>
+          <h2 className={styles.bannerTitle}>
+            <InlineCode text={title} />
+          </h2>
           <p className={styles.bannerExplanation}>
             <InlineCode text={explanation} />
           </p>

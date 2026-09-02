@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PropagationStep } from "../types/content";
 import { CodeBlock } from "./CodeBlock";
+import { InlineCode } from "./InlineCode";
 import styles from "./PropagationReplay.module.css";
 
 export interface PropagationReplayProps {
@@ -105,7 +106,9 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
               )}
               <div className={[styles.step, visible ? styles.stepVisible : ""].join(" ")}>
                 <code className={styles.stepMethod}>{step.methodName}</code>
-                <span className={[styles.stepDetail, STATUS_CLASS[step.status]].join(" ")}>{step.detail}</span>
+                <span className={[styles.stepDetail, STATUS_CLASS[step.status]].join(" ")}>
+                  <InlineCode text={step.detail} />
+                </span>
               </div>
             </div>
           );
