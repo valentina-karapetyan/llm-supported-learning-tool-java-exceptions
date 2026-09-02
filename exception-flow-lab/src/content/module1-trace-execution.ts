@@ -82,7 +82,8 @@ export const diagnosticTask: Task = {
         System.out.println("error");
     }
 }`,
-  question: "Drag the events into the order they actually occur.",
+  question:
+    "Build the execution trace. Select the events that occur, in the order they happen. Events you do not select are treated as skipped.",
   answer: {
     type: "execution_trace",
     data: {
@@ -187,7 +188,8 @@ export const transferTaskBaseline: Task = {
         System.out.println("save failed");
     }
 }`,
-  question: "Drag the events into the order they actually occur.",
+  question:
+    "Build the execution trace. Select the events that occur, in the order they happen. Events you do not select are treated as skipped.",
   answer: {
     type: "execution_trace",
     data: {
@@ -293,7 +295,8 @@ export const transferTaskStretch: Task = {
         System.out.println("out of stock");
     }
 }`,
-  question: "Drag the events into the order they actually occur.",
+  question:
+    "Build the execution trace. Select the events that occur, in the order they happen. Events you do not select are treated as skipped.",
   answer: {
     type: "execution_trace",
     data: {
