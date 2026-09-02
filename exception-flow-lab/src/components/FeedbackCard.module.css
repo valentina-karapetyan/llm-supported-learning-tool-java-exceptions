@@ -79,25 +79,6 @@
   gap: var(--space-3);
 }
 
-.articulationEcho {
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.articulationLabel {
-  margin: 0 0 var(--space-1);
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.articulationText {
-  margin: 0;
-  font-style: italic;
-  color: var(--color-text);
-}
-
 .ruleLabel {
   margin: 0;
   font-size: 0.8rem;

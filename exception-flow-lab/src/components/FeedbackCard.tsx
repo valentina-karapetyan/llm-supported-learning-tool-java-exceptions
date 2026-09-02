@@ -1,8 +1,8 @@
 // src/components/FeedbackCard.tsx
 //
-// Screen D (Feedback). Shows correctness, the learner's own articulation
-// next to the key rule, and the ExecutionReplay visualizer directly under
-// the key rule card, per the build spec.
+// Screen D (Feedback). Shows correctness, the key rule, and the
+// ExecutionReplay visualizer directly under the key rule card, per the
+// build spec.
 //
 // ExecutionReplay only renders when a task actually has a replayScript.
 // Module 1's tasks are runtime control-flow traces, so they all have one —
@@ -24,7 +24,6 @@ import styles from "./FeedbackCard.module.css";
 export interface FeedbackCardProps {
   feedback: Feedback;
   wasCorrect: boolean;
-  articulationText: string;
   code: string;
   replayScript?: ReplayStep[];
   // Hand-authored "solved" code, shown instead of the plain (still-blank)
@@ -44,7 +43,6 @@ export interface FeedbackCardProps {
 export function FeedbackCard({
   feedback,
   wasCorrect,
-  articulationText,
   code,
   replayScript,
   resolvedCode,
@@ -86,12 +84,6 @@ export function FeedbackCard({
       )}
 
       <div className={styles.ruleCard}>
-        {articulationText.trim() && (
-          <div className={styles.articulationEcho}>
-            <p className={styles.articulationLabel}>Your reflection — never graded, just for you:</p>
-            <p className={styles.articulationText}>“{articulationText.trim()}”</p>
-          </div>
-        )}
         <p className={styles.ruleLabel}>Key rule</p>
         <p className={styles.ruleText}>
           <InlineCode text={feedback.keyRule} />

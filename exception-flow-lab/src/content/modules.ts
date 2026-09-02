@@ -14,8 +14,8 @@ export const module1: Module = {
   id: "module-1",
   title: "Trace the Execution",
   description: "What happens after an exception is thrown?",
-  // m1-transfer-stretch is swapped in at runtime for high-confidence learners,
-  // not listed statically — see transferVariantForHighConfidence.
+  // m1-transfer-stretch is served on the one allowed transfer retry, not
+  // listed statically — see retryVariant.
   taskIds: ["m1-diagnostic", "m1-transfer"],
   available: true,
 };
@@ -63,51 +63,25 @@ export function getDiagnosticTask(module: Module): Task | undefined {
   return getTaskById(module.taskIds[0]);
 }
 
-/**
- * Resolves the transfer task to serve for a module, applying the
- * flow-adaptive swap: if the diagnostic was answered correctly with "high"
- * confidence, serve the more interesting variant instead of the baseline.
- */
-export function getTransferTask(module: Module, diagnosticHighConfidenceCorrect: boolean): Task | undefined {
-  const baseline = getTaskById(module.taskIds[1]);
-  if (!baseline) return undefined;
-  if (diagnosticHighConfidenceCorrect && baseline.transferVariantForHighConfidence) {
-    return baseline.transferVariantForHighConfidence;
-  }
-  return baseline;
+/** The transfer task is always taskIds[1] — a module's one baseline
+ * transfer task. (Module 1's harder "stretch" variant is no longer swapped
+ * in up front based on confidence; it's served only as the comparable
+ * retry case — see getComparableRetryTask below.) */
+export function getTransferTask(module: Module): Task | undefined {
+  return getTaskById(module.taskIds[1]);
 }
 
 /**
- * The "comparable version" served on the one allowed transfer retry (spec
- * §11): whichever transfer-task variant (baseline ↔ transferVariantForHighConfidence)
- * the learner has *not* just seen, rather than requiring a third authored
- * task. Generalized off `justAttempted.moduleId` — same pattern as
- * `getTransferTask` above — so it works for any module as soon as that
- * module's baseline task gets a `transferVariantForHighConfidence` wired
- * up, with no per-module edit needed here.
+ * The task served on the one allowed transfer retry (spec §11), after the
+ * baseline transfer task was answered incorrectly — whatever `retryVariant`
+ * that task authored, so the retry tests the same rule through a
+ * differently-shaped (or at least fresh) question instead of literally
+ * repeating itself.
  *
- * Modules with neither a `retryVariant` nor a `transferVariantForHighConfidence`
- * authored just return undefined here, and the caller's fallback re-serves
- * the same task on retry. Not a bug — a module that hasn't gotten that
- * optional refinement.
+ * Modules that haven't authored a `retryVariant` just return undefined
+ * here, and the caller's fallback re-serves the same task on retry. Not a
+ * bug — a module that hasn't gotten that optional refinement.
  */
 export function getComparableRetryTask(justAttempted: Task): Task | undefined {
-  // A task-specific retry variant (spec §11 — Case 2's "Try again" case)
-  // takes priority when authored: it exists specifically to differ from the
-  // baseline on a wrong answer, independent of the high-confidence swap
-  // below, so it applies regardless of *why* this is a retry.
-  if (justAttempted.retryVariant) return justAttempted.retryVariant;
-
-  const module = getModuleById(justAttempted.moduleId);
-  if (!module) return undefined;
-  const baseline = getTaskById(module.taskIds[1]);
-  if (!baseline) return undefined;
-
-  if (justAttempted.id === baseline.id) {
-    return baseline.transferVariantForHighConfidence;
-  }
-  if (baseline.transferVariantForHighConfidence?.id === justAttempted.id) {
-    return baseline;
-  }
-  return undefined;
+  return justAttempted.retryVariant;
 }

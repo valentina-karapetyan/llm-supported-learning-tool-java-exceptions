@@ -5,8 +5,6 @@
 // shapes, since a TaskRenderer needs to know exactly what to expect per
 // type instead of working against `unknown`.
 
-export type ConfidenceLevel = "low" | "medium" | "high";
-
 export type TaskType =
   | "execution_trace"
   | "statement_selection"
@@ -108,7 +106,7 @@ export interface SingleChoiceOption {
 // type. Distinct from HandlerSelectionData below: that shape's component
 // reveals a rationale per option immediately on selection (built for a
 // different, not-yet-authored flow), which would leak correctness before
-// the confidence step. Use this whenever a task just needs "pick one of N
+// the Feedback screen. Use this whenever a task just needs "pick one of N
 // options, then see feedback the normal way" — e.g. Case 2's "does this
 // code compile?" transfer task.
 export interface SingleChoiceData {
@@ -226,7 +224,6 @@ export interface Task {
   answer: TaskAnswerData; // discriminated union
   feedback: Feedback;
   supportContent: Record<SupportType, LlmSupportResponse>;
-  articulationPrompt: string; // e.g. "Why do you think `second()` never runs?"
   // Drives ExecutionReplay, authored by hand per task. Optional and omitted
   // entirely for tasks that aren't runtime control-flow traces (e.g. a
   // catch_order task tests a static/compile-time rule — there's nothing to
@@ -264,14 +261,10 @@ export interface Task {
   // hardcoded per-module conditional there.
   orientationNote?: string;
   isTransferTask?: boolean;
-  transferVariantForHighConfidence?: Task; // swapped in for the "flow-adaptive transfer retry", see build spec §2
   // Served on the one allowed transfer retry (spec §11) when *this exact
   // task* was just answered incorrectly — lets the retry test the same rule
   // through a differently-shaped question instead of literally repeating
-  // itself. Distinct from transferVariantForHighConfidence above: that field
-  // is keyed off a *correct, high-confidence first attempt* (a trigger this
-  // module may not use); this one only ever appears after a wrong answer.
-  // See getComparableRetryTask in content/modules.ts for how the two combine.
+  // itself. See getComparableRetryTask in content/modules.ts.
   retryVariant?: Task;
 }
 

@@ -6,26 +6,22 @@
 // diagnostic, TransferTaskFlow for transfer attempts), so this component
 // itself doesn't need to know about stage/attempt at all.
 //
-// Order matters here per the build spec: answer → confidence → (optional)
-// self-articulation → only then does the parent get told to show feedback.
+// Flow is TASK → FEEDBACK → TRANSFER (per the latest supervisor revision):
+// submitting an answer here goes straight to the parent's Feedback screen —
+// no confidence step, no self-articulation step in between anymore.
 
-import { useState } from "react";
-import type { ConfidenceLevel, Task, TaskResponseData } from "../types/content";
+import type { Task, TaskResponseData } from "../types/content";
 import type { TaskStage } from "../state/screenReducer";
 import { CodeBlock } from "./CodeBlock";
 import { ExceptionHierarchy } from "./ExceptionHierarchy";
 import { CallChainTrail } from "./CallChainTrail";
 import { TaskRenderer } from "./TaskRenderer";
-import { ConfidenceSelector } from "./ConfidenceSelector";
-import { ArticulationBox } from "./ArticulationBox";
 import { CaseNav, type CaseProgressStage } from "./CaseNav";
 import { InlineCode } from "./InlineCode";
 import styles from "./TaskScreen.module.css";
 
 export interface TaskSubmission {
   response: TaskResponseData;
-  confidence: ConfidenceLevel;
-  articulationText: string;
 }
 
 export interface TaskScreenProps {
@@ -36,34 +32,14 @@ export interface TaskScreenProps {
   eyebrow?: React.ReactNode;
 }
 
-type Step = "answering" | "confidence" | "articulate";
-
 export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: TaskScreenProps) {
-  const [step, setStep] = useState<Step>("answering");
-  const [response, setResponse] = useState<TaskResponseData | null>(null);
-  const [confidence, setConfidence] = useState<ConfidenceLevel | null>(null);
-  const [articulationText, setArticulationText] = useState("");
-
   // Lightweight per-case progress indicator (build spec's Case 1 revision,
-  // §10), opted into by Module 1 and (per the Case 3 build) Module 3 —
-  // Module 2 deliberately kept the plain bar with no trail, so every other
-  // module (including it) renders with no trail at all.
+  // §10, since simplified to TASK → FEEDBACK → TRANSFER), opted into by
+  // Module 1 and (per the Case 3 build) Module 3 — Module 2 deliberately
+  // kept the plain bar with no trail, so every other module (including it)
+  // renders with no trail at all.
   const progressStage: CaseProgressStage | undefined =
-    task.moduleId === "module-1" || task.moduleId === "module-3"
-      ? stage === "transfer"
-        ? "transfer"
-        : step === "articulate"
-          ? "reflection"
-          : "prediction"
-      : undefined;
-
-  // Framing sentence for the prediction step — says what the learner is
-  // looking at ("code runs once, predict the events, order them") without
-  // explaining the control-flow rule itself, which would give the answer
-  // away. Same reasoning as the trail above: authored for module-1's
-  // execution_trace tasks specifically, so it's gated the same way, and it
-  // only makes sense while the task is still the thing on screen.
-  const showIntro = task.moduleId === "module-1" && step === "answering";
+    task.moduleId === "module-1" || task.moduleId === "module-3" ? (stage === "transfer" ? "transfer" : "task") : undefined;
 
   // Case 2's own orientation sentence (build spec's Case 2 revision) —
   // orients the learner to "this needs reordering" without explaining the
@@ -71,21 +47,17 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
   // catch_order tasks specifically (the reordering interaction) rather than
   // every module-2 task, since the transfer tasks ask a different kind of
   // question and get their framing from `task.question` instead.
-  const showCatchOrderIntro = task.moduleId === "module-2" && task.answer.type === "catch_order" && step === "answering";
+  const showCatchOrderIntro = task.moduleId === "module-2" && task.answer.type === "catch_order";
 
-  function handleAnswerSubmit(r: TaskResponseData) {
-    setResponse(r);
-    setStep("confidence");
-  }
+  // Short, generic framing sentence for Module 1's execution-trace tasks —
+  // says what the learner is looking at ("code runs once, figure out which
+  // events occur") without explaining the control-flow rule itself, which
+  // would give the answer away. Distinct from `task.question` below: that's
+  // the operational instruction for the trace-builder widget itself.
+  const showIntro = task.moduleId === "module-1";
 
-  function handleConfidenceNext() {
-    if (!confidence) return;
-    setStep("articulate");
-  }
-
-  function handleSeeFeedback() {
-    if (!response || !confidence) return;
-    onSubmit({ response, confidence, articulationText });
+  function handleAnswerSubmit(response: TaskResponseData) {
+    onSubmit({ response });
   }
 
   return (
@@ -106,50 +78,16 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
       )}
       {/* Generic orientation slot for any module (see Task.orientationNote) —
           new modules should prefer authoring this over adding another
-          hardcoded showXIntro conditional like the two above. */}
-      {task.orientationNote && step === "answering" && <p className={styles.intro}>{task.orientationNote}</p>}
+          hardcoded showXIntro conditional like the one above. */}
+      {task.orientationNote && <p className={styles.intro}>{task.orientationNote}</p>}
       <CodeBlock code={task.code} />
       {task.hierarchy && <ExceptionHierarchy nodes={task.hierarchy} />}
       {task.callChainTrail && <CallChainTrail steps={task.callChainTrail} />}
 
-      {/* The task question ("Drag the events...") only makes sense while the
-          task itself is still on screen — once the learner has submitted an
-          answer and moved on to confidence/reflection, that instruction is
-          stale and would misleadingly suggest the task is still active. */}
-      {step === "answering" && (
-        <>
-          <p className={styles.question}>
-            <InlineCode text={task.question} />
-          </p>
-          <TaskRenderer task={task} onSubmit={handleAnswerSubmit} />
-        </>
-      )}
-
-      {step === "confidence" && (
-        <div className={styles.stepCard}>
-          <ConfidenceSelector
-            value={confidence}
-            onChange={setConfidence}
-            prompt="Before seeing the feedback, how confident are you in your answer?"
-          />
-          <div className={styles.stepActions}>
-            <button type="button" className={styles.primaryButton} disabled={!confidence} onClick={handleConfidenceNext}>
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === "articulate" && (
-        <div className={styles.stepCard}>
-          <ArticulationBox prompt={task.articulationPrompt} value={articulationText} onChange={setArticulationText} />
-          <div className={styles.stepActions}>
-            <button type="button" className={styles.primaryButton} onClick={handleSeeFeedback}>
-              See feedback
-            </button>
-          </div>
-        </div>
-      )}
+      <p className={styles.question}>
+        <InlineCode text={task.question} />
+      </p>
+      <TaskRenderer task={task} onSubmit={handleAnswerSubmit} />
     </div>
   );
 }

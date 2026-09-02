@@ -1,11 +1,11 @@
 // src/components/TransferTaskFlow.tsx
 //
 // Screen F (Transfer Task). Thin wrapper around the generic TaskScreen that
-// adds transfer-specific framing copy — which task variant to serve (the
-// baseline vs. the flow-adaptive high-confidence variant) and the one
-// allowed retry are resolved by the caller (App, via content/modules.ts
-// helpers); this component's own job is just the transfer-specific chrome,
-// so TaskScreen itself stays stage-agnostic.
+// adds transfer-specific framing copy — which task to serve and the one
+// allowed retry (its comparable variant, if one is authored) are resolved
+// by the caller (App, via content/modules.ts helpers); this component's own
+// job is just the transfer-specific chrome, so TaskScreen itself stays
+// stage-agnostic.
 
 import type { Task } from "../types/content";
 import { TaskScreen, type TaskSubmission } from "./TaskScreen";
@@ -15,10 +15,10 @@ export interface TransferTaskFlowProps {
   task: Task;
   attempt: number;
   // Whether this retry actually serves a different task than the previous
-  // attempt (true when the task being retried has a transferVariantForHighConfidence
-  // or retryVariant authored — see getComparableRetryTask; undefined/false
-  // otherwise). Lets the copy stay accurate instead of promising "a
-  // different case" it might not deliver.
+  // attempt (true when the task being retried has a retryVariant authored —
+  // see getComparableRetryTask; undefined/false otherwise). Lets the copy
+  // stay accurate instead of promising "a different case" it might not
+  // deliver.
   isDistinctRetryVariant?: boolean;
   onSubmit: (submission: TaskSubmission) => void;
   onBackToMap: () => void;

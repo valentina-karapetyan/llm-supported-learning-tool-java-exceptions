@@ -20,10 +20,6 @@
 // for the one allowed retry after a wrong answer — a different question
 // shape (which clause handles a given subtype, rather than does-this-compile)
 // over a fresh hierarchy, so a retry never just repeats the same question.
-// It does NOT also set `transferVariantForHighConfidence`: that swap is
-// keyed off a *correct, high-confidence diagnostic*, a separate trigger this
-// module hasn't opted into — see build spec §6.3, "optional, author after
-// baseline is validated."
 
 import type { Task, TaskResponseData } from "../types/content";
 import { SUPPORT_TITLES } from "../types/content";
@@ -139,7 +135,6 @@ export const module2DiagnosticTask: Task = {
 // only ever catches what's still left unmatched by the ones above it.`,
     },
   },
-  articulationPrompt: "In one sentence — what do you think determines which catch clause should come first?",
   // No replayScript — catch order is a static/compile-time rule, so there's
   // nothing here for ExecutionReplay to animate. FeedbackCard shows
   // resolvedCode instead (see hasReplayScript in types/content.ts).
@@ -251,7 +246,6 @@ export const module2TransferTask: Task = {
 // second clause here is unreachable, same problem as before.`,
     },
   },
-  articulationPrompt: "In one sentence — how did you decide whether this code would compile?",
   isTransferTask: true,
 };
 
@@ -353,7 +347,6 @@ export const module2TransferRetryTask: Task = {
 // and runs first, so catch (Exception e) never does.`,
     },
   },
-  articulationPrompt: "In one sentence — how do you decide which catch clause runs when none of them names the exact exception type that was thrown?",
   isTransferTask: true,
 };
 

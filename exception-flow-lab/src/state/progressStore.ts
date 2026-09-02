@@ -1,14 +1,12 @@
 // src/state/progressStore.ts
 
-import type { ConfidenceLevel, SupportType } from "../types/content";
+import type { SupportType } from "../types/content";
 
 export interface TaskProgress {
   taskId: string;
   completed: boolean;
   selectedAnswer: unknown; // the learner's submitted TaskResponseData payload
   wasCorrect: boolean;
-  confidence: ConfidenceLevel;
-  articulationText?: string;
   supportRequested: SupportType[]; // in the order requested, empty if skipped
   // Extension beyond the base spec shape: which attempt this was (1 or 2,
   // since the transfer task allows exactly one retry). Needed to compute

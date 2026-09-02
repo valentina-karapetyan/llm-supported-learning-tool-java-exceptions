@@ -33,7 +33,8 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
 
   // The core misconception this task targets: believing second() and/or
   // "done" still run after first() throws. Whenever either one made it into
-  // "This happens", that is the headline issue regardless of anything else.
+  // the learner's execution trace, that is the headline issue regardless of
+  // anything else.
   if (has("e3") || has("e4")) return DIAGNOSTIC_CORE_MISCONCEPTION_EXPLANATION;
 
   const hasFirst = has("e1");
@@ -145,7 +146,6 @@ export const diagnosticTask: Task = {
 // "order placed" never run — Java jumps straight to the catch clause.`,
     },
   },
-  articulationPrompt: "In one sentence — what happens to `second()` after `first()` throws an exception, and why?",
   replayScript: [
     { lineNumber: 2, state: "active" }, //     try {
     { lineNumber: 3, state: "throws", badgeLabel: "first() THROWS" }, //         first();
@@ -250,7 +250,6 @@ export const transferTaskBaseline: Task = {
 // "checking comment length" already printed by then.`,
     },
   },
-  articulationPrompt: "In one sentence — what happens after `saveToDatabase()` throws its exception here, and why?",
   isTransferTask: true,
   replayScript: [
     { lineNumber: 2, state: "active" }, //     try {
@@ -263,16 +262,17 @@ export const transferTaskBaseline: Task = {
   ],
 };
 
-// --- 3. Transfer task variant for high confidence ---
+// --- 3. Transfer task retry variant ("a trickier case") ---
 //
-// Per the build spec's "flow-adaptive transfer retry": if the diagnostic was
-// answered correctly with "high" confidence, this variant is served instead
-// of the baseline — same rule, one notch harder than the baseline: three
-// statements get skipped after the throw instead of two (a println, a
-// method call, another println), which makes it easier to lose track of
-// exactly how much gets skipped, not just whether something does. The
-// throwing call itself is also less obviously "the risky one" here, since
-// it's not the first thing that could plausibly fail.
+// Served only on the one allowed retry, and only after m1-transfer was
+// answered incorrectly (see retryVariant wiring below) — same rule, one
+// notch harder than the baseline: three statements get skipped after the
+// throw instead of two (a println, a method call, another println), which
+// makes it easier to lose track of exactly how much gets skipped, not just
+// whether something does. The throwing call itself is also less obviously
+// "the risky one" here, since it's not the first thing that could
+// plausibly fail. A comparable case reinforcing the base rule, not a
+// second attempt at the exact same question.
 
 export const transferTaskStretch: Task = {
   id: "m1-transfer-stretch",
@@ -355,7 +355,6 @@ export const transferTaskStretch: Task = {
 // notifyFollowers(), is skipped.`,
     },
   },
-  articulationPrompt: "In one sentence — what happens after `reserveStock()` throws its exception here, and why?",
   isTransferTask: true,
   replayScript: [
     { lineNumber: 2, state: "active" }, //     try {
@@ -369,9 +368,10 @@ export const transferTaskStretch: Task = {
   ],
 };
 
-// Wire the flow-adaptive swap onto the baseline transfer task, so any code
-// that resolves "the transfer task for this module" can find the variant
-// without a separate lookup table.
-transferTaskBaseline.transferVariantForHighConfidence = transferTaskStretch;
+// Wire the retry-only swap (spec §11, same pattern as Modules 2 and 3): a
+// wrong answer on the baseline transfer task serves this comparable case on
+// the one allowed retry, instead of literally repeating the same question.
+// See getComparableRetryTask in content/modules.ts.
+transferTaskBaseline.retryVariant = transferTaskStretch;
 
 export const module1Tasks: Task[] = [diagnosticTask, transferTaskBaseline, transferTaskStretch];
