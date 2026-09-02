@@ -24,7 +24,7 @@ import { SUPPORT_TITLES } from "../types/content";
 //   e4 = "done" is printed               (distractor — never happens)
 //   e5 = matching catch clause runs      (correct — happens)
 const DIAGNOSTIC_CORE_MISCONCEPTION_EXPLANATION =
-  'When `first()` throws an exception, Java does not continue with the remaining statements in the same `try` block. `second()` and the `"done"` statement are skipped, and control transfers to the matching catch clause.';
+  'When `first()` throws an exception, Java does not continue with the remaining statements in the same `try` block. `second()` and the `"done"` statement are skipped, and control transfers to the matching `catch` clause.';
 
 function diagnosticIncorrectExplanation(response: TaskResponseData): string {
   if (response.type !== "execution_trace") return DIAGNOSTIC_CORE_MISCONCEPTION_EXPLANATION;
@@ -44,13 +44,13 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
   // Every correct event was left out — the sequence is empty (or contains
   // only cards that were already ruled out above).
   if (!hasFirst && !hasThrow && !hasCatch) {
-    return "You left every event that actually happens out of the sequence. `first()` starting — and then throwing — always happens first, and Java always transfers control to the matching catch clause right after. Neither of those is optional.";
+    return "You left every event that actually happens out of the sequence. `first()` starting — and then throwing — always happens first, and Java always transfers control to the matching `catch` clause right after. Neither of those is optional.";
   }
 
   const missing: string[] = [];
   if (!hasFirst) missing.push("`first()` starting");
   if (!hasThrow) missing.push("the exception being thrown inside `first()`");
-  if (!hasCatch) missing.push("the matching catch clause running");
+  if (!hasCatch) missing.push("the matching `catch` clause running");
   if (missing.length > 0) {
     const list = missing.length === 1 ? missing[0] : `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
     const verb = missing.length === 1 ? "is" : "are";
@@ -59,7 +59,7 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
 
   // All three correct events are present and nothing incorrect was added —
   // the only way left to be wrong is the order.
-  return "You have the right three events, just not in the order Java actually runs them: `first()` starts, then the exception is thrown inside it, and only then does the matching catch clause run. Compare the positions below to see where yours differs.";
+  return "You have the right three events, just not in the order Java actually runs them: `first()` starts, then the exception is thrown inside it, and only then does the matching `catch` clause run. Compare the positions below to see where yours differs.";
 }
 
 // --- 1. Diagnostic task ---
@@ -72,7 +72,7 @@ export const diagnosticTask: Task = {
   learningObjective:
     "Understand that a thrown exception skips the remaining statements in the same try block.",
   misconception:
-    "Assuming execution continues with later statements in the same try block after an exception is thrown.",
+    "Assuming execution continues with later statements in the same `try` block after an exception is thrown.",
   code: `void start() {
     try {
         first(); // throws SomeException during this call
@@ -89,10 +89,10 @@ export const diagnosticTask: Task = {
     data: {
       cards: [
         { id: "e1", label: "`first()` starts" },
-        { id: "e2", label: "`first()` throws SomeException" },
+        { id: "e2", label: "`first()` throws `SomeException`" },
         { id: "e3", label: "`second()` starts" },
         { id: "e4", label: '"done" is printed' },
-        { id: "e5", label: "The matching catch clause runs" },
+        { id: "e5", label: "The matching `catch` clause runs" },
       ],
       // second() and "done" never happen — the correct sequence has only 3 events
       correctOrder: ["e1", "e2", "e5"],
@@ -101,7 +101,7 @@ export const diagnosticTask: Task = {
   feedback: {
     correctTitle: "Correct — you traced the exceptional control flow.",
     correctExplanation:
-      "Once `first()` throws the exception, Java skips the remaining statements in the `try` block and executes the matching catch clause directly.",
+      "Once `first()` throws the exception, Java skips the remaining statements in the `try` block and executes the matching `catch` clause directly.",
     incorrectTitle: "Not quite — follow the control flow.",
     incorrectExplanation: DIAGNOSTIC_CORE_MISCONCEPTION_EXPLANATION,
     // Reacts to the learner's actual submitted sequence instead of always
@@ -109,7 +109,7 @@ export const diagnosticTask: Task = {
     // above. `incorrectExplanation` above stays as the fallback/default.
     getIncorrectExplanation: diagnosticIncorrectExplanation,
     keyRule:
-      "Once an exception interrupts execution inside a try block, the remaining statements in that block are skipped and control transfers to a matching catch clause.",
+      "Once an exception interrupts execution inside a `try` block, the remaining statements in that block are skipped and control transfers to a matching `catch` clause.",
   },
   supportContent: {
     hint: {
@@ -122,14 +122,14 @@ export const diagnosticTask: Task = {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. first() runs and throws SomeException.\n2. Java immediately stops executing the try block — it does not finish first()'s remaining code or move on to second().\n3. Java looks for a catch clause matching SomeException.\n4. The catch (SomeException e) block runs and prints \"error\".",
-      keyRule: "An exception interrupts the remaining statements in the current try block.",
+        "1. `first()` runs and throws `SomeException`.\n2. Java immediately stops executing the `try` block — it does not finish `first()`'s remaining code or move on to `second()`.\n3. Java looks for a `catch` clause matching `SomeException`.\n4. The `catch (SomeException e)` block runs and prints \"error\".",
+      keyRule: "An exception interrupts the remaining statements in the current `try` block.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
       title: SUPPORT_TITLES.simpler_explanation,
       content:
-        'Think of the try block as a checklist. If something goes wrong on one item, Java doesn\'t keep ticking off the rest of the list — it jumps straight to the "if something goes wrong" plan (the catch clause).',
+        'Think of the `try` block as a checklist. If something goes wrong on one item, Java doesn\'t keep ticking off the rest of the list — it jumps straight to the "if something goes wrong" plan (the `catch` clause).',
     },
     similar_example: {
       supportType: "similar_example",
@@ -177,7 +177,7 @@ export const transferTaskBaseline: Task = {
   title: "Trace the Execution — Transfer",
   learningObjective: "Apply the same rule to a new scenario where something succeeds before the failure.",
   misconception:
-    "Assuming execution continues with later statements in the same try block after an exception is thrown.",
+    "Assuming execution continues with later statements in the same `try` block after an exception is thrown.",
   code: `void submitForm() {
     try {
         System.out.println("validating form");
@@ -195,10 +195,10 @@ export const transferTaskBaseline: Task = {
     data: {
       cards: [
         { id: "t1", label: '"validating form" is printed' },
-        { id: "t2", label: "`saveToDatabase()` throws DatabaseException" },
+        { id: "t2", label: "`saveToDatabase()` throws `DatabaseException`" },
         { id: "t3", label: '"form saved" is printed' },
         { id: "t4", label: "`sendConfirmationEmail()` runs" },
-        { id: "t5", label: "The matching catch clause runs" },
+        { id: "t5", label: "The matching `catch` clause runs" },
       ],
       // "validating form" DOES print — it runs before the failure. "form
       // saved" and sendConfirmationEmail() are both skipped, since they
@@ -209,12 +209,12 @@ export const transferTaskBaseline: Task = {
   feedback: {
     correctTitle: "Correct — same rule, a new shape.",
     correctExplanation:
-      '"validating form" prints fine — the failure happens one line later, inside saveToDatabase(). Once it throws, "form saved" and sendConfirmationEmail() never run; control goes straight to the catch clause.',
+      '"validating form" prints fine — the failure happens one line later, inside `saveToDatabase()`. Once it throws, "form saved" and `sendConfirmationEmail()` never run; control goes straight to the `catch` clause.',
     incorrectTitle: "Check exactly where the exception happens this time.",
     incorrectExplanation:
-      '"validating form" does print — that line runs before anything goes wrong. But saveToDatabase() throws right after it, so "form saved" and sendConfirmationEmail() are both skipped, and control moves straight to the catch clause.',
+      '"validating form" does print — that line runs before anything goes wrong. But `saveToDatabase()` throws right after it, so "form saved" and `sendConfirmationEmail()` are both skipped, and control moves straight to the `catch` clause.',
     keyRule:
-      "An exception interrupts the remaining statements in the current try block and transfers control to a matching catch clause — everything before the failing line still runs normally.",
+      "An exception interrupts the remaining statements in the current `try` block and transfers control to a matching `catch` clause — everything before the failing line still runs normally.",
   },
   supportContent: {
     hint: {
@@ -227,8 +227,8 @@ export const transferTaskBaseline: Task = {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        '1. "validating form" prints — nothing has gone wrong yet.\n2. saveToDatabase() runs and throws DatabaseException.\n3. Java abandons the rest of the try block immediately: "form saved" never prints, and sendConfirmationEmail() never runs.\n4. The catch (DatabaseException e) block runs and prints "save failed".',
-      keyRule: "Everything before the failing line still runs; everything after it in the same try block does not.",
+        '1. "validating form" prints — nothing has gone wrong yet.\n2. `saveToDatabase()` runs and throws `DatabaseException`.\n3. Java abandons the rest of the `try` block immediately: "form saved" never prints, and `sendConfirmationEmail()` never runs.\n4. The `catch (DatabaseException e)` block runs and prints "save failed".',
+      keyRule: "Everything before the failing line still runs; everything after it in the same `try` block does not.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
@@ -283,7 +283,7 @@ export const transferTaskStretch: Task = {
   title: "Trace the Execution — A Trickier Case",
   learningObjective: "Apply the same rule when the failing call is less obviously the risky one.",
   misconception:
-    "Assuming execution continues with later statements in the same try block after an exception is thrown.",
+    "Assuming execution continues with later statements in the same `try` block after an exception is thrown.",
   code: `void processOrder() {
     try {
         System.out.println("checking stock");
@@ -302,10 +302,10 @@ export const transferTaskStretch: Task = {
     data: {
       cards: [
         { id: "s1", label: '"checking stock" is printed' },
-        { id: "s2", label: "`reserveStock()` throws StockException" },
+        { id: "s2", label: "`reserveStock()` throws `StockException`" },
         { id: "s3", label: '"stock reserved" is printed' },
         { id: "s4", label: "`emailReceipt()` runs" },
-        { id: "s5", label: "The matching catch clause runs" },
+        { id: "s5", label: "The matching `catch` clause runs" },
       ],
       correctOrder: ["s1", "s2", "s5"],
     },
@@ -313,26 +313,26 @@ export const transferTaskStretch: Task = {
   feedback: {
     correctTitle: "Correct — you caught the less obvious case.",
     correctExplanation:
-      "The first println runs fine — the failure is one call later, inside reserveStock(). Everything after that point in the try block, including emailReceipt(), is skipped.",
+      "The first println runs fine — the failure is one call later, inside `reserveStock()`. Everything after that point in the `try` block, including `emailReceipt()`, is skipped.",
     incorrectTitle: "Look again at where exactly the exception happens.",
     incorrectExplanation:
-      '"checking stock" does print — that line runs before the exception. But once reserveStock() throws, everything after it in the try block is skipped, including "stock reserved" and emailReceipt().',
+      '"checking stock" does print — that line runs before the exception. But once `reserveStock()` throws, everything after it in the `try` block is skipped, including "stock reserved" and `emailReceipt()`.',
     keyRule:
-      "An exception interrupts the remaining statements in the current try block and transfers control to a matching catch clause — everything before the failing line still runs normally.",
+      "An exception interrupts the remaining statements in the current `try` block and transfers control to a matching `catch` clause — everything before the failing line still runs normally.",
   },
   supportContent: {
     hint: {
       supportType: "hint",
       title: SUPPORT_TITLES.hint,
       content:
-        "Not every line in the try block is equally risky — find the exact line that throws, then think about what comes only before it.",
+        "Not every line in the `try` block is equally risky — find the exact line that throws, then think about what comes only before it.",
     },
     step_by_step: {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        '1. "checking stock" prints — this happens before anything risky.\n2. reserveStock() runs and throws StockException.\n3. Java abandons the rest of the try block: "stock reserved" and emailReceipt() never happen.\n4. catch (StockException e) runs and prints "out of stock".',
-      keyRule: "Everything before the failing line still runs; everything after it in the same try block does not.",
+        '1. "checking stock" prints — this happens before anything risky.\n2. `reserveStock()` runs and throws `StockException`.\n3. Java abandons the rest of the `try` block: "stock reserved" and `emailReceipt()` never happen.\n4. `catch (StockException e)` runs and prints "out of stock".',
+      keyRule: "Everything before the failing line still runs; everything after it in the same `try` block does not.",
     },
     simpler_explanation: {
       supportType: "simpler_explanation",

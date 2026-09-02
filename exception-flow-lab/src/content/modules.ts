@@ -23,7 +23,7 @@ export const module1: Module = {
 export const module2: Module = {
   id: "module-2",
   title: "Catch Order & Specificity",
-  description: "Which catch clause actually runs when several could match?",
+  description: "Which `catch` clause actually runs when several could match?",
   taskIds: ["m2-diagnostic", "m2-transfer"],
   available: true,
 };
