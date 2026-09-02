@@ -1,0 +1,12 @@
+/* The one shared pill style for inline code spans — same formula already
+   used by the dedicated display components (CallChainTrail's .method,
+   ExceptionHierarchy's .type): a faint violet-tinted background derived
+   from --color-primary, so code reads as code at a glance instead of just
+   switching font. font-family itself still comes from the global `code`
+   rule in tokens.css — this only adds the visual "pill". */
+.code {
+  background: rgba(43, 36, 112, 0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
