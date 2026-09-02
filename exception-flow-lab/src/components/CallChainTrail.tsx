@@ -17,7 +17,7 @@ export interface CallChainTrailProps {
 export function CallChainTrail({ steps }: CallChainTrailProps) {
   return (
     <div className={styles.wrapper}>
-      <p className={styles.label}>Call chain</p>
+      <p className={styles.label}>Call direction</p>
       <ol className={styles.trail}>
         {steps.map((step, index) => (
           <li key={`${step.methodName}-${index}`} className={styles.step}>

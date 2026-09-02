@@ -81,7 +81,7 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <h3 className={styles.heading}>Watch it propagate</h3>
+        <h3 className={styles.heading}>Exception propagation</h3>
         {!reducedMotion && (
           <button
             type="button"
