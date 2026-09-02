@@ -26,15 +26,7 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
     case "execution_trace": {
       if (response.type !== "execution_trace") return null;
       const labelOf = (id: string) => answer.data.cards.find((c) => c.id === id)?.label ?? id;
-      const doesntHappenIds = answer.data.cards.map((c) => c.id).filter((id) => !answer.data.correctOrder.includes(id));
-      return (
-        <ExecutionTraceDiff
-          correctOrder={answer.data.correctOrder}
-          doesntHappenIds={doesntHappenIds}
-          yourSequence={response.sequence}
-          labelOf={labelOf}
-        />
-      );
+      return <ExecutionTraceDiff correctOrder={answer.data.correctOrder} yourSequence={response.sequence} labelOf={labelOf} />;
     }
 
     case "catch_order": {
@@ -132,21 +124,19 @@ function LabeledList({ title, ids, labelOf, matchAt }: LabeledListProps) {
   );
 }
 
-// Dedicated to execution_trace: shows the two reference lists (what
-// actually happens, in order, and what doesn't) side by side, then the
-// learner's own submitted sequence marked up against the correct one, then
-// calls out exactly what was off — events that shouldn't be in the
-// sequence, events missing from it, or (if the set was right) just the
-// order. Never shows "(nothing)" for the learner's sequence unless they
-// truly submitted zero events as happening.
+// Dedicated to execution_trace: shows the correct execution trace next to
+// the learner's own submitted trace (marked up ✓/✗ position by position),
+// then calls out exactly what was off — events incorrectly included (in
+// the learner's trace but not the correct one), events incorrectly omitted
+// (in the correct trace but missing from the learner's), or — if the set of
+// events was right — just the order. Never shows "(nothing)" for the
+// learner's trace unless they truly selected zero events.
 function ExecutionTraceDiff({
   correctOrder,
-  doesntHappenIds,
   yourSequence,
   labelOf,
 }: {
   correctOrder: string[];
-  doesntHappenIds: string[];
   yourSequence: string[];
   labelOf: (id: string) => string;
 }) {
@@ -158,39 +148,38 @@ function ExecutionTraceDiff({
   return (
     <div className={styles.wrapper}>
       <div className={styles.columns}>
-        <LabeledList title="Correct sequence" ids={correctOrder} labelOf={labelOf} />
-        <LabeledList title="Doesn't happen" ids={doesntHappenIds} labelOf={labelOf} />
-      </div>
+        <LabeledList title="Correct execution trace" ids={correctOrder} labelOf={labelOf} />
 
-      <div className={styles.column}>
-        <p className={styles.columnTitle}>Your answer — “This happens, in order”</p>
-        {yourSequence.length === 0 ? (
-          <p className={styles.empty}>(nothing — you didn't mark any event as happening)</p>
-        ) : (
-          <ol className={styles.list}>
-            {yourSequence.map((id, index) => {
-              const isMatch = correctOrder[index] === id;
-              return (
-                <li key={`${id}-${index}`} className={[styles.row, isMatch ? styles.rowMatch : styles.rowMismatch].join(" ")}>
-                  <span className={styles.rowMark}>{isMatch ? "✓" : "✗"}</span>
-                  <span>
-                    <InlineCode text={labelOf(id)} />
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        )}
+        <div className={styles.column}>
+          <p className={styles.columnTitle}>Your execution trace</p>
+          {yourSequence.length === 0 ? (
+            <p className={styles.empty}>(nothing — you didn't select any event)</p>
+          ) : (
+            <ol className={styles.list}>
+              {yourSequence.map((id, index) => {
+                const isMatch = correctOrder[index] === id;
+                return (
+                  <li key={`${id}-${index}`} className={[styles.row, isMatch ? styles.rowMatch : styles.rowMismatch].join(" ")}>
+                    <span className={styles.rowMark}>{isMatch ? "✓" : "✗"}</span>
+                    <span>
+                      <InlineCode text={labelOf(id)} />
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
       </div>
 
       {extra.length > 0 && (
-        <DiffHint hint="You placed these in “This happens” — they don't actually happen:" ids={extra} labelOf={labelOf} />
+        <DiffHint hint="Incorrectly included — you selected these, but they don't actually happen:" ids={extra} labelOf={labelOf} />
       )}
       {missing.length > 0 && (
-        <DiffHint hint="You left these out of “This happens” — they do happen:" ids={missing} labelOf={labelOf} />
+        <DiffHint hint="Incorrectly omitted — you left these out, but they do happen:" ids={missing} labelOf={labelOf} />
       )}
       {rightSetWrongOrder && (
-        <p className={styles.orderHint}>You had the right three events — just not in the right order. Compare the positions above.</p>
+        <p className={styles.orderHint}>You had the right events — just not in the right order. Compare the positions above.</p>
       )}
     </div>
   );
