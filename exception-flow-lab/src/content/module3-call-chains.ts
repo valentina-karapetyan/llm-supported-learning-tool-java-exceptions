@@ -44,12 +44,19 @@ const PROPAGATION_KEY_RULE =
 const FIRST_MATCH_KEY_RULE = "Propagation stops at the first compatible handler encountered on the way back through the call chain.";
 
 // --- 1. Diagnostic task ---
+//
+// Deliberately tests propagation alone: `start()`'s handler names the exact
+// thrown type (`catch (FileNotFoundException e)`, not `catch (IOException e)`),
+// so there's no supertype/subtype matching involved and no exception
+// hierarchy to show — just "does the learner follow the call chain until a
+// handler turns up." Superclass/subclass matching is introduced later, by
+// the transfer task below.
 
 // The full trace, reused as the correct-answer explanation and appended to
 // every wrong-answer branch below, so the complete picture is always on
 // screen regardless of which option the learner picked.
 const DIAGNOSTIC_CORE =
-  "`readProfileFile()` throws `FileNotFoundException`. There is no matching handler there, so the exception propagates back to `loadProfile()`. `loadProfile()` also has no handler, so it continues to `start()`. The `catch (IOException e)` clause matches because `FileNotFoundException` is a subtype of `IOException`, so the exception is handled there.";
+  "`readProfileFile()` throws `FileNotFoundException`. Neither it nor `loadProfile()` has a handler, so the exception propagates up to `start()`, where `catch (FileNotFoundException e)` catches it.";
 
 function diagnosticIncorrectTitle(response: TaskResponseData): string {
   if (response.type !== "single_choice") return "Not quite — trace the propagation again.";
@@ -59,7 +66,7 @@ function diagnosticIncorrectTitle(response: TaskResponseData): string {
     case "m3d-caller":
       return "Not quite — the immediate caller does not automatically handle the exception.";
     case "m3d-uncaught":
-      return "Look at the type relationship.";
+      return "One of these methods does catch it.";
     default:
       return "Not quite — trace the propagation again.";
   }
@@ -69,11 +76,11 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
   if (response.type !== "single_choice") return DIAGNOSTIC_CORE;
   switch (response.selectedOptionId) {
     case "m3d-here":
-      return `\`readProfileFile()\` does create and throw the \`FileNotFoundException\` — but throwing an exception and handling one are separate steps. This method has no \`catch\` clause of its own, so execution doesn't stop here. ${DIAGNOSTIC_CORE}`;
+      return `\`readProfileFile()\` does throw it — but throwing and handling are separate steps, and this method has no \`catch\` clause of its own. ${DIAGNOSTIC_CORE}`;
     case "m3d-caller":
-      return `\`loadProfile()\` is the immediate caller of \`readProfileFile()\`, but being the immediate caller doesn't automatically mean it handles the exception — \`loadProfile()\` has no \`catch\` clause either, so it keeps propagating upward, past it. ${DIAGNOSTIC_CORE}`;
+      return `\`loadProfile()\` is the immediate caller, but it has no \`catch\` clause either, so it isn't automatically the handler. ${DIAGNOSTIC_CORE}`;
     case "m3d-uncaught":
-      return `\`FileNotFoundException\` is a subtype of \`IOException\` — a \`catch\` clause doesn't need to name the exact thrown type, a compatible supertype is enough to handle it. So \`catch (IOException e)\` in \`start()\` does match. ${DIAGNOSTIC_CORE}`;
+      return `It doesn't stay uncaught — \`start()\` does have a matching \`catch (FileNotFoundException e)\`, reached once the exception finishes propagating up. ${DIAGNOSTIC_CORE}`;
     default:
       return DIAGNOSTIC_CORE;
   }
@@ -84,30 +91,24 @@ export const module3DiagnosticTask: Task = {
   moduleId: "module-3",
   caseLabel: "Case file: The Escaping Exception",
   title: "Call Chains & Propagation",
-  learningObjective:
-    "Understand that an uncaught exception propagates up the call chain to its caller, continuing until a compatible handler is found — and that a handler doesn't need to name the exact thrown type, just a compatible supertype.",
+  learningObjective: "Understand that an uncaught exception propagates up the call chain to its caller, continuing until a matching handler is found.",
   misconception:
-    "Assuming an exception is handled in the method where it's thrown, or that the immediate caller must contain the handler, rather than tracing propagation up through the full call chain until a compatible `catch` clause is found.",
+    "Assuming an exception is handled in the method where it's thrown, or that the immediate caller must contain the handler, rather than tracing propagation up through the full call chain until a matching `catch` clause is found.",
   code: `void start() {
     try {
         loadProfile();
-    } catch (IOException e) {
+    } catch (FileNotFoundException e) {
         System.out.println("could not load profile");
     }
 }
 
-void loadProfile() throws IOException {
+void loadProfile() throws FileNotFoundException {
     readProfileFile();
 }
 
 void readProfileFile() throws FileNotFoundException {
     throw new FileNotFoundException();
 }`,
-  hierarchy: [
-    { label: "Exception", depth: 0 },
-    { label: "IOException", depth: 1 },
-    { label: "FileNotFoundException", depth: 2 },
-  ],
   callChainTrail: [{ methodName: "start()" }, { methodName: "loadProfile()" }, { methodName: "readProfileFile()", isOrigin: true }],
   orientationNote:
     "An exception does not always get handled in the method where it occurs. Follow the calls below and decide where this exception is eventually handled.",
@@ -119,8 +120,8 @@ void readProfileFile() throws FileNotFoundException {
       options: [
         { id: "m3d-here", label: "Inside `readProfileFile()`, because that is where it is thrown" },
         { id: "m3d-caller", label: "Inside `loadProfile()`, because it is the immediate caller" },
-        { id: "m3d-start", label: "In `start()` by `catch (IOException e)`" },
-        { id: "m3d-uncaught", label: "It remains uncaught because there is no `catch (FileNotFoundException e)`" },
+        { id: "m3d-start", label: "In `start()` by `catch (FileNotFoundException e)`" },
+        { id: "m3d-uncaught", label: "It remains uncaught — none of these methods actually catch it" },
       ],
       correctOptionId: "m3d-start",
     },
@@ -145,7 +146,7 @@ void readProfileFile() throws FileNotFoundException {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. `readProfileFile()` throws `FileNotFoundException` — but it has no `catch` clause, so it can't handle it there.\n2. Java looks at whoever called `readProfileFile()`: that's `loadProfile()`. It has no `catch` clause either.\n3. Java looks at whoever called `loadProfile()`: that's `start()`. It has `catch (IOException e)`.\n4. `FileNotFoundException` is a subtype of `IOException`, so this `catch` clause matches — the exception is handled in `start()`.",
+        "1. `readProfileFile()` throws `FileNotFoundException` — but it has no `catch` clause, so it can't handle it there.\n2. Java looks at whoever called `readProfileFile()`: that's `loadProfile()`. It has no `catch` clause either.\n3. Java looks at whoever called `loadProfile()`: that's `start()`. It has `catch (FileNotFoundException e)`.\n4. The type matches exactly, so this `catch` clause handles it — the exception is caught in `start()`.",
       keyRule: PROPAGATION_KEY_RULE,
     },
     simpler_explanation: {
@@ -160,26 +161,26 @@ void readProfileFile() throws FileNotFoundException {
       content: `void run() {
     try {
         fetchData();
-    } catch (Exception e) {
+    } catch (ParsingException e) {
         System.out.println("fetch failed");
     }
 }
 
-void fetchData() {
+void fetchData() throws ParsingException {
     parseResponse();
 }
 
 void parseResponse() throws ParsingException {
     throw new ParsingException();
 }
-// ParsingException extends Exception — parseResponse() and fetchData()
-// both lack a handler, so it propagates all the way up to run().`,
+// parseResponse() and fetchData() both lack a handler, so the exception
+// propagates all the way up to run(), where it's finally caught.`,
     },
   },
   propagationTrace: [
     { methodName: "readProfileFile()", detail: "throws `FileNotFoundException`", status: "throws" },
     { methodName: "loadProfile()", detail: "no handler — propagates", status: "propagates" },
-    { methodName: "start()", detail: "`catch (IOException e)` matches — handled here", status: "handled" },
+    { methodName: "start()", detail: "`catch (FileNotFoundException e)` matches — handled here", status: "handled" },
   ],
 };
 
@@ -188,10 +189,20 @@ void parseResponse() throws ParsingException {
 // Deliberately not "propagate until something catches it" again — here two
 // handlers are plausible, so the task tests whether the learner understands
 // that propagation stops at the *first* compatible one, rather than
-// searching outward for the globally most specific match.
+// searching outward for the globally most specific match. This is the one
+// task in the module that still involves superclass/subclass matching (see
+// `hierarchy` below) — introduced here, once propagation alone is already
+// understood from the diagnostic task.
+//
+// `process()` must declare `throws FileNotFoundException`: its own try
+// block catches every checked exception `readFile()` can throw, so nothing
+// escapes it at runtime — but `start()`'s `catch (FileNotFoundException e)`
+// can only compile if `process()` is declared able to produce one. This is
+// exactly the point being taught: the declaration says a `FileNotFoundException`
+// could reach `start()`, but `process()`'s own handler always claims it first.
 
 const TRANSFER_CORE =
-  "The exception moves back through the active call chain. `process()` is reached before `start()`, and its `catch (IOException e)` already matches `FileNotFoundException`. Once that handler catches the exception, propagation stops, so the outer `FileNotFoundException` handler never receives it.";
+  "`readFile()` throws `FileNotFoundException`. `process()` is reached first, and its `catch (IOException e)` already matches — propagation stops there, so `start()`'s `catch (FileNotFoundException e)` never runs.";
 
 function transferIncorrectTitle(response: TaskResponseData): string {
   if (response.type !== "single_choice") return "Check which handler is reached first.";
@@ -209,11 +220,11 @@ function transferIncorrectExplanation(response: TaskResponseData): string {
   if (response.type !== "single_choice") return TRANSFER_CORE;
   switch (response.selectedOptionId) {
     case "m3t-outer":
-      return `\`catch (FileNotFoundException e)\` in \`start()\` does name the exact type — but Java doesn't keep searching the whole call chain for the most specific handler anywhere in the program. ${TRANSFER_CORE}`;
+      return `\`start()\`'s clause names the exact type — but Java doesn't keep searching the chain for the most specific handler anywhere in the program. ${TRANSFER_CORE}`;
     case "m3t-both":
-      return `Only one \`catch\` clause ever runs for a single thrown exception — once a handler catches it, the exception is considered handled and execution moves on from there, it doesn't also trigger another \`catch\` block further out. ${TRANSFER_CORE}`;
+      return `Only one \`catch\` clause ever runs for a single thrown exception. ${TRANSFER_CORE}`;
     case "m3t-neither":
-      return `This exception is caught, not left to propagate all the way out — \`process()\`'s \`catch (IOException e)\` matches it, since \`FileNotFoundException\` is a subtype of \`IOException\`. ${TRANSFER_CORE}`;
+      return `This exception is caught, not left to propagate all the way out. ${TRANSFER_CORE}`;
     default:
       return TRANSFER_CORE;
   }
@@ -236,7 +247,7 @@ export const module3TransferTask: Task = {
     }
 }
 
-void process() {
+void process() throws FileNotFoundException {
     try {
         readFile();
     } catch (IOException e) {
@@ -269,8 +280,7 @@ void readFile() throws FileNotFoundException {
   },
   feedback: {
     correctTitle: "Correct — the nearest matching handler wins.",
-    correctExplanation:
-      "`readFile()` throws `FileNotFoundException` and has no handler of its own, so it propagates to its caller, `process()`. `process()` has `catch (IOException e)` — and since `FileNotFoundException` is a subtype of `IOException`, that clause already matches. Propagation stops there: the exception never reaches `start()`, so its `catch (FileNotFoundException e)` never runs.",
+    correctExplanation: TRANSFER_CORE,
     incorrectTitle: "Check which handler is reached first.",
     incorrectExplanation: TRANSFER_CORE,
     getIncorrectTitle: transferIncorrectTitle,
@@ -339,10 +349,15 @@ void step2() {
 // deliberately back to the simpler "propagate until something catches it"
 // shape (one handler, nothing in between) rather than the transfer task's
 // two-plausible-handlers trap — a comparable case reinforcing the base
-// rule, not a second attempt at the exact same trap.
+// rule, not a second attempt at the exact same trap. Never a mandatory
+// stage on its own — module3Tasks below doesn't list it, and modules.ts's
+// taskIds only ever resolve to m3-diagnostic/m3-transfer.
+//
+// `save()` must declare `throws ValidationException`: it calls `validate()`,
+// which throws that checked exception, without catching it itself.
 
 const RETRY_CORE =
-  "`validate()` throws `ValidationException`. There is no matching handler there, so the exception propagates back to `save()`. `save()` also has no handler, so it continues to `run()`. The `catch (ApplicationException e)` clause matches because `ValidationException` is a subtype of `ApplicationException`, so the exception is handled there.";
+  "`validate()` throws `ValidationException`. Neither it nor `save()` has a handler, so it propagates to `run()`, where `catch (ApplicationException e)` matches and handles it.";
 
 function retryIncorrectTitle(response: TaskResponseData): string {
   if (response.type !== "single_choice") return "Not quite — trace the propagation again.";
@@ -362,11 +377,11 @@ function retryIncorrectExplanation(response: TaskResponseData): string {
   if (response.type !== "single_choice") return RETRY_CORE;
   switch (response.selectedOptionId) {
     case "m3r-here":
-      return `\`validate()\` does create and throw the \`ValidationException\` — but throwing an exception and handling one are separate steps. This method has no \`catch\` clause of its own, so execution doesn't stop here. ${RETRY_CORE}`;
+      return `\`validate()\` does throw it — but throwing and handling are separate steps, and this method has no \`catch\` clause of its own. ${RETRY_CORE}`;
     case "m3r-caller":
-      return `\`save()\` is the immediate caller of \`validate()\`, but being the immediate caller doesn't automatically mean it handles the exception — \`save()\` has no \`catch\` clause either, so it keeps propagating upward, past it. ${RETRY_CORE}`;
+      return `\`save()\` is the immediate caller, but it has no \`catch\` clause either, so it isn't automatically the handler. ${RETRY_CORE}`;
     case "m3r-uncaught":
-      return `\`ValidationException\` is a subtype of \`ApplicationException\` — a \`catch\` clause doesn't need to name the exact thrown type, a compatible supertype is enough to handle it. So \`catch (ApplicationException e)\` in \`run()\` does match. ${RETRY_CORE}`;
+      return `\`ValidationException\` is a subtype of \`ApplicationException\`, so \`catch (ApplicationException e)\` in \`run()\` does match. ${RETRY_CORE}`;
     default:
       return RETRY_CORE;
   }
@@ -388,7 +403,7 @@ export const module3TransferRetryTask: Task = {
     }
 }
 
-void save() {
+void save() throws ValidationException {
     validate();
 }
 
@@ -453,7 +468,7 @@ void validate() throws ValidationException {
     }
 }
 
-void loadSettings() {
+void loadSettings() throws MissingKeyException {
     parseSettingsFile();
 }
 
