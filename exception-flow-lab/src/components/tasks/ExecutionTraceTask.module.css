@@ -4,31 +4,13 @@
   gap: var(--space-4);
 }
 
-.zones {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.destinationZones {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
-
-@media (max-width: 720px) {
-  .destinationZones {
-    grid-template-columns: 1fr;
-  }
-}
-
-.zone {
+.section {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-.zoneTitle {
+.sectionTitle {
   margin: 0;
   font-size: 0.85rem;
   text-transform: uppercase;
@@ -36,34 +18,67 @@
   color: var(--color-text-muted);
 }
 
-.zoneBody {
-  min-height: 120px;
-  border: 2px dashed var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-2);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  background: var(--color-surface);
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.zoneBodyOver {
-  border-color: var(--color-accent);
-  background: rgba(15, 155, 142, 0.06);
-}
-
 .emptyLabel {
-  margin: var(--space-2);
+  margin: 0;
   color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.eventButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.eventButton:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.eventButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.addMarker {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.traceList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .card {
-  /* wrap, not nowrap: a sequence card can carry up to five small buttons
-     (reorder, back to sort, doesn't-happen) — on a narrower destination
-     column that row wraps onto its own line under the label instead of
-     overflowing the card. */
+  /* wrap, not nowrap: a trace card carries up to three small buttons
+     (reorder ×2, remove) — on a narrow viewport that row wraps onto its own
+     line under the label instead of overflowing the card. */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -72,26 +87,6 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
   padding: var(--space-2);
-}
-
-.dragHandle {
-  flex: 0 0 auto;
-  border: none;
-  background: transparent;
-  color: var(--color-text-muted);
-  cursor: grab;
-  font-size: 1rem;
-  padding: 2px 4px;
-  border-radius: 4px;
-}
-
-.dragHandle:hover:not(:disabled) {
-  background: var(--color-border);
-}
-
-.dragHandle:disabled {
-  cursor: default;
-  opacity: 0.4;
 }
 
 .cardLabel {
@@ -146,15 +141,6 @@
   text-align: center;
 }
 
-.dragPreview {
-  background: var(--color-surface);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-control);
-  padding: var(--space-2);
-  box-shadow: var(--shadow-card);
-  font-size: 0.9rem;
-}
-
 .actions {
   display: flex;
   gap: var(--space-2);
@@ -178,18 +164,4 @@
 .primaryButton:disabled {
   opacity: 0.4;
   cursor: default;
-}
-
-.secondaryButton {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  padding: var(--space-2) var(--space-4);
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-.secondaryButton:hover:not(:disabled) {
-  border-color: var(--color-primary);
 }
