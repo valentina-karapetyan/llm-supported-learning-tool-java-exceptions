@@ -62,8 +62,6 @@ export default function App() {
       completed: true,
       selectedAnswer: submission.response,
       wasCorrect,
-      confidence: submission.confidence,
-      articulationText: submission.articulationText,
       supportRequested: [],
       attempt: screen.attempt,
     };
@@ -73,8 +71,6 @@ export default function App() {
       type: "SUBMIT_TASK",
       result: {
         wasCorrect,
-        confidence: submission.confidence,
-        articulationText: submission.articulationText,
         attempt: screen.attempt,
         response: submission.response,
       },
@@ -101,8 +97,7 @@ export default function App() {
     if ((screen.screen !== "feedback" && screen.screen !== "ai_support") || screen.stage !== "diagnostic") return;
     const module = getModuleById(screen.moduleId);
     if (!module) return;
-    const diagnosticHighConfidenceCorrect = screen.result.wasCorrect && screen.result.confidence === "high";
-    const transferTask = getTransferTask(module, diagnosticHighConfidenceCorrect);
+    const transferTask = getTransferTask(module);
     if (!transferTask) {
       // Defensive fallback — shouldn't happen once a module's transfer task is authored.
       dispatch({ type: "COMPLETE_MODULE" });
@@ -206,7 +201,6 @@ export default function App() {
             <FeedbackCard
               feedback={task.feedback}
               wasCorrect={screen.result.wasCorrect}
-              articulationText={screen.result.articulationText}
               code={task.code}
               replayScript={task.replayScript}
               resolvedCode={task.resolvedCode}

@@ -176,7 +176,6 @@ void parseResponse() throws ParsingException {
 // both lack a handler, so it propagates all the way up to run().`,
     },
   },
-  articulationPrompt: "In one sentence — what do you think determines where an exception is eventually handled?",
   propagationTrace: [
     { methodName: "readProfileFile()", detail: "throws FileNotFoundException", status: "throws" },
     { methodName: "loadProfile()", detail: "no handler — propagates", status: "propagates" },
@@ -325,7 +324,6 @@ void step2() {
 // there, even though run()'s catch names the exact type.`,
     },
   },
-  articulationPrompt: "In one sentence — how did you decide which handler actually receives the exception?",
   propagationTrace: [
     { methodName: "readFile()", detail: "throws FileNotFoundException", status: "throws" },
     { methodName: "process()", detail: "catch (IOException e) matches — handled here", status: "handled" },
@@ -466,7 +464,6 @@ void parseSettingsFile() throws MissingKeyException {
 // handler, so it propagates all the way up to main().`,
     },
   },
-  articulationPrompt: "In one sentence — how do you trace where an exception like this ends up being handled?",
   propagationTrace: [
     { methodName: "validate()", detail: "throws ValidationException", status: "throws" },
     { methodName: "save()", detail: "no handler — propagates", status: "propagates" },

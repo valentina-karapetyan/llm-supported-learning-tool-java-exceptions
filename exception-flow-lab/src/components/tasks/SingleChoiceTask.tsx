@@ -3,8 +3,8 @@
 // Plain single-select: pick one option, submit. Deliberately no inline
 // reveal (unlike HandlerSelectionTask, which shows a rationale per option
 // immediately on selection) — correctness is decided and shown only on the
-// Feedback screen, so the app-wide order (answer → confidence → reflection
-// → feedback) holds for this task type too.
+// Feedback screen, so the app-wide order (answer → feedback) holds for this
+// task type too.
 
 import { useState } from "react";
 import type { SingleChoiceData } from "../../types/content";

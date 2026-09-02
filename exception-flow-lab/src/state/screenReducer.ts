@@ -6,14 +6,12 @@
 // → (optional retry, once) → module completion. Concept Journal is reachable
 // as a side screen, not part of that linear flow.
 
-import type { ConfidenceLevel, TaskResponseData } from "../types/content";
+import type { TaskResponseData } from "../types/content";
 
 export type TaskStage = "diagnostic" | "transfer";
 
 export interface SubmissionResult {
   wasCorrect: boolean;
-  confidence: ConfidenceLevel;
-  articulationText: string;
   attempt: number; // 1, or 2 on the one allowed transfer retry
   // The learner's raw structured answer, carried through to the Feedback
   // screen so it can show *what* was mis-sorted/mis-selected — not used for

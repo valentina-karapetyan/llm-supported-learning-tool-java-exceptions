@@ -1,20 +1,19 @@
 // src/components/CaseNav.tsx
 //
 // Small, subtle wayfinding bar shown at the top of every case's screens: a
-// "back to Case files" link plus (optionally) a lightweight 4-step trail —
-// Prediction → Reflection → Feedback → Transfer — showing roughly where
-// the learner is in that one case file's flow. Opted into by Cases 1 and 3;
-// see caseProgressStage in App.tsx/TaskScreen.tsx for which modules pass a
-// stage. Deliberately not a wizard: no clickable steps, no internal state,
-// just a read-out of whatever stage the caller says the learner is on.
+// "back to Case files" link plus (optionally) a lightweight 3-step trail —
+// Task → Feedback → Transfer — showing roughly where the learner is in that
+// one case file's flow. Opted into by Cases 1 and 3; see caseProgressStage
+// in App.tsx/TaskScreen.tsx for which modules pass a stage. Deliberately not
+// a wizard: no clickable steps, no internal state, just a read-out of
+// whatever stage the caller says the learner is on.
 
 import styles from "./CaseNav.module.css";
 
-export type CaseProgressStage = "prediction" | "reflection" | "feedback" | "transfer";
+export type CaseProgressStage = "task" | "feedback" | "transfer";
 
 const STAGES: { key: CaseProgressStage; label: string }[] = [
-  { key: "prediction", label: "Prediction" },
-  { key: "reflection", label: "Reflection" },
+  { key: "task", label: "Task" },
   { key: "feedback", label: "Feedback" },
   { key: "transfer", label: "Transfer" },
 ];
