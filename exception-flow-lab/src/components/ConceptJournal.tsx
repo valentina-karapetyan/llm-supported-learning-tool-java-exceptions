@@ -6,6 +6,7 @@
 import type { Module } from "../types/content";
 import type { AppProgress } from "../state/progressStore";
 import { getTaskById } from "../content/modules";
+import { InlineCode } from "./InlineCode";
 import styles from "./ConceptJournal.module.css";
 
 export interface ConceptJournalProps {
@@ -53,7 +54,9 @@ export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProp
                     <p className={styles.blockLabel}>Misconceptions addressed</p>
                     <ul className={styles.list}>
                       {misconceptions.map((m) => (
-                        <li key={m}>{m}</li>
+                        <li key={m}>
+                          <InlineCode text={m} />
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -61,7 +64,9 @@ export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProp
                     <p className={styles.blockLabel}>Key rules</p>
                     <ul className={styles.list}>
                       {keyRules.map((r) => (
-                        <li key={r}>{r}</li>
+                        <li key={r}>
+                          <InlineCode text={r} />
+                        </li>
                       ))}
                     </ul>
                   </div>

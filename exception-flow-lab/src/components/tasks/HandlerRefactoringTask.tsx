@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import type { HandlerRefactoringData } from "../../types/content";
+import { InlineCode } from "../InlineCode";
 import styles from "./SelectionTask.module.css";
 
 export interface HandlerRefactoringTaskProps {
@@ -36,7 +37,9 @@ export function HandlerRefactoringTask({ data, onSubmit, disabled }: HandlerRefa
                   {isSelected ? "●" : ""}
                 </span>
                 <span className={styles.optionBody}>
-                  <span className={styles.optionLabel}>{option.label}</span>
+                  <span className={styles.optionLabel}>
+                    <InlineCode text={option.label} />
+                  </span>
                   <pre className={styles.optionCode}>
                     <code>{option.code}</code>
                   </pre>

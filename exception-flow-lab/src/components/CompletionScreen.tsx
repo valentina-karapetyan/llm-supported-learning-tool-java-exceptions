@@ -6,6 +6,7 @@
 import type { Module } from "../types/content";
 import type { ModuleProgress } from "../state/progressStore";
 import { getTaskById } from "../content/modules";
+import { InlineCode } from "./InlineCode";
 import styles from "./CompletionScreen.module.css";
 
 export interface CompletionScreenProps {
@@ -33,7 +34,9 @@ export function CompletionScreen({ module, moduleProgress, onBackToMap, onViewJo
       {keyRules.length > 0 && (
         <ul className={styles.ruleList}>
           {keyRules.map((rule) => (
-            <li key={rule}>{rule}</li>
+            <li key={rule}>
+              <InlineCode text={rule} />
+            </li>
           ))}
         </ul>
       )}
