@@ -1,14 +1,13 @@
 // src/content/modules.ts
 //
-// Module definitions + a content lookup. Modules 1, 2 and 3 have authored
-// task content; 4 is still listed as a locked/"coming soon" placeholder on
-// the Module Map so the screen's shape is right, without inventing task
-// content that hasn't been authored or validated yet.
+// Module definitions + a content lookup. All four modules now have
+// authored task content.
 
 import type { Module, Task } from "../types/content";
 import { module1Tasks } from "./module1-trace-execution";
 import { module2Tasks } from "./module2-catch-order";
 import { module3Tasks } from "./module3-call-chains";
+import { module4Tasks } from "./module4-designing-handlers";
 
 export const module1: Module = {
   id: "module-1",
@@ -38,17 +37,19 @@ export const module3: Module = {
   available: true,
 };
 
-const module4Placeholder: Module = {
+export const module4: Module = {
   id: "module-4",
   title: "Designing Handlers",
   description: "Choosing and refactoring exception-handling strategies.",
-  taskIds: [],
-  available: false,
+  // m4-transfer-retry is served on the one allowed transfer retry, not
+  // listed statically — see retryVariant.
+  taskIds: ["m4-diagnostic", "m4-transfer"],
+  available: true,
 };
 
-export const modules: Module[] = [module1, module2, module3, module4Placeholder];
+export const modules: Module[] = [module1, module2, module3, module4];
 
-const allTasks: Task[] = [...module1Tasks, ...module2Tasks, ...module3Tasks];
+const allTasks: Task[] = [...module1Tasks, ...module2Tasks, ...module3Tasks, ...module4Tasks];
 
 export function getModuleById(moduleId: string): Module | undefined {
   return modules.find((m) => m.id === moduleId);
