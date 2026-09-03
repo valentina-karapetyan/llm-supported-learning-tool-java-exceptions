@@ -31,6 +31,10 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
+  /* Preserves authored line breaks (e.g. Module 4's "Required reactions"
+     bullet list) without affecting single-line questions elsewhere, which
+     contain no newlines to begin with. */
+  white-space: pre-line;
 }
 
 .stepCard {
