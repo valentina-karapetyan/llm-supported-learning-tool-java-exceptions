@@ -28,9 +28,9 @@ export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubm
   const eyebrowText =
     attempt > 1
       ? isDistinctRetryVariant
-        ? "One more try — here's a genuinely different case. Same rule."
-        : "One more try — look at it again. Same rule as before."
-      : "Transfer task — apply the same rule to a new case.";
+        ? "One more try: here's a genuinely different case. Same rule."
+        : "One more try, look at it again. Same rule as before."
+      : "Transfer task: apply the same rule to a new case.";
 
   return (
     <TaskScreen

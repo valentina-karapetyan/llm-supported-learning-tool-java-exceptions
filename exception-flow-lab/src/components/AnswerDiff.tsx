@@ -153,7 +153,7 @@ function ExecutionTraceDiff({
         <div className={styles.column}>
           <p className={styles.columnTitle}>Your execution trace</p>
           {yourSequence.length === 0 ? (
-            <p className={styles.empty}>(nothing — you didn't select any event)</p>
+            <p className={styles.empty}>(nothing, you didn't select any event)</p>
           ) : (
             <ol className={styles.list}>
               {yourSequence.map((id, index) => {
@@ -173,13 +173,13 @@ function ExecutionTraceDiff({
       </div>
 
       {extra.length > 0 && (
-        <DiffHint hint="Incorrectly included — you selected these, but they don't actually happen:" ids={extra} labelOf={labelOf} />
+        <DiffHint hint="Incorrectly included: you selected these, but they don't actually happen:" ids={extra} labelOf={labelOf} />
       )}
       {missing.length > 0 && (
-        <DiffHint hint="Incorrectly omitted — you left these out, but they do happen:" ids={missing} labelOf={labelOf} />
+        <DiffHint hint="Incorrectly omitted: you left these out, but they do happen:" ids={missing} labelOf={labelOf} />
       )}
       {rightSetWrongOrder && (
-        <p className={styles.orderHint}>You had the right events — just not in the right order. Compare the positions above.</p>
+        <p className={styles.orderHint}>You had the right events, just not in the right order. Compare the positions above.</p>
       )}
     </div>
   );
