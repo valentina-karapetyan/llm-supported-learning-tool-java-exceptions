@@ -17,6 +17,10 @@ import { module3Tasks } from "./module3-call-chains";
 import { module4Tasks } from "./module4-designing-handlers";
 import { module5Tasks } from "./module5-mixed-practice";
 
+// Re-exported so App.tsx (and anything else) can pull every content lookup
+// — task, module, and now retrieval question — from this one module.
+export { getRetrievalQuestion } from "./retrievalQuestions";
+
 export const module1: Module = {
   id: "module-1",
   title: "Trace the Execution",
