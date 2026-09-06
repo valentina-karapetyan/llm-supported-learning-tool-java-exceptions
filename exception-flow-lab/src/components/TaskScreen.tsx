@@ -9,6 +9,12 @@
 // Flow is TASK → FEEDBACK → TRANSFER (per the latest supervisor revision):
 // submitting an answer here goes straight to the parent's Feedback screen —
 // no confidence step, no self-articulation step in between anymore.
+//
+// Module 5's mixed cases render through this same component. They pass no
+// `stage` (there is no diagnostic/transfer distinction in that flow) and
+// supply their own `caseTrail` instead — everything else on this screen
+// (case label, title, orientation note, code, hierarchy, question,
+// TaskRenderer) is already content-driven and needed no change.
 
 import type { Task, TaskResponseData } from "../types/content";
 import type { TaskStage } from "../state/screenReducer";
@@ -16,7 +22,7 @@ import { CodeBlock } from "./CodeBlock";
 import { ExceptionHierarchy } from "./ExceptionHierarchy";
 import { CallChainTrail } from "./CallChainTrail";
 import { TaskRenderer } from "./TaskRenderer";
-import { CaseNav, type CaseProgressStage } from "./CaseNav";
+import { CaseNav, type CaseProgressStage, type CaseTrail } from "./CaseNav";
 import { InlineCode } from "./InlineCode";
 import styles from "./TaskScreen.module.css";
 
@@ -26,20 +32,29 @@ export interface TaskSubmission {
 
 export interface TaskScreenProps {
   task: Task;
-  stage: TaskStage;
+  // Omitted by flows that have no diagnostic/transfer distinction (Module 5's
+  // mixed cases), which supply `caseTrail` instead.
+  stage?: TaskStage;
   onSubmit: (submission: TaskSubmission) => void;
   onBackToMap: () => void;
   eyebrow?: React.ReactNode;
+  // Explicit CaseNav trail, overriding the Task → Feedback → Transfer one
+  // derived from `stage` below.
+  caseTrail?: CaseTrail;
 }
 
-export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: TaskScreenProps) {
+export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow, caseTrail }: TaskScreenProps) {
   // Lightweight per-case progress indicator (build spec's Case 1 revision,
   // §10, since simplified to TASK → FEEDBACK → TRANSFER), opted into by
   // Module 1 and (per the Case 3 build) Module 3 — Module 2 deliberately
   // kept the plain bar with no trail, so every other module (including it)
   // renders with no trail at all.
   const progressStage: CaseProgressStage | undefined =
-    task.moduleId === "module-1" || task.moduleId === "module-3" ? (stage === "transfer" ? "transfer" : "task") : undefined;
+    stage && (task.moduleId === "module-1" || task.moduleId === "module-3")
+      ? stage === "transfer"
+        ? "transfer"
+        : "task"
+      : undefined;
 
   // Case 2's own orientation sentence (build spec's Case 2 revision) —
   // orients the learner to "this needs reordering" without explaining the
@@ -62,7 +77,7 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow }: Task
 
   return (
     <div className={styles.wrapper}>
-      <CaseNav onBackToMap={onBackToMap} progressStage={progressStage} />
+      <CaseNav onBackToMap={onBackToMap} progressStage={progressStage} trail={caseTrail} />
       {eyebrow}
       <p className={styles.caseLabel}>{task.caseLabel}</p>
       <h1 className={styles.title}>{task.title}</h1>
