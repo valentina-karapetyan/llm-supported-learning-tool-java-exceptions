@@ -16,6 +16,7 @@ import {
   isMixedPracticeModule,
   getNextMixedCaseTask,
   getMixedCaseTrail,
+  getRetrievalQuestion,
 } from "./content/modules";
 import { screenReducer, initialScreenState, type ScreenState, type TaskStage } from "./state/screenReducer";
 import { loadProgress, recordTaskAttempt, resetProgress, shouldCollapseSupportPanel, type AppProgress, type TaskProgress } from "./state/progressStore";
@@ -27,6 +28,7 @@ import { TaskScreen, type TaskSubmission } from "./components/TaskScreen";
 import { TransferTaskFlow } from "./components/TransferTaskFlow";
 import { FeedbackCard } from "./components/FeedbackCard";
 import { AiSupportPanel } from "./components/AiSupportPanel";
+import { RetrievalPractice } from "./components/RetrievalPractice";
 import { CompletionScreen } from "./components/CompletionScreen";
 import { ConceptJournal } from "./components/ConceptJournal";
 import { CaseNav, type CaseProgressStage } from "./components/CaseNav";
@@ -166,6 +168,15 @@ export default function App() {
     dispatch({ type: "RETRY_TRANSFER", retryTaskId: retryTask.id, isDistinctVariant: Boolean(comparableTask) });
   }
 
+  // Fired from the transfer stage's Feedback screen once the module is
+  // otherwise done (correct, or the one retry used up) — moves on to
+  // Retrieval Practice rather than straight to the completion screen.
+  function handleContinueToRetrieval() {
+    dispatch({ type: "SHOW_RETRIEVAL" });
+  }
+
+  // Fired from the Retrieval Practice screen's "Complete module" / "Complete
+  // learning lab" button.
   function handleCompleteModule() {
     dispatch({ type: "COMPLETE_MODULE" });
   }
@@ -276,8 +287,8 @@ export default function App() {
                 </button>
               )}
               {canFinish && (
-                <button type="button" className={styles.primaryButton} onClick={handleCompleteModule}>
-                  Finish module
+                <button type="button" className={styles.primaryButton} onClick={handleContinueToRetrieval}>
+                  Continue to retrieval practice
                 </button>
               )}
             </div>
@@ -369,6 +380,26 @@ export default function App() {
               collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
               initialRequested={existingTaskProgress?.supportRequested ?? []}
               onBack={handleCloseSupport}
+            />
+          </div>
+        );
+      }
+
+      // Retrieval Practice: one open-recall question, shown for every module
+      // right after its last task and before its completion screen. Reached
+      // from both flows — see SHOW_RETRIEVAL and CONTINUE_MIXED in
+      // screenReducer.ts.
+      case "retrieval_practice": {
+        const module = getModuleById(screen.moduleId);
+        const retrievalQuestion = module && getRetrievalQuestion(module.id);
+        if (!module || !retrievalQuestion) return null;
+        return (
+          <div className={styles.feedbackWrapper}>
+            <CaseNav onBackToMap={handleBackToMap} />
+            <RetrievalPractice
+              retrievalQuestion={retrievalQuestion}
+              completeLabel={isMixedPracticeModule(module) ? "Complete learning lab" : "Complete module"}
+              onComplete={handleCompleteModule}
             />
           </div>
         );
