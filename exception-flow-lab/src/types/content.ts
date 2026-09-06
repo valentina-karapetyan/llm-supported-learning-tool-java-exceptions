@@ -36,7 +36,13 @@ export interface Feedback {
   correctExplanation: string;
   incorrectTitle: string;
   incorrectExplanation: string;
-  keyRule: string;
+  // Optional: the "Key rule" card on the Feedback screen. Modules 1-4 all
+  // author one — each of those tasks teaches a rule for the first time.
+  // Module 5 (mixed practice) deliberately omits it: it introduces no new
+  // theory, so restating a rule card there would turn retrieval practice
+  // back into instruction. FeedbackCard/ConceptJournal/CompletionScreen all
+  // skip the card entirely when it's absent.
+  keyRule?: string;
   // Optional rule-based override for the incorrect-answer explanation,
   // computed from the learner's actual submitted response instead of always
   // showing the same static `incorrectExplanation` string. Still 100%
@@ -212,6 +218,27 @@ export interface PropagationStep {
   status: PropagationStepStatus;
 }
 
+// --- Module 5 (mixed practice) only ---
+//
+// Modules 1-4 run one shape: diagnostic → feedback → transfer → completion,
+// where "which stage am I on" is enough to drive the UI. Module 5 runs
+// CASE 1 → CASE 2 → CASE 3 → COMPLETE instead: a flat sequence of short
+// mixed cases, each answered once and immediately followed by its own
+// feedback, with no confidence step, no reflection step and no retry. These
+// three fields are the only extra information that flow needs, grouped into
+// one optional object rather than three loose optional fields on `Task`.
+export interface MixedCaseMeta {
+  // Groups the tasks belonging to one case under a single step in the
+  // CaseNav trail — Case 3's Part A and Part B share "Case 3", so the trail
+  // reads "Case 1 → Case 2 → Case 3", not "… → Case 3 → Case 3".
+  trailLabel: string;
+  // Feedback-screen button label for continuing out of this case, e.g.
+  // "Continue to Case 2" / "Continue to Part B" / "See the summary".
+  // Authored per task so the copy can be honest about what actually comes
+  // next instead of a generic "Continue".
+  continueLabel: string;
+}
+
 export interface Task {
   id: string;
   moduleId: string;
@@ -230,6 +257,13 @@ export interface Task {
   // "replay"). Use `hasReplayScript(task)` rather than checking
   // `.length > 0` ad hoc at call sites.
   replayScript?: ReplayStep[];
+  // Overrides the callout ExecutionReplay fades in under the code at the
+  // throw -> catch moment. The default ("control jumps straight to the
+  // matching catch clause") describes a jump inside one method, which is
+  // right for Module 1 but understates what happens when the exception
+  // crosses method boundaries first — Module 5's Case 1 names the
+  // propagation instead. Rendered through InlineCode, so `code spans` work.
+  replayCallout?: string;
   // The "solved" version of `code`, authored by hand, shown on the Feedback
   // screen instead of the plain `code` for tasks with no replayScript (a
   // runtime trace already shows the resolution via ExecutionReplay; a static
@@ -260,6 +294,10 @@ export interface Task {
   // (starting with Module 3) should prefer this field over adding another
   // hardcoded per-module conditional there.
   orientationNote?: string;
+  // Set only by Module 5's mixed-practice tasks (see MixedCaseMeta above).
+  // Absent everywhere else, which is also how App.tsx tells a mixed case
+  // apart from a diagnostic/transfer task when rendering its chrome.
+  mixedCase?: MixedCaseMeta;
   isTransferTask?: boolean;
   // Served on the one allowed transfer retry (spec §11) when *this exact
   // task* was just answered incorrectly — lets the retry test the same rule
@@ -289,12 +327,37 @@ export function hasReplayScript(replayScript: ReplayStep[] | undefined): replayS
   return Boolean(replayScript && replayScript.length > 0);
 }
 
+/** How a module's screens are sequenced.
+ *  - "diagnostic_transfer" (default): Modules 1-4's flow — taskIds[0] is the
+ *    diagnostic, taskIds[1] the transfer task, with one allowed retry.
+ *  - "mixed_practice": Module 5's flow — every entry in taskIds is one short
+ *    mixed case, answered once, each immediately followed by its own
+ *    feedback screen, then straight on to the next case. No retry. */
+export type ModuleFlow = "diagnostic_transfer" | "mixed_practice";
+
+/** Hand-authored copy for a module's completion screen, used instead of the
+ *  default "here are the key rules you collected" derivation. Module 5 needs
+ *  this because its tasks deliberately author no `keyRule` (it introduces no
+ *  new theory), so there'd be nothing to derive — and because a consolidation
+ *  module's summary is a written recap, not a list of per-task rules. */
+export interface ModuleCompletionSummary {
+  eyebrow?: string; // overrides the default "Module complete"
+  title: string;
+  lede?: string;
+  points: string[]; // rendered through InlineCode, same as derived key rules
+  primaryActionLabel?: string; // overrides the default "Back to case files"
+}
+
 export interface Module {
   id: string;
   title: string;
   description: string;
-  taskIds: string[]; // first is the diagnostic task, rest are transfer tasks in order
+  // For "diagnostic_transfer": first is the diagnostic task, rest are
+  // transfer tasks in order. For "mixed_practice": every case, in order.
+  taskIds: string[];
   available: boolean; // false for modules whose content hasn't been authored yet
+  flow?: ModuleFlow; // defaults to "diagnostic_transfer" when omitted
+  completion?: ModuleCompletionSummary;
 }
 
 /** Type guard so a component can narrow `answer`/`response` pairs safely. */
