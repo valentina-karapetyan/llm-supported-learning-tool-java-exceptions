@@ -47,7 +47,7 @@ export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProp
               </div>
 
               {misconceptions.length === 0 ? (
-                <p className={styles.emptyState}>Nothing recorded yet — head to the case files to get started.</p>
+                <p className={styles.emptyState}>Nothing recorded yet, head to the case files to get started.</p>
               ) : (
                 <>
                   <div className={styles.block}>
@@ -60,16 +60,21 @@ export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProp
                       ))}
                     </ul>
                   </div>
-                  <div className={styles.block}>
-                    <p className={styles.blockLabel}>Key rules</p>
-                    <ul className={styles.list}>
-                      {keyRules.map((r) => (
-                        <li key={r}>
-                          <InlineCode text={r} />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  {/* Module 5's tasks author no keyRule (it introduces no new
+                      theory), so this block would otherwise render as an
+                      empty list under a heading. */}
+                  {keyRules.length > 0 && (
+                    <div className={styles.block}>
+                      <p className={styles.blockLabel}>Key rules</p>
+                      <ul className={styles.list}>
+                        {keyRules.map((r) => (
+                          <li key={r}>
+                            <InlineCode text={r} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </>
               )}
             </div>
