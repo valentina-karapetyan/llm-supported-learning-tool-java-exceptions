@@ -1,6 +1,6 @@
 // src/components/ModuleMap.tsx
 //
-// Screen B. All four modules currently have authored content; a module
+// Screen B. All five modules currently have authored content; a module
 // with `available: false` would still render as a locked "coming soon"
 // card so the map's shape stays right without inventing unauthored content.
 

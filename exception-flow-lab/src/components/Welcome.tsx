@@ -21,7 +21,7 @@ const HOW_IT_WORKS = [
 export function Welcome({ onStart }: WelcomeProps) {
   return (
     <div className={styles.wrapper}>
-      <p className={styles.meta}>Four case files · self-paced</p>
+      <p className={styles.meta}>Five case files · self-paced</p>
       <h1 className={styles.title}>An exception does not politely wait its turn.</h1>
       <p className={styles.lede}>
         <InlineCode text="Each case file is one thing programmers get wrong about `try`/`catch`. Commit to an answer, then trace the real control flow." />
