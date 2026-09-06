@@ -87,7 +87,7 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, onB
   return (
     <div className={styles.wrapper}>
       <h2 className={styles.heading}>AI support</h2>
-      <p className={styles.subheading}>Four steps, from a light nudge to a worked example — never a grade, never a chat box.</p>
+      <p className={styles.subheading}>Four steps, from a light nudge to a worked example: never a grade, never a chat box.</p>
 
       <div className={styles.buttonRow}>
         {SUPPORT_TYPE_ORDER.map((type, index) => (

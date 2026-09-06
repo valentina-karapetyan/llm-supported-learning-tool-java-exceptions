@@ -38,7 +38,7 @@ const KEY_RULE =
 
 function diagnosticIncorrectExplanation(response: TaskResponseData): string {
   if (response.type !== "catch_order") {
-    return "A `catch` clause doesn't only match its exact exception type — it also matches every subclass of that type. `FileNotFoundException` is a subclass of `IOException`, which is a subclass of `Exception`, so an earlier, broader clause already matches a thrown `FileNotFoundException`. Because the broader `catch` clause already matches that subtype, the later, more specific clause can never be selected — Java treats it as unreachable and rejects the code at compile time.";
+    return "A `catch` clause doesn't only match its exact exception type: it also matches every subclass of that type. `FileNotFoundException` is a subclass of `IOException`, which is a subclass of `Exception`, so an earlier, broader clause already matches a thrown `FileNotFoundException`. Because the broader `catch` clause already matches that subtype, the later, more specific clause can never be selected: Java treats it as unreachable and rejects the code at compile time.";
   }
   const order = response.order;
   const indexOf = (id: string) => order.indexOf(id);
@@ -48,10 +48,10 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
   const ioeBeforeFnf = indexOf("c3") < indexOf("c2");
 
   if (exceptionBeforeFnf || exceptionBeforeIoe) {
-    return "`catch (Exception e)` is the broadest of these three — it's a supertype of both `IOException` and `FileNotFoundException`, so it already matches either one. Because the broader `catch (Exception e)` clause already matches both, whichever narrower clause is listed after it can never be selected — Java treats that clause as unreachable and rejects the code at compile time. `Exception` has to come last.";
+    return "`catch (Exception e)` is the broadest of these three: it's a supertype of both `IOException` and `FileNotFoundException`, so it already matches either one. Because the broader `catch (Exception e)` clause already matches both, whichever narrower clause is listed after it can never be selected: Java treats that clause as unreachable and rejects the code at compile time. `Exception` has to come last.";
   }
   if (ioeBeforeFnf) {
-    return "`catch (IOException e)` is a supertype of `catch (FileNotFoundException e)` — `FileNotFoundException` is one of its subclasses — so listing `IOException` first means it already matches a thrown `FileNotFoundException`. Because the broader `IOException` clause already matches it, the later `FileNotFoundException` clause can never be selected — Java treats it as unreachable and rejects the code at compile time. `FileNotFoundException` has to come before `IOException`.";
+    return "`catch (IOException e)` is a supertype of `catch (FileNotFoundException e)`, since `FileNotFoundException` is one of its subclasses, so listing `IOException` first means it already matches a thrown `FileNotFoundException`. Because the broader `IOException` clause already matches it, the later `FileNotFoundException` clause can never be selected: Java treats it as unreachable and rejects the code at compile time. `FileNotFoundException` has to come before `IOException`.";
   }
   return "Not quite the right order. Check each pair of clauses: whichever type is a subclass of another one here has to be listed before it, or that subclass's own clause becomes unreachable.";
 }
@@ -62,7 +62,7 @@ export const module2DiagnosticTask: Task = {
   caseLabel: "Case file: The Unreachable Catch",
   title: "Catch Order & Specificity",
   learningObjective:
-    "Understand that a catch clause also matches subclasses of its declared type, and that catch clauses are checked in the order they're written — so a broader clause placed before a related, more specific one makes the specific clause unreachable.",
+    "Understand that a catch clause also matches subclasses of its declared type, and that catch clauses are checked in the order they're written, so a broader clause placed before a related, more specific one makes the specific clause unreachable.",
   misconception:
     "Assuming a `catch` clause only matches its exact exception type, so its position relative to a related supertype or subtype doesn't matter.",
   code: `void loadConfig() {
@@ -90,12 +90,12 @@ export const module2DiagnosticTask: Task = {
     },
   },
   feedback: {
-    correctTitle: "Correct — most specific first.",
+    correctTitle: "Correct: most specific first.",
     correctExplanation:
-      "That's a valid order. Java checks `catch` clauses top-to-bottom and runs the first one whose type matches — and a `catch` for a supertype also matches every one of its subclasses. Placing `FileNotFoundException` first means it's checked before its ancestors `IOException` and `Exception`, so every clause here still gets a chance to run.",
-    incorrectTitle: "Not quite — one of these clauses can't be reached.",
+      "That's a valid order. Java checks `catch` clauses top-to-bottom and runs the first one whose type matches, and a `catch` for a supertype also matches every one of its subclasses. Placing `FileNotFoundException` first means it's checked before its ancestors `IOException` and `Exception`, so every clause here still gets a chance to run.",
+    incorrectTitle: "Not quite: one of these clauses can't be reached.",
     incorrectExplanation:
-      "A `catch` clause doesn't only match its exact exception type — it also matches every subclass of that type. `FileNotFoundException` is a subclass of `IOException`, which is a subclass of `Exception`, so placing `IOException` or `Exception` before `FileNotFoundException` means that earlier clause already matches a thrown `FileNotFoundException`. Because the broader `catch` clause already matches that subtype, the later specific clause can never be selected. Java therefore treats it as unreachable and rejects the code at compile time.",
+      "A `catch` clause doesn't only match its exact exception type: it also matches every subclass of that type. `FileNotFoundException` is a subclass of `IOException`, which is a subclass of `Exception`, so placing `IOException` or `Exception` before `FileNotFoundException` means that earlier clause already matches a thrown `FileNotFoundException`. Because the broader `catch` clause already matches that subtype, the later specific clause can never be selected. Java therefore treats it as unreachable and rejects the code at compile time.",
     getIncorrectExplanation: diagnosticIncorrectExplanation,
     keyRule: KEY_RULE,
   },
@@ -104,20 +104,20 @@ export const module2DiagnosticTask: Task = {
       supportType: "hint",
       title: SUPPORT_TITLES.hint,
       content:
-        "A `catch` clause doesn't only match its exact exception type — it also matches every subclass of that type. Which of these three types is a subclass of one of the others in the list?",
+        "A `catch` clause doesn't only match its exact exception type: it also matches every subclass of that type. Which of these three types is a subclass of one of the others in the list?",
     },
     step_by_step: {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. `FileNotFoundException` extends `IOException`, and `IOException` extends `Exception` — a `catch` for any one of these also matches every type below it in that chain.\n2. Java checks `catch` clauses in the order they're written and looks for the first one whose type matches.\n3. If `catch (Exception e)` or `catch (IOException e)` came first, it would already match a thrown `FileNotFoundException` — so the `FileNotFoundException` clause after it could never be selected.\n4. Java treats that clause as unreachable and rejects the code at compile time. So the order has to go narrowest to broadest: `FileNotFoundException`, then `IOException`, then `Exception`.",
+        "1. `FileNotFoundException` extends `IOException`, and `IOException` extends `Exception`: a `catch` for any one of these also matches every type below it in that chain.\n2. Java checks `catch` clauses in the order they're written and looks for the first one whose type matches.\n3. If `catch (Exception e)` or `catch (IOException e)` came first, it would already match a thrown `FileNotFoundException`, so the `FileNotFoundException` clause after it could never be selected.\n4. Java treats that clause as unreachable and rejects the code at compile time. So the order has to go narrowest to broadest: `FileNotFoundException`, then `IOException`, then `Exception`.",
       keyRule: KEY_RULE,
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
       title: SUPPORT_TITLES.simpler_explanation,
       content:
-        'A `catch` clause for a general type also accepts anything more specific than it — like a box labeled "vehicles" that also holds every car and bike put into it. If you check the "vehicles" box first, you\'ll never get to open the "bike" box underneath, because the bike was already claimed. The most specific box has to be checked first.',
+        'A `catch` clause for a general type also accepts anything more specific than it, like a box labeled "vehicles" that also holds every car and bike put into it. If you check the "vehicles" box first, you\'ll never get to open the "bike" box underneath, because the bike was already claimed. The most specific box has to be checked first.',
     },
     similar_example: {
       supportType: "similar_example",
@@ -131,7 +131,7 @@ export const module2DiagnosticTask: Task = {
 } catch (Exception e) {
     System.out.println("something else went wrong");
 }
-// SocketException extends IOException extends Exception — each clause
+// SocketException extends IOException extends Exception: each clause
 // only ever catches what's still left unmatched by the ones above it.`,
     },
   },
@@ -164,7 +164,7 @@ export const module2TransferTask: Task = {
   id: "m2-transfer",
   moduleId: "module-2",
   caseLabel: "Case file: The Ignored Format Error",
-  title: "Catch Order & Specificity — Transfer",
+  title: "Catch Order & Specificity: Transfer",
   learningObjective: "Recognize the same catch-order rule by reading already-written code, not just by arranging clauses.",
   misconception: "Assuming that listing a broader exception type before a related, more specific subtype is harmless as long as both clauses are present.",
   code: `void parseInput() {
@@ -186,30 +186,30 @@ export const module2TransferTask: Task = {
     data: {
       options: [
         { id: "m2t-yes", label: "Yes" },
-        { id: "m2t-no-parse", label: "No — `catch (SAXParseException e)` is unreachable" },
-        { id: "m2t-no-sax", label: "No — `catch (SAXException e)` is unreachable" },
+        { id: "m2t-no-parse", label: "No: `catch (SAXParseException e)` is unreachable" },
+        { id: "m2t-no-sax", label: "No: `catch (SAXException e)` is unreachable" },
       ],
       correctOptionId: "m2t-no-parse",
     },
   },
   feedback: {
-    correctTitle: "Correct — you spotted the unreachable clause.",
+    correctTitle: "Correct: you spotted the unreachable clause.",
     correctExplanation:
-      "`catch (SAXException e)` is listed first, and `SAXException` is the supertype of `SAXParseException` — so it already matches any `SAXParseException` thrown here. Because the broader `SAXException` clause already matches it, `catch (SAXParseException e)` can never be selected — Java treats it as unreachable and rejects the code at compile time.",
+      "`catch (SAXException e)` is listed first, and `SAXException` is the supertype of `SAXParseException`, so it already matches any `SAXParseException` thrown here. Because the broader `SAXException` clause already matches it, `catch (SAXParseException e)` can never be selected: Java treats it as unreachable and rejects the code at compile time.",
     incorrectTitle: "Check which clause comes first.",
     incorrectExplanation:
-      "`catch (SAXException e)` is listed before `catch (SAXParseException e)`. `SAXException` is the supertype of `SAXParseException`, so that first clause already matches any `SAXParseException`. Because the broader clause already matches it, the second, more specific clause can never be selected — Java treats it as unreachable and rejects the code at compile time.",
+      "`catch (SAXException e)` is listed before `catch (SAXParseException e)`. `SAXException` is the supertype of `SAXParseException`, so that first clause already matches any `SAXParseException`. Because the broader clause already matches it, the second, more specific clause can never be selected: Java treats it as unreachable and rejects the code at compile time.",
     getIncorrectExplanation: (response) => {
       if (response.type !== "single_choice") {
-        return "`catch (SAXException e)` is listed before `catch (SAXParseException e)`. `SAXException` is the supertype of `SAXParseException`, so that first clause already matches any `SAXParseException`. The second, more specific clause can never be selected — Java treats it as unreachable and rejects the code at compile time.";
+        return "`catch (SAXException e)` is listed before `catch (SAXParseException e)`. `SAXException` is the supertype of `SAXParseException`, so that first clause already matches any `SAXParseException`. The second, more specific clause can never be selected: Java treats it as unreachable and rejects the code at compile time.";
       }
       if (response.selectedOptionId === "m2t-yes") {
-        return "This code doesn't actually compile. `catch (SAXException e)` comes first, and `SAXException` is the supertype of `SAXParseException` — so it already matches any `SAXParseException` thrown here. Because the broader clause already matches it, `catch (SAXParseException e)` can never be selected — Java treats it as unreachable and rejects the code at compile time.";
+        return "This code doesn't actually compile. `catch (SAXException e)` comes first, and `SAXException` is the supertype of `SAXParseException`, so it already matches any `SAXParseException` thrown here. Because the broader clause already matches it, `catch (SAXParseException e)` can never be selected: Java treats it as unreachable and rejects the code at compile time.";
       }
       if (response.selectedOptionId === "m2t-no-sax") {
-        return "It's `catch (SAXParseException e)` that's unreachable here, not `catch (SAXException e)`. `SAXException` is the supertype, and it's listed first — so it already matches a thrown `SAXParseException`. The clause that can never be selected is the one below it: `catch (SAXParseException e)`.";
+        return "It's `catch (SAXParseException e)` that's unreachable here, not `catch (SAXException e)`. `SAXException` is the supertype, and it's listed first, so it already matches a thrown `SAXParseException`. The clause that can never be selected is the one below it: `catch (SAXParseException e)`.";
       }
-      return "`catch (SAXException e)` is listed before `catch (SAXParseException e)`. `SAXException` is the supertype of `SAXParseException`, so that first clause already matches any `SAXParseException`. The second, more specific clause can never be selected — Java treats it as unreachable and rejects the code at compile time.";
+      return "`catch (SAXException e)` is listed before `catch (SAXParseException e)`. `SAXException` is the supertype of `SAXParseException`, so that first clause already matches any `SAXParseException`. The second, more specific clause can never be selected: Java treats it as unreachable and rejects the code at compile time.";
     },
     keyRule: KEY_RULE,
   },
@@ -217,20 +217,20 @@ export const module2TransferTask: Task = {
     hint: {
       supportType: "hint",
       title: SUPPORT_TITLES.hint,
-      content: "Look at which type is listed first — `SAXException` or `SAXParseException` — and whether one of those types is a supertype of the other.",
+      content: "Look at which type is listed first, `SAXException` or `SAXParseException`, and whether one of those types is a supertype of the other.",
     },
     step_by_step: {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. `SAXParseException` extends `SAXException`, so a `catch (SAXException e)` also matches every `SAXParseException`.\n2. Here, `catch (SAXException e)` is listed first, before `catch (SAXParseException e)`.\n3. Because `catch` clauses are matched by type — including through inheritance — `catch (SAXException e)` already covers every `SAXParseException` too.\n4. That makes the second clause, `catch (SAXParseException e)`, unreachable: the broader clause already matches everything it could ever catch, so Java's compiler rejects the code.",
+        "1. `SAXParseException` extends `SAXException`, so a `catch (SAXException e)` also matches every `SAXParseException`.\n2. Here, `catch (SAXException e)` is listed first, before `catch (SAXParseException e)`.\n3. Because `catch` clauses are matched by type, including through inheritance, `catch (SAXException e)` already covers every `SAXParseException` too.\n4. That makes the second clause, `catch (SAXParseException e)`, unreachable: the broader clause already matches everything it could ever catch, so Java's compiler rejects the code.",
       keyRule: KEY_RULE,
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
       title: SUPPORT_TITLES.simpler_explanation,
       content:
-        "A `catch` clause for a general type also accepts anything more specific than it. Here the general `SAXException` clause is checked first, so it already covers the more specific `SAXParseException` — leaving nothing for the second clause to ever match, which is exactly what Java won't allow.",
+        "A `catch` clause for a general type also accepts anything more specific than it. Here the general `SAXException` clause is checked first, so it already covers the more specific `SAXParseException`, leaving nothing for the second clause to ever match, which is exactly what Java won't allow.",
     },
     similar_example: {
       supportType: "similar_example",
@@ -242,7 +242,7 @@ export const module2TransferTask: Task = {
 } catch (NumberFormatException e) {
     System.out.println("not a number");
 }
-// NumberFormatException extends IllegalArgumentException — so the
+// NumberFormatException extends IllegalArgumentException, so the
 // second clause here is unreachable, same problem as before.`,
     },
   },
@@ -263,7 +263,7 @@ export const module2TransferRetryTask: Task = {
   id: "m2-transfer-retry",
   moduleId: "module-2",
   caseLabel: "Case file: The Silent Handler",
-  title: "Catch Order & Specificity — A Trickier Case",
+  title: "Catch Order & Specificity: A Trickier Case",
   learningObjective: "Identify which already-correctly-ordered catch clause actually handles a thrown subtype that has no clause of its own.",
   misconception: "Assuming a `catch` clause only matches its exact exception type, so a thrown subclass with no matching clause of its own must be uncaught.",
   code: `void chargeCard() {
@@ -287,29 +287,29 @@ export const module2TransferRetryTask: Task = {
       options: [
         { id: "m2r-payment", label: "`catch (PaymentException e)`" },
         { id: "m2r-exception", label: "`catch (Exception e)`" },
-        { id: "m2r-uncaught", label: "No `catch` clause runs — it propagates uncaught" },
+        { id: "m2r-uncaught", label: "No `catch` clause runs: it propagates uncaught" },
       ],
       correctOptionId: "m2r-payment",
     },
   },
   feedback: {
-    correctTitle: "Correct — you found the clause that actually catches it.",
+    correctTitle: "Correct: you found the clause that actually catches it.",
     correctExplanation:
-      "`InsufficientFundsException` is a subclass of `PaymentException`, so `catch (PaymentException e)` matches it even though no clause names `InsufficientFundsException` directly. Java checks `catch` clauses in order and runs the first one whose type matches — including matches through inheritance — so `catch (PaymentException e)` runs, and `catch (Exception e)` never gets a turn.",
+      "`InsufficientFundsException` is a subclass of `PaymentException`, so `catch (PaymentException e)` matches it even though no clause names `InsufficientFundsException` directly. Java checks `catch` clauses in order and runs the first one whose type matches, including matches through inheritance, so `catch (PaymentException e)` runs, and `catch (Exception e)` never gets a turn.",
     incorrectTitle: "Check which clause matches first.",
     incorrectExplanation:
-      "`InsufficientFundsException` is a subclass of `PaymentException`, and `catch (PaymentException e)` is listed before `catch (Exception e)`. Java checks `catch` clauses in order and runs the first one whose type matches the thrown exception — including matches through inheritance — so `catch (PaymentException e)` is the one that actually runs here, even though `InsufficientFundsException` has no `catch` clause of its own.",
+      "`InsufficientFundsException` is a subclass of `PaymentException`, and `catch (PaymentException e)` is listed before `catch (Exception e)`. Java checks `catch` clauses in order and runs the first one whose type matches the thrown exception, including matches through inheritance, so `catch (PaymentException e)` is the one that actually runs here, even though `InsufficientFundsException` has no `catch` clause of its own.",
     getIncorrectExplanation: (response) => {
       if (response.type !== "single_choice") {
-        return "`catch (PaymentException e)` is listed before `catch (Exception e)`, and `PaymentException` is a supertype of `InsufficientFundsException` — so `catch (PaymentException e)` is the one that actually runs.";
+        return "`catch (PaymentException e)` is listed before `catch (Exception e)`, and `PaymentException` is a supertype of `InsufficientFundsException`, so `catch (PaymentException e)` is the one that actually runs.";
       }
       if (response.selectedOptionId === "m2r-exception") {
         return "`catch (PaymentException e)` comes first and it already matches `InsufficientFundsException`, since `PaymentException` is one of its supertypes. Java runs the first matching clause it finds, so `catch (Exception e)` never gets reached.";
       }
       if (response.selectedOptionId === "m2r-uncaught") {
-        return "This exception is caught, not propagated. `PaymentException` is a supertype of `InsufficientFundsException`, and `catch (PaymentException e)` is listed first — Java matches `catch` clauses by supertype too, not only by exact type, so that clause claims it.";
+        return "This exception is caught, not propagated. `PaymentException` is a supertype of `InsufficientFundsException`, and `catch (PaymentException e)` is listed first: Java matches `catch` clauses by supertype too, not only by exact type, so that clause claims it.";
       }
-      return "`catch (PaymentException e)` is listed before `catch (Exception e)`, and `PaymentException` is a supertype of `InsufficientFundsException` — so `catch (PaymentException e)` is the one that actually runs.";
+      return "`catch (PaymentException e)` is listed before `catch (Exception e)`, and `PaymentException` is a supertype of `InsufficientFundsException`, so `catch (PaymentException e)` is the one that actually runs.";
     },
     keyRule: KEY_RULE,
   },
@@ -317,20 +317,20 @@ export const module2TransferRetryTask: Task = {
     hint: {
       supportType: "hint",
       title: SUPPORT_TITLES.hint,
-      content: "`InsufficientFundsException` doesn't have its own `catch` clause here — but it's a subclass of one of the two types that do. Which one, and which is checked first?",
+      content: "`InsufficientFundsException` doesn't have its own `catch` clause here, but it's a subclass of one of the two types that do. Which one, and which is checked first?",
     },
     step_by_step: {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. `InsufficientFundsException` extends `PaymentException`, which extends `Exception`.\n2. Neither `catch` clause names `InsufficientFundsException` directly — but `catch (PaymentException e)` matches it anyway, because `PaymentException` is one of its supertypes.\n3. Java checks `catch` clauses in the order they're written and runs the first one whose type matches — including matches through inheritance.\n4. `catch (PaymentException e)` is listed first and already matches, so that's the clause that runs. `catch (Exception e)` never gets a turn.",
+        "1. `InsufficientFundsException` extends `PaymentException`, which extends `Exception`.\n2. Neither `catch` clause names `InsufficientFundsException` directly, but `catch (PaymentException e)` matches it anyway, because `PaymentException` is one of its supertypes.\n3. Java checks `catch` clauses in the order they're written and runs the first one whose type matches, including matches through inheritance.\n4. `catch (PaymentException e)` is listed first and already matches, so that's the clause that runs. `catch (Exception e)` never gets a turn.",
       keyRule: KEY_RULE,
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
       title: SUPPORT_TITLES.simpler_explanation,
       content:
-        "A `catch` clause matches anything that \"is a\" that type, not just an exact match. `PaymentException` is one of `InsufficientFundsException`'s supertypes, so the `PaymentException` clause claims it — and since it's listed first, it gets there before the `Exception` clause ever could.",
+        "A `catch` clause matches anything that \"is a\" that type, not just an exact match. `PaymentException` is one of `InsufficientFundsException`'s supertypes, so the `PaymentException` clause claims it, and since it's listed first, it gets there before the `Exception` clause ever could.",
     },
     similar_example: {
       supportType: "similar_example",
@@ -342,7 +342,7 @@ export const module2TransferRetryTask: Task = {
 } catch (Exception e) {
     System.out.println("unexpected error");
 }
-// ConnectException extends SocketException — there's no catch for
+// ConnectException extends SocketException: there's no catch for
 // ConnectException itself, but catch (SocketException e) matches it
 // and runs first, so catch (Exception e) never does.`,
     },

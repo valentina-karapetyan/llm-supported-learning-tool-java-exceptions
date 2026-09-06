@@ -59,16 +59,16 @@ const DIAGNOSTIC_CORE =
   "`readProfileFile()` throws `FileNotFoundException`. Neither it nor `loadProfile()` has a handler, so the exception propagates up to `start()`, where `catch (FileNotFoundException e)` catches it.";
 
 function diagnosticIncorrectTitle(response: TaskResponseData): string {
-  if (response.type !== "single_choice") return "Not quite — trace the propagation again.";
+  if (response.type !== "single_choice") return "Not quite: trace the propagation again.";
   switch (response.selectedOptionId) {
     case "m3d-here":
-      return "Not quite — throwing and handling are separate steps.";
+      return "Not quite: throwing and handling are separate steps.";
     case "m3d-caller":
-      return "Not quite — the immediate caller does not automatically handle the exception.";
+      return "Not quite: the immediate caller does not automatically handle the exception.";
     case "m3d-uncaught":
       return "One of these methods does catch it.";
     default:
-      return "Not quite — trace the propagation again.";
+      return "Not quite: trace the propagation again.";
   }
 }
 
@@ -76,11 +76,11 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
   if (response.type !== "single_choice") return DIAGNOSTIC_CORE;
   switch (response.selectedOptionId) {
     case "m3d-here":
-      return `\`readProfileFile()\` does throw it — but throwing and handling are separate steps, and this method has no \`catch\` clause of its own. ${DIAGNOSTIC_CORE}`;
+      return `\`readProfileFile()\` does throw it, but throwing and handling are separate steps, and this method has no \`catch\` clause of its own. ${DIAGNOSTIC_CORE}`;
     case "m3d-caller":
       return `\`loadProfile()\` is the immediate caller, but it has no \`catch\` clause either, so it isn't automatically the handler. ${DIAGNOSTIC_CORE}`;
     case "m3d-uncaught":
-      return `It doesn't stay uncaught — \`start()\` does have a matching \`catch (FileNotFoundException e)\`, reached once the exception finishes propagating up. ${DIAGNOSTIC_CORE}`;
+      return `It doesn't stay uncaught: \`start()\` does have a matching \`catch (FileNotFoundException e)\`, reached once the exception finishes propagating up. ${DIAGNOSTIC_CORE}`;
     default:
       return DIAGNOSTIC_CORE;
   }
@@ -121,15 +121,15 @@ void readProfileFile() throws FileNotFoundException {
         { id: "m3d-here", label: "Inside `readProfileFile()`, because that is where it is thrown" },
         { id: "m3d-caller", label: "Inside `loadProfile()`, because it is the immediate caller" },
         { id: "m3d-start", label: "In `start()` by `catch (FileNotFoundException e)`" },
-        { id: "m3d-uncaught", label: "It remains uncaught — none of these methods actually catch it" },
+        { id: "m3d-uncaught", label: "It remains uncaught: none of these methods actually catch it" },
       ],
       correctOptionId: "m3d-start",
     },
   },
   feedback: {
-    correctTitle: "Correct — you followed it all the way up.",
+    correctTitle: "Correct: you followed it all the way up.",
     correctExplanation: DIAGNOSTIC_CORE,
-    incorrectTitle: "Not quite — trace the propagation again.",
+    incorrectTitle: "Not quite: trace the propagation again.",
     incorrectExplanation: DIAGNOSTIC_CORE,
     getIncorrectTitle: diagnosticIncorrectTitle,
     getIncorrectExplanation: diagnosticIncorrectExplanation,
@@ -146,14 +146,14 @@ void readProfileFile() throws FileNotFoundException {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. `readProfileFile()` throws `FileNotFoundException` — but it has no `catch` clause, so it can't handle it there.\n2. Java looks at whoever called `readProfileFile()`: that's `loadProfile()`. It has no `catch` clause either.\n3. Java looks at whoever called `loadProfile()`: that's `start()`. It has `catch (FileNotFoundException e)`.\n4. The type matches exactly, so this `catch` clause handles it — the exception is caught in `start()`.",
+        "1. `readProfileFile()` throws `FileNotFoundException`, but it has no `catch` clause, so it can't handle it there.\n2. Java looks at whoever called `readProfileFile()`: that's `loadProfile()`. It has no `catch` clause either.\n3. Java looks at whoever called `loadProfile()`: that's `start()`. It has `catch (FileNotFoundException e)`.\n4. The type matches exactly, so this `catch` clause handles it: the exception is caught in `start()`.",
       keyRule: PROPAGATION_KEY_RULE,
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
       title: SUPPORT_TITLES.simpler_explanation,
       content:
-        "Think of it like passing a problem up a chain of command: if you can't solve it, you hand it to whoever asked you to do the work. `readProfileFile()` can't handle it, so it hands it to `loadProfile()`. `loadProfile()` can't handle it either, so it hands it to `start()` — and `start()` finally has someone who knows what to do with it.",
+        "Think of it like passing a problem up a chain of command: if you can't solve it, you hand it to whoever asked you to do the work. `readProfileFile()` can't handle it, so it hands it to `loadProfile()`. `loadProfile()` can't handle it either, so it hands it to `start()`, and `start()` finally has someone who knows what to do with it.",
     },
     similar_example: {
       supportType: "similar_example",
@@ -179,8 +179,8 @@ void parseResponse() throws ParsingException {
   },
   propagationTrace: [
     { methodName: "readProfileFile()", detail: "throws `FileNotFoundException`", status: "throws" },
-    { methodName: "loadProfile()", detail: "no handler — propagates", status: "propagates" },
-    { methodName: "start()", detail: "`catch (FileNotFoundException e)` matches — handled here", status: "handled" },
+    { methodName: "loadProfile()", detail: "no handler: propagates", status: "propagates" },
+    { methodName: "start()", detail: "`catch (FileNotFoundException e)` matches: handled here", status: "handled" },
   ],
 };
 
@@ -202,7 +202,7 @@ void parseResponse() throws ParsingException {
 // could reach `start()`, but `process()`'s own handler always claims it first.
 
 const TRANSFER_CORE =
-  "`readFile()` throws `FileNotFoundException`. `process()` is reached first, and its `catch (IOException e)` already matches — propagation stops there, so `start()`'s `catch (FileNotFoundException e)` never runs.";
+  "`readFile()` throws `FileNotFoundException`. `process()` is reached first, and its `catch (IOException e)` already matches: propagation stops there, so `start()`'s `catch (FileNotFoundException e)` never runs.";
 
 function transferIncorrectTitle(response: TaskResponseData): string {
   if (response.type !== "single_choice") return "Check which handler is reached first.";
@@ -220,7 +220,7 @@ function transferIncorrectExplanation(response: TaskResponseData): string {
   if (response.type !== "single_choice") return TRANSFER_CORE;
   switch (response.selectedOptionId) {
     case "m3t-outer":
-      return `\`start()\`'s clause names the exact type — but Java doesn't keep searching the chain for the most specific handler anywhere in the program. ${TRANSFER_CORE}`;
+      return `\`start()\`'s clause names the exact type, but Java doesn't keep searching the chain for the most specific handler anywhere in the program. ${TRANSFER_CORE}`;
     case "m3t-both":
       return `Only one \`catch\` clause ever runs for a single thrown exception. ${TRANSFER_CORE}`;
     case "m3t-neither":
@@ -234,7 +234,7 @@ export const module3TransferTask: Task = {
   id: "m3-transfer",
   moduleId: "module-3",
   caseLabel: "Case file: The First Safe Landing",
-  title: "Call Chains & Propagation — Transfer",
+  title: "Call Chains & Propagation: Transfer",
   learningObjective:
     "Recognize that propagation stops at the first compatible handler encountered on the way back through the call chain, not the most specific handler anywhere in the program.",
   misconception:
@@ -279,7 +279,7 @@ void readFile() throws FileNotFoundException {
     },
   },
   feedback: {
-    correctTitle: "Correct — the nearest matching handler wins.",
+    correctTitle: "Correct: the nearest matching handler wins.",
     correctExplanation: TRANSFER_CORE,
     incorrectTitle: "Check which handler is reached first.",
     incorrectExplanation: TRANSFER_CORE,
@@ -298,7 +298,7 @@ void readFile() throws FileNotFoundException {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. `readFile()` throws `FileNotFoundException` and has no `catch` clause of its own.\n2. Java looks at its caller, `process()` — which has `catch (IOException e)`.\n3. `FileNotFoundException` is a subtype of `IOException`, so this clause matches immediately.\n4. Java stops right there — it never continues on to check `start()`'s `catch (FileNotFoundException e)`, even though that one names the exact type.",
+        "1. `readFile()` throws `FileNotFoundException` and has no `catch` clause of its own.\n2. Java looks at its caller, `process()`, which has `catch (IOException e)`.\n3. `FileNotFoundException` is a subtype of `IOException`, so this clause matches immediately.\n4. Java stops right there: it never continues on to check `start()`'s `catch (FileNotFoundException e)`, even though that one names the exact type.",
       keyRule: FIRST_MATCH_KEY_RULE,
     },
     simpler_explanation: {
@@ -329,14 +329,14 @@ void step1() {
 void step2() {
     throw new ArithmeticException();
 }
-// ArithmeticException extends RuntimeException — step1()'s broader
+// ArithmeticException extends RuntimeException: step1()'s broader
 // catch (RuntimeException e) already matches and stops the exception
 // there, even though run()'s catch names the exact type.`,
     },
   },
   propagationTrace: [
     { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws" },
-    { methodName: "process()", detail: "`catch (IOException e)` matches — handled here", status: "handled" },
+    { methodName: "process()", detail: "`catch (IOException e)` matches: handled here", status: "handled" },
   ],
   isTransferTask: true,
 };
@@ -360,16 +360,16 @@ const RETRY_CORE =
   "`validate()` throws `ValidationException`. Neither it nor `save()` has a handler, so it propagates to `run()`, where `catch (ApplicationException e)` matches and handles it.";
 
 function retryIncorrectTitle(response: TaskResponseData): string {
-  if (response.type !== "single_choice") return "Not quite — trace the propagation again.";
+  if (response.type !== "single_choice") return "Not quite: trace the propagation again.";
   switch (response.selectedOptionId) {
     case "m3r-here":
-      return "Not quite — throwing and handling are separate steps.";
+      return "Not quite: throwing and handling are separate steps.";
     case "m3r-caller":
-      return "Not quite — the immediate caller does not automatically handle the exception.";
+      return "Not quite: the immediate caller does not automatically handle the exception.";
     case "m3r-uncaught":
       return "Look at the type relationship.";
     default:
-      return "Not quite — trace the propagation again.";
+      return "Not quite: trace the propagation again.";
   }
 }
 
@@ -377,7 +377,7 @@ function retryIncorrectExplanation(response: TaskResponseData): string {
   if (response.type !== "single_choice") return RETRY_CORE;
   switch (response.selectedOptionId) {
     case "m3r-here":
-      return `\`validate()\` does throw it — but throwing and handling are separate steps, and this method has no \`catch\` clause of its own. ${RETRY_CORE}`;
+      return `\`validate()\` does throw it, but throwing and handling are separate steps, and this method has no \`catch\` clause of its own. ${RETRY_CORE}`;
     case "m3r-caller":
       return `\`save()\` is the immediate caller, but it has no \`catch\` clause either, so it isn't automatically the handler. ${RETRY_CORE}`;
     case "m3r-uncaught":
@@ -391,8 +391,8 @@ export const module3TransferRetryTask: Task = {
   id: "m3-transfer-retry",
   moduleId: "module-3",
   caseLabel: "Case file: The Skipped Layer",
-  title: "Call Chains & Propagation — A Comparable Case",
-  learningObjective: "Apply the same propagation rule — no local handler, continue to the caller — to a new hierarchy and call chain.",
+  title: "Call Chains & Propagation: A Comparable Case",
+  learningObjective: "Apply the same propagation rule, no local handler, continue to the caller, to a new hierarchy and call chain.",
   misconception:
     "Assuming an exception is handled in the method where it's thrown or by its immediate caller, rather than tracing propagation up through the full call chain until a compatible `catch` clause is found.",
   code: `void run() {
@@ -430,9 +430,9 @@ void validate() throws ValidationException {
     },
   },
   feedback: {
-    correctTitle: "Correct — same rule, new names.",
+    correctTitle: "Correct: same rule, new names.",
     correctExplanation: RETRY_CORE,
-    incorrectTitle: "Not quite — trace the propagation again.",
+    incorrectTitle: "Not quite: trace the propagation again.",
     incorrectExplanation: RETRY_CORE,
     getIncorrectTitle: retryIncorrectTitle,
     getIncorrectExplanation: retryIncorrectExplanation,
@@ -448,14 +448,14 @@ void validate() throws ValidationException {
       supportType: "step_by_step",
       title: SUPPORT_TITLES.step_by_step,
       content:
-        "1. `validate()` throws `ValidationException` — but it has no `catch` clause, so it can't handle it there.\n2. Java looks at whoever called `validate()`: that's `save()`. It has no `catch` clause either.\n3. Java looks at whoever called `save()`: that's `run()`. It has `catch (ApplicationException e)`.\n4. `ValidationException` is a subtype of `ApplicationException`, so this `catch` clause matches — the exception is handled in `run()`.",
+        "1. `validate()` throws `ValidationException`, but it has no `catch` clause, so it can't handle it there.\n2. Java looks at whoever called `validate()`: that's `save()`. It has no `catch` clause either.\n3. Java looks at whoever called `save()`: that's `run()`. It has `catch (ApplicationException e)`.\n4. `ValidationException` is a subtype of `ApplicationException`, so this `catch` clause matches: the exception is handled in `run()`.",
       keyRule: PROPAGATION_KEY_RULE,
     },
     simpler_explanation: {
       supportType: "simpler_explanation",
       title: SUPPORT_TITLES.simpler_explanation,
       content:
-        "Same chain-of-command idea: if a method can't solve the problem, it hands it to whoever called it. `validate()` can't handle it, so it hands it to `save()`. `save()` can't handle it either, so it hands it to `run()` — which finally has a matching `catch` clause.",
+        "Same chain-of-command idea: if a method can't solve the problem, it hands it to whoever called it. `validate()` can't handle it, so it hands it to `save()`. `save()` can't handle it either, so it hands it to `run()`, which finally has a matching `catch` clause.",
     },
     similar_example: {
       supportType: "similar_example",
@@ -475,14 +475,14 @@ void loadSettings() throws MissingKeyException {
 void parseSettingsFile() throws MissingKeyException {
     throw new MissingKeyException();
 }
-// MissingKeyException extends ConfigException — loadSettings() has no
+// MissingKeyException extends ConfigException: loadSettings() has no
 // handler, so it propagates all the way up to main().`,
     },
   },
   propagationTrace: [
     { methodName: "validate()", detail: "throws `ValidationException`", status: "throws" },
-    { methodName: "save()", detail: "no handler — propagates", status: "propagates" },
-    { methodName: "run()", detail: "`catch (ApplicationException e)` matches — handled here", status: "handled" },
+    { methodName: "save()", detail: "no handler: propagates", status: "propagates" },
+    { methodName: "run()", detail: "`catch (ApplicationException e)` matches: handled here", status: "handled" },
   ],
   isTransferTask: true,
 };
