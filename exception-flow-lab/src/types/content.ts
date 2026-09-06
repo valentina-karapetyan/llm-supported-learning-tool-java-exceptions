@@ -360,6 +360,47 @@ export interface Module {
   completion?: ModuleCompletionSummary;
 }
 
+// --- Retrieval Practice (every module, after the final task, before
+// completion) ---
+//
+// One open-recall question per module, shown on its own screen between the
+// module's last feedback (Modules 1-4's transfer feedback, Module 5's last
+// mixed case) and its completion screen. Deliberately free-text, not
+// multiple-choice — the point is active recall, not recognition.
+//
+// The four fields below are 100% hand-authored and predefined, same as every
+// other piece of "correctness" content in this app (Feedback.keyRule,
+// HandlerOption.isCorrect, etc.). They exist now so a future LLM integration
+// has something fixed to compare the learner's answer against — the LLM's
+// job will only ever be to compare and explain, never to invent what counts
+// as correct or decide what the learner was supposed to learn. See
+// RetrievalComparisonResult below and retrievalComparisonService.ts.
+export interface RetrievalQuestion {
+  id: string;
+  moduleId: string;
+  question: string; // may contain `inline code`, rendered via InlineCode
+  referenceAnswer: string; // never shown to the learner before they submit
+  requiredConcepts: string[];
+  commonMisconceptions: string[];
+}
+
+/** The shape a future LLM-backed comparison will return. Not produced or
+ *  consumed anywhere yet — see retrievalComparisonService.ts's placeholder
+ *  implementation, which always resolves to `undefined` instead of one of
+ *  these, and RetrievalPractice.tsx's static placeholder card, which is
+ *  shown in its place. Defined now so that swapping in a live comparison
+ *  later only means branching on a value of this shape, not redesigning the
+ *  screen around it. */
+export type RetrievalVerdict = "correct" | "partially_correct" | "incorrect";
+
+export interface RetrievalComparisonResult {
+  verdict: RetrievalVerdict;
+  conceptsMentioned: string[]; // subset of the question's requiredConcepts
+  conceptsMissing: string[]; // subset of the question's requiredConcepts
+  misconceptionsDetected: string[]; // subset of the question's commonMisconceptions
+  explanation: string; // short, learner-facing
+}
+
 /** Type guard so a component can narrow `answer`/`response` pairs safely. */
 export function isTaskType<T extends TaskType>(
   answer: TaskAnswerData,
