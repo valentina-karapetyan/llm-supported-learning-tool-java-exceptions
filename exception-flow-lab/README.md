@@ -6,9 +6,11 @@ No accounts, no backend, no leaderboards, no timers. A learner works through sho
 
 ## Status
 
-Module 1 — **"Trace the Execution"** — and Module 2 — **"Catch Order & Specificity"** — are built completely and end-to-end: Welcome → Module Map → Task (diagnostic) → Feedback → AI Support → Transfer Task (with the one-retry, and for Module 1 the flow-adaptive variant swap) → Module Completion → Concept Journal. Modules 3–4 are scaffolded as locked "coming soon" cards on the Module Map — the architecture is ready to extend, but no task content has been authored for them yet (see "Adding a module" below).
+All five modules are built end-to-end. Modules 1–4 run the standard flow: Welcome → Module Map → Task (diagnostic) → Feedback → AI Support → Transfer Task (with the one retry, serving a comparable variant where one is authored) → Module Completion → Concept Journal.
 
-Module 1's tasks are runtime control-flow traces, so their Feedback screen shows the animated `ExecutionReplay`. Module 2's tasks (`catch_order`) are about a static/compile-time ordering rule, not "what happens when this runs" — they have no `replayScript`, and `FeedbackCard` falls back to a plain code block for them instead of showing an animation that wouldn't mean anything. Module 2 also doesn't have a high-confidence "stretch" transfer variant yet (optional per the build spec, not required).
+**Module 5 — "Mixed Case Review" — runs a different flow on purpose.** It's a consolidation module: interleaved retrieval practice over the rules Modules 1–4 introduced, with no new theory of its own. Its flow is CASE 1 → CASE 2 → CASE 3 → COMPLETE — each case is one short snippet, one focused question, immediate targeted feedback, then straight on to the next. No diagnostic/transfer split, no confidence question, no reflection question, no retry. See "Module 5" below.
+
+Module 1's tasks are runtime control-flow traces, so their Feedback screen shows the animated `ExecutionReplay`. Module 2's tasks (`catch_order`) are about a static/compile-time ordering rule, not "what happens when this runs" — they have no `replayScript`, and `FeedbackCard` falls back to a plain code block for them instead of showing an animation that wouldn't mean anything. Module 3's tasks show the animated `PropagationReplay` instead, since propagation crosses method boundaries that per-line highlighting can't represent. Module 2 doesn't have a high-confidence "stretch" transfer variant (optional per the build spec, not required).
 
 ## Install & run
 
@@ -27,7 +29,10 @@ src/
 ├── content/
 │   ├── module1-trace-execution.ts   # all Module 1 task content (diagnostic + 2 transfer variants)
 │   ├── module2-catch-order.ts       # all Module 2 task content (diagnostic + 1 transfer task)
-│   └── modules.ts                   # module list + lookup helpers (getTaskById, getTransferTask, ...)
+│   ├── module3-call-chains.ts       # all Module 3 task content (diagnostic + transfer + retry variant)
+│   ├── module4-designing-handlers.ts# all Module 4 task content (diagnostic + transfer + retry variant)
+│   ├── module5-mixed-practice.ts    # all Module 5 task content (3 mixed cases; case 3 has parts A and B)
+│   └── modules.ts                   # module list + lookup helpers (getTaskById, getTransferTask, getMixedCaseTrail, ...)
 ├── llm/llmSupportService.ts    # mock-first, swappable LLM support interface (see below)
 ├── state/
 │   ├── progressStore.ts        # localStorage read/write/reset
@@ -45,8 +50,31 @@ Add a `Task` object (see `types/content.ts`) to that module's content file, list
 ### Adding a new module
 
 1. Create `src/content/moduleN-<slug>.ts` following `module1-trace-execution.ts`'s shape: a diagnostic task (`taskIds[0]`) and one or more transfer tasks.
-2. Register it in `src/content/modules.ts` — replace the relevant locked placeholder with `available: true` and real `taskIds`, and add its tasks to the internal task lookup array.
+2. Register it in `src/content/modules.ts` — add it to `modules`, and add its tasks to the internal task lookup array.
 3. Nothing else needs to change: `App.tsx`, `TaskRenderer`, `FeedbackCard`, `AiSupportPanel`, etc. are all content-agnostic.
+
+To add another *mixed-practice* module instead, set `flow: "mixed_practice"` on it, list every case in `taskIds` in order, give each of those tasks a `mixedCase: { trailLabel, continueLabel }`, and author a `completion` summary (a mixed-practice module has no per-task `keyRule` to derive one from). Everything else — the screens, the reducer transitions, the CaseNav trail — is already generic.
+
+## Module 5 — mixed practice
+
+Module 5 exists to consolidate, not to teach. It combines, without ever telling the learner which earlier case file a rule came from:
+
+| Case | Case file | Interaction | What has to be combined |
+| --- | --- | --- | --- |
+| 1 | The Missing Confirmation | `execution_trace` | statements skipped after a throw **+** propagation past a method with no handler |
+| 2 | The Special Case | `handler_refactoring` | subtype-before-supertype ordering **+** matching handler scope to the intended group |
+| 3A | The Handler That Never Sees It | `single_choice` | propagation **+** hierarchy compatibility **+** first-compatible-handler |
+| 3B | The Handler That Never Sees It | `handler_refactoring` | all of 3A **+** specific-before-general **+** designing for different reactions |
+
+Design constraints this module holds itself to, all enforced in content rather than in code:
+
+- **No new theory, and no Key Rule card.** `Feedback.keyRule` is optional; Module 5 authors none, so `FeedbackCard` skips the card, `ConceptJournal` skips the (otherwise empty) "Key rules" block, and `CompletionScreen` uses the module's authored `completion` summary instead of derived rules.
+- **Shorter feedback than Modules 1–4.** It names the specific mistake and shows the resolution; it doesn't re-teach.
+- **No repeated interaction across cases**, and no confidence or reflection screens anywhere.
+- **Neutral option labels.** Modules 1–4 label handler options evaluatively ("overly general", "duplicated handling"); Module 5's are purely structural ("`catch (X e)`, then `catch (Y e)`") so the label can't hand over the verdict before the learner has reasoned. They still read correctly in `AnswerDiff`'s "you picked / correct answer".
+- **Correctness is still 100% predefined** — `evaluateAnswer` against authored answer data, exactly as everywhere else. The LLM support panel never grades.
+
+Every Java snippet in this module (task code, all option snippets, and every `resolvedCode`) was compiled and run against a real JDK during authoring, including the two intentionally-invalid distractors — Case 2 option A and Case 3B option B, both rejected with `exception … has already been caught`. Case 3's `process()` must declare `throws FileNotFoundException` for `start()`'s handler to compile at all, which is the same wrinkle Module 3's transfer task has, and is itself part of what makes the case interesting.
 
 ## Live LLM API integration
 
