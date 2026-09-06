@@ -7,7 +7,16 @@
 // submission.
 
 import { useReducer, useRef, useState } from "react";
-import { modules, getModuleById, getTaskById, getTransferTask, getComparableRetryTask } from "./content/modules";
+import {
+  modules,
+  getModuleById,
+  getTaskById,
+  getTransferTask,
+  getComparableRetryTask,
+  isMixedPracticeModule,
+  getNextMixedCaseTask,
+  getMixedCaseTrail,
+} from "./content/modules";
 import { screenReducer, initialScreenState, type ScreenState, type TaskStage } from "./state/screenReducer";
 import { loadProgress, recordTaskAttempt, resetProgress, shouldCollapseSupportPanel, type AppProgress, type TaskProgress } from "./state/progressStore";
 import { evaluateAnswer } from "./state/evaluateAnswer";
@@ -44,10 +53,18 @@ export default function App() {
   function handleSelectModule(moduleId: string) {
     const module = getModuleById(moduleId);
     if (!module || !module.available) return;
+    if (isMixedPracticeModule(module)) {
+      dispatch({ type: "START_MIXED_MODULE", moduleId, taskId: module.taskIds[0] });
+      return;
+    }
     dispatch({ type: "SELECT_MODULE", moduleId, diagnosticTaskId: module.taskIds[0] });
   }
 
   function handleTaskSubmit(submission: TaskSubmission) {
+    if (screen.screen === "mixed_case") {
+      handleMixedCaseSubmit(submission);
+      return;
+    }
     if (screen.screen !== "task") return;
     const task = getTaskById(screen.taskId);
     if (!task) return;
@@ -77,12 +94,46 @@ export default function App() {
     });
   }
 
+  // Module 5's cases are answered exactly once — no retry, so `attempt` is
+  // always 1 — and the module counts as completed as soon as the last case
+  // has been submitted, correct or not (the point is the practice, and there
+  // is nothing left to serve after it).
+  function handleMixedCaseSubmit(submission: TaskSubmission) {
+    if (screen.screen !== "mixed_case") return;
+    const task = getTaskById(screen.taskId);
+    const module = getModuleById(screen.moduleId);
+    if (!task || !module) return;
+
+    const wasCorrect = evaluateAnswer(task.answer, submission.response);
+    const isLastCase = !getNextMixedCaseTask(module, task.id);
+
+    const taskProgress: TaskProgress = {
+      taskId: task.id,
+      completed: true,
+      selectedAnswer: submission.response,
+      wasCorrect,
+      supportRequested: [],
+      attempt: 1,
+    };
+
+    setProgress(recordTaskAttempt(progress, screen.moduleId, taskProgress, isLastCase));
+    dispatch({ type: "SUBMIT_TASK", result: { wasCorrect, attempt: 1, response: submission.response } });
+  }
+
+  function handleContinueMixedCase() {
+    if (screen.screen !== "mixed_feedback" && screen.screen !== "mixed_support") return;
+    const module = getModuleById(screen.moduleId);
+    const task = getTaskById(screen.taskId);
+    if (!module || !task) return;
+    dispatch({ type: "CONTINUE_MIXED", nextTaskId: getNextMixedCaseTask(module, task.id)?.id });
+  }
+
   function handleRequestSupport() {
     dispatch({ type: "REQUEST_SUPPORT" });
   }
 
   function handleCloseSupport(requestedInOrder: SupportType[]) {
-    if (screen.screen === "ai_support" && requestedInOrder.length > 0) {
+    if ((screen.screen === "ai_support" || screen.screen === "mixed_support") && requestedInOrder.length > 0) {
       const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
       const existing = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
       if (existing) {
@@ -203,6 +254,7 @@ export default function App() {
               wasCorrect={screen.result.wasCorrect}
               code={task.code}
               replayScript={task.replayScript}
+              replayCallout={task.replayCallout}
               resolvedCode={task.resolvedCode}
               hierarchy={task.hierarchy}
               propagationTrace={task.propagationTrace}
@@ -229,6 +281,77 @@ export default function App() {
                 </button>
               )}
             </div>
+          </div>
+        );
+      }
+
+      // --- Module 5's mixed-practice flow (see screenReducer.ts) ---
+      //
+      // Reuses TaskScreen / FeedbackCard / AiSupportPanel unchanged; the only
+      // differences are the CaseNav trail (Case 1 → Case 2 → Case 3 instead
+      // of Task → Feedback → Transfer) and the feedback actions, which offer
+      // exactly one way forward — no retry, no separate "continue to transfer
+      // task" branch.
+      case "mixed_case": {
+        const task = getTaskById(screen.taskId);
+        const module = getModuleById(screen.moduleId);
+        if (!task || !module) return null;
+        return (
+          <TaskScreen
+            task={task}
+            caseTrail={getMixedCaseTrail(module, task.id)}
+            onSubmit={handleTaskSubmit}
+            onBackToMap={handleBackToMap}
+          />
+        );
+      }
+
+      case "mixed_feedback": {
+        const task = getTaskById(screen.taskId);
+        const module = getModuleById(screen.moduleId);
+        if (!task || !module) return null;
+        return (
+          <div className={styles.feedbackWrapper}>
+            <CaseNav onBackToMap={handleBackToMap} trail={getMixedCaseTrail(module, task.id)} />
+            <FeedbackCard
+              feedback={task.feedback}
+              wasCorrect={screen.result.wasCorrect}
+              code={task.code}
+              replayScript={task.replayScript}
+              replayCallout={task.replayCallout}
+              resolvedCode={task.resolvedCode}
+              hierarchy={task.hierarchy}
+              propagationTrace={task.propagationTrace}
+              answer={task.answer}
+              response={screen.result.response}
+            />
+            <div className={styles.feedbackActions}>
+              <button type="button" className={styles.secondaryButton} onClick={handleRequestSupport}>
+                Explain this another way
+              </button>
+              <button type="button" className={styles.primaryButton} onClick={handleContinueMixedCase}>
+                {task.mixedCase?.continueLabel ?? "Continue"}
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      case "mixed_support": {
+        const task = getTaskById(screen.taskId);
+        const module = getModuleById(screen.moduleId);
+        if (!task || !module) return null;
+        const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
+        const existingTaskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
+        return (
+          <div className={styles.feedbackWrapper}>
+            <CaseNav onBackToMap={handleBackToMap} trail={getMixedCaseTrail(module, task.id)} />
+            <AiSupportPanel
+              task={task}
+              collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
+              initialRequested={existingTaskProgress?.supportRequested ?? []}
+              onBack={handleCloseSupport}
+            />
           </div>
         );
       }
