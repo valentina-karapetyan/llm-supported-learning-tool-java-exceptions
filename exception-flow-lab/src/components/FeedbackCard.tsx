@@ -26,6 +26,9 @@ export interface FeedbackCardProps {
   wasCorrect: boolean;
   code: string;
   replayScript?: ReplayStep[];
+  // Per-task override for ExecutionReplay's throw -> catch callout; see
+  // Task.replayCallout. Ignored by tasks with no replayScript.
+  replayCallout?: string;
   // Hand-authored "solved" code, shown instead of the plain (still-blank)
   // `code` for tasks with no replayScript. Falls back to `code` if absent.
   resolvedCode?: string;
@@ -45,6 +48,7 @@ export function FeedbackCard({
   wasCorrect,
   code,
   replayScript,
+  replayCallout,
   resolvedCode,
   hierarchy,
   propagationTrace,
@@ -85,15 +89,21 @@ export function FeedbackCard({
         </div>
       )}
 
-      <div className={styles.ruleCard}>
-        <p className={styles.ruleLabel}>Key rule</p>
-        <p className={styles.ruleText}>
-          <InlineCode text={feedback.keyRule} />
-        </p>
-      </div>
+      {/* Modules 1-4 all author a key rule — each of their tasks teaches one
+          for the first time. Module 5 deliberately authors none: it's
+          retrieval practice over rules already covered, and restating them
+          in a card here would turn it back into instruction. */}
+      {feedback.keyRule && (
+        <div className={styles.ruleCard}>
+          <p className={styles.ruleLabel}>Key rule</p>
+          <p className={styles.ruleText}>
+            <InlineCode text={feedback.keyRule} />
+          </p>
+        </div>
+      )}
 
       {hasReplayScript(replayScript) ? (
-        <ExecutionReplay code={code} replayScript={replayScript} />
+        <ExecutionReplay code={code} replayScript={replayScript} callout={replayCallout} />
       ) : propagationTrace && propagationTrace.length > 0 ? (
         <PropagationReplay code={resolvedCode ?? code} trace={propagationTrace} />
       ) : (
