@@ -4,6 +4,7 @@
 // a hairline-divided list, closer to a printed table of contents).
 
 import type { Module } from "../types/content";
+import { InlineCode } from "./InlineCode";
 import styles from "./ModuleCard.module.css";
 
 export type ModuleCardState = "not_started" | "in_progress" | "completed";
@@ -32,7 +33,9 @@ export function ModuleCard({ module, state, index, onSelect }: ModuleCardProps) 
       </span>
       <span className={styles.body}>
         <span className={styles.title}>{module.title}</span>
-        <span className={styles.description}>{module.description}</span>
+        <span className={styles.description}>
+          <InlineCode text={module.description} />
+        </span>
       </span>
       <span className={[styles.status, state === "completed" ? styles.statusCompleted : ""].join(" ")}>{statusLabel}</span>
     </button>

@@ -6,9 +6,11 @@ No accounts, no backend, no leaderboards, no timers. A learner works through sho
 
 ## Status
 
-Module 1 — **"Trace the Execution"** — and Module 2 — **"Catch Order & Specificity"** — are built completely and end-to-end: Welcome → Module Map → Task (diagnostic) → Feedback → AI Support → Transfer Task (with the one-retry, and for Module 1 the flow-adaptive variant swap) → Module Completion → Concept Journal. Modules 3–4 are scaffolded as locked "coming soon" cards on the Module Map — the architecture is ready to extend, but no task content has been authored for them yet (see "Adding a module" below).
+All five modules are built end-to-end. Modules 1–4 run the standard flow: Welcome → Module Map → Task (diagnostic) → Feedback → AI Support → Transfer Task (with the one retry, serving a comparable variant where one is authored) → Module Completion → Concept Journal.
 
-Module 1's tasks are runtime control-flow traces, so their Feedback screen shows the animated `ExecutionReplay`. Module 2's tasks (`catch_order`) are about a static/compile-time ordering rule, not "what happens when this runs" — they have no `replayScript`, and `FeedbackCard` falls back to a plain code block for them instead of showing an animation that wouldn't mean anything. Module 2 also doesn't have a high-confidence "stretch" transfer variant yet (optional per the build spec, not required).
+**Module 5 — "Mixed Case Review" — runs a different flow on purpose.** It's a consolidation module: interleaved retrieval practice over the rules Modules 1–4 introduced, with no new theory of its own. Its flow is CASE 1 → CASE 2 → CASE 3 → COMPLETE — each case is one short snippet, one focused question, immediate targeted feedback, then straight on to the next. No diagnostic/transfer split, no confidence question, no reflection question, no retry. See "Module 5" below.
+
+Module 1's tasks are runtime control-flow traces, so their Feedback screen shows the animated `ExecutionReplay`. Module 2's tasks (`catch_order`) are about a static/compile-time ordering rule, not "what happens when this runs" — they have no `replayScript`, and `FeedbackCard` falls back to a plain code block for them instead of showing an animation that wouldn't mean anything. Module 3's tasks show the animated `PropagationReplay` instead, since propagation crosses method boundaries that per-line highlighting can't represent. Module 2 doesn't have a high-confidence "stretch" transfer variant (optional per the build spec, not required).
 
 ## Install & run
 
@@ -27,7 +29,10 @@ src/
 ├── content/
 │   ├── module1-trace-execution.ts   # all Module 1 task content (diagnostic + 2 transfer variants)
 │   ├── module2-catch-order.ts       # all Module 2 task content (diagnostic + 1 transfer task)
-│   └── modules.ts                   # module list + lookup helpers (getTaskById, getTransferTask, ...)
+│   ├── module3-call-chains.ts       # all Module 3 task content (diagnostic + transfer + retry variant)
+│   ├── module4-designing-handlers.ts# all Module 4 task content (diagnostic + transfer + retry variant)
+│   ├── module5-mixed-practice.ts    # all Module 5 task content (3 mixed cases; case 3 has parts A and B)
+│   └── modules.ts                   # module list + lookup helpers (getTaskById, getTransferTask, getMixedCaseTrail, ...)
 ├── llm/llmSupportService.ts    # mock-first, swappable LLM support interface (see below)
 ├── state/
 │   ├── progressStore.ts        # localStorage read/write/reset
@@ -45,8 +50,31 @@ Add a `Task` object (see `types/content.ts`) to that module's content file, list
 ### Adding a new module
 
 1. Create `src/content/moduleN-<slug>.ts` following `module1-trace-execution.ts`'s shape: a diagnostic task (`taskIds[0]`) and one or more transfer tasks.
-2. Register it in `src/content/modules.ts` — replace the relevant locked placeholder with `available: true` and real `taskIds`, and add its tasks to the internal task lookup array.
+2. Register it in `src/content/modules.ts` — add it to `modules`, and add its tasks to the internal task lookup array.
 3. Nothing else needs to change: `App.tsx`, `TaskRenderer`, `FeedbackCard`, `AiSupportPanel`, etc. are all content-agnostic.
+
+To add another *mixed-practice* module instead, set `flow: "mixed_practice"` on it, list every case in `taskIds` in order, give each of those tasks a `mixedCase: { trailLabel, continueLabel }`, and author a `completion` summary (a mixed-practice module has no per-task `keyRule` to derive one from). Everything else — the screens, the reducer transitions, the CaseNav trail — is already generic.
+
+## Module 5 — mixed practice
+
+Module 5 exists to consolidate, not to teach. It combines, without ever telling the learner which earlier case file a rule came from:
+
+| Case | Case file | Interaction | What has to be combined |
+| --- | --- | --- | --- |
+| 1 | The Missing Confirmation | `execution_trace` | statements skipped after a throw **+** propagation past a method with no handler |
+| 2 | The Special Case | `handler_refactoring` | subtype-before-supertype ordering **+** matching handler scope to the intended group |
+| 3A | The Handler That Never Sees It | `single_choice` | propagation **+** hierarchy compatibility **+** first-compatible-handler |
+| 3B | The Handler That Never Sees It | `handler_refactoring` | all of 3A **+** specific-before-general **+** designing for different reactions |
+
+Design constraints this module holds itself to, all enforced in content rather than in code:
+
+- **No new theory, and no Key Rule card.** `Feedback.keyRule` is optional; Module 5 authors none, so `FeedbackCard` skips the card, `ConceptJournal` skips the (otherwise empty) "Key rules" block, and `CompletionScreen` uses the module's authored `completion` summary instead of derived rules.
+- **Shorter feedback than Modules 1–4.** It names the specific mistake and shows the resolution; it doesn't re-teach.
+- **No repeated interaction across cases**, and no confidence or reflection screens anywhere.
+- **Neutral option labels.** Modules 1–4 label handler options evaluatively ("overly general", "duplicated handling"); Module 5's are purely structural ("`catch (X e)`, then `catch (Y e)`") so the label can't hand over the verdict before the learner has reasoned. They still read correctly in `AnswerDiff`'s "you picked / correct answer".
+- **Correctness is still 100% predefined** — `evaluateAnswer` against authored answer data, exactly as everywhere else. The LLM support panel never grades.
+
+Every Java snippet in this module (task code, all option snippets, and every `resolvedCode`) was compiled and run against a real JDK during authoring, including the two intentionally-invalid distractors — Case 2 option A and Case 3B option B, both rejected with `exception … has already been caught`. Case 3's `process()` must declare `throws FileNotFoundException` for `start()`'s handler to compile at all, which is the same wrinkle Module 3's transfer task has, and is itself part of what makes the case interesting.
 
 ## Live LLM API integration
 
@@ -67,8 +95,9 @@ All progress is stored client-side under the `exception-flow-lab-progress` `loca
 
 ## Design choices worth knowing about (deviations/extensions vs. the raw build spec)
 
-- **Skip-detection UI (`ExecutionTraceTask`)**: cards start in a shuffled "Doesn't happen" pool; the learner sorts them into an ordered "This happens" sequence via drag **or** always-visible ▲/▼/"move" buttons — no interaction depends solely on drag-and-drop.
-- **Transfer task ≠ renamed diagnostic**: Module 1's baseline transfer task originally reused the diagnostic's exact shape (throw on the first try-statement, two things skipped) with only method/variable names changed — that let a learner pattern-match the surface without engaging with the rule, so it was rebuilt with a genuinely different shape (one statement succeeds *before* the throw). The high-confidence "stretch" variant is different again (several things skipped instead of one). Same principle applied to Module 2: its transfer task uses an unrelated scenario (XML parsing vs. file I/O) and a different exception hierarchy, not just renamed classes.
+- **Skip-detection UI (`ExecutionTraceTask`)**: cards start in a shuffled, neutral "Events to sort" pool — never pre-sorted into "happens" or "doesn't happen", so the starting layout can't be read as a hint — and the learner explicitly sorts them into an ordered "This happens, in order" list and a "Doesn't happen" list via drag **or** always-visible "move to zone" / ▲/▼ buttons; no interaction depends solely on drag-and-drop. Submission is gated on the pool being empty (every card explicitly classified).
+- **Case 1 rule-based feedback (`Feedback.getIncorrectExplanation`)**: an optional, hand-authored function on a task's `feedback` that picks which predefined explanation to show for a wrong answer based on *what* was actually wrong with the learner's submitted sequence (wrong events included, events missing, right set/wrong order, etc.) — still fully predefined/non-LLM, just reactive instead of one static string. Only `module1-trace-execution.ts`'s `diagnosticTask` supplies one; every other task falls back to the static `incorrectExplanation` unchanged.
+- **Transfer task ≠ renamed diagnostic**: Module 1's baseline transfer task originally reused the diagnostic's exact shape (throw on the first try-statement, one thing skipped) with only method/variable names changed — that let a learner pattern-match the surface without engaging with the rule, so it was rebuilt with a genuinely different shape (one statement succeeds *before* the throw, and *two* are skipped after it, not one). The high-confidence "stretch" variant is different again (three things skipped instead of two, and the throwing call is less obviously "the risky one"). Same principle applied to Module 2: its transfer task uses an unrelated scenario (XML parsing vs. file I/O) and a different exception hierarchy, not just renamed classes.
 - **Transfer retry content**: the spec's "one retry with a new comparable version" is served using the *other* authored transfer variant (baseline ↔ stretch) where one exists, rather than a new authored task per retry. `getComparableRetryTask` (in `content/modules.ts`) resolves this generically off `justAttempted.moduleId`, the same pattern `getTransferTask` already uses — so it works for any module the moment a `transferVariantForHighConfidence` is wired up, no per-module edit needed. Module 1 has both variants, so its retry genuinely shows a different case, and both the retry button ("Try a comparable case") and the Transfer Task screen's eyebrow copy say so. Module 2 only has a baseline (no stretch variant authored yet), so its retry re-serves the same task — and the button/copy there say "Try again" / "look at it again" instead, computed from whether a distinct variant actually exists rather than a single hardcoded string that could overclaim.
 - **ExecutionReplay is optional, not universal**: it only renders when a `Task` has a non-empty `replayScript`. Module 1's tasks are runtime traces, so they all have one. Module 2's `catch_order` tasks test a static/compile-time rule (catch clause order), where "replay the execution" doesn't mean anything — `FeedbackCard` falls back to a plain `CodeBlock` for those instead of showing an animation with nothing real to animate.
 - **ExecutionReplay's "arrow"**: implemented as a callout banner that fades in under the code block at the throw→catch moment, rather than a literal animated SVG path between two lines — simpler and more robust for a handful of short snippets; upgradeable later if wanted.

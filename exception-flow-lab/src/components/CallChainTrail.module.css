@@ -1,0 +1,58 @@
+.wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-accent);
+}
+
+.trail {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.method {
+  font-family: var(--font-code);
+  font-size: 0.9rem;
+  background: rgba(43, 36, 112, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.originBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-error);
+  background: rgba(198, 91, 91, 0.1);
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.arrow {
+  color: var(--color-text-muted);
+}

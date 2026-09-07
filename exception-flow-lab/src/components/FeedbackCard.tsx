@@ -1,8 +1,8 @@
 // src/components/FeedbackCard.tsx
 //
-// Screen D (Feedback). Shows correctness, the learner's own articulation
-// next to the key rule, and the ExecutionReplay visualizer directly under
-// the key rule card, per the build spec.
+// Screen D (Feedback). Shows correctness, the key rule, and the
+// ExecutionReplay visualizer directly under the key rule card, per the
+// build spec.
 //
 // ExecutionReplay only renders when a task actually has a replayScript.
 // Module 1's tasks are runtime control-flow traces, so they all have one —
@@ -11,22 +11,34 @@
 // when this runs"), so a task can reasonably omit it and just show its
 // plain code instead of an animation that wouldn't mean anything.
 
-import type { Feedback, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
+import type { Feedback, HierarchyNode, PropagationStep, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
 import { hasReplayScript } from "../types/content";
 import { CodeBlock } from "./CodeBlock";
 import { ExecutionReplay } from "./ExecutionReplay";
+import { PropagationReplay } from "./PropagationReplay";
+import { ExceptionHierarchy } from "./ExceptionHierarchy";
 import { AnswerDiff } from "./AnswerDiff";
+import { InlineCode } from "./InlineCode";
 import styles from "./FeedbackCard.module.css";
 
 export interface FeedbackCardProps {
   feedback: Feedback;
   wasCorrect: boolean;
-  articulationText: string;
   code: string;
   replayScript?: ReplayStep[];
+  // Per-task override for ExecutionReplay's throw -> catch callout; see
+  // Task.replayCallout. Ignored by tasks with no replayScript.
+  replayCallout?: string;
   // Hand-authored "solved" code, shown instead of the plain (still-blank)
   // `code` for tasks with no replayScript. Falls back to `code` if absent.
   resolvedCode?: string;
+  // Shown separately below the code, never spliced into it — see
+  // Task.hierarchy. Optional; most tasks omit it.
+  hierarchy?: HierarchyNode[];
+  // Case 3's main visualization (PropagationReplay) — takes priority over
+  // the replayScript/resolvedCode fallback below when present. See
+  // Task.propagationTrace.
+  propagationTrace?: PropagationStep[];
   answer: TaskAnswerData;
   response: TaskResponseData;
 }
@@ -34,15 +46,25 @@ export interface FeedbackCardProps {
 export function FeedbackCard({
   feedback,
   wasCorrect,
-  articulationText,
   code,
   replayScript,
+  replayCallout,
   resolvedCode,
+  hierarchy,
+  propagationTrace,
   answer,
   response,
 }: FeedbackCardProps) {
-  const title = wasCorrect ? feedback.correctTitle : feedback.incorrectTitle;
-  const explanation = wasCorrect ? feedback.correctExplanation : feedback.incorrectExplanation;
+  // For a wrong answer, prefer the rule-based title/explanation computed
+  // from what the learner actually submitted (see Feedback.getIncorrectTitle
+  // / getIncorrectExplanation) — still 100% predefined copy, just selected
+  // by the learner's specific mistake instead of always showing the same
+  // generic banner. Falls back to the static incorrectTitle/incorrectExplanation
+  // for every task that doesn't supply one.
+  const title = wasCorrect ? feedback.correctTitle : (feedback.getIncorrectTitle?.(response) ?? feedback.incorrectTitle);
+  const explanation = wasCorrect
+    ? feedback.correctExplanation
+    : (feedback.getIncorrectExplanation?.(response) ?? feedback.incorrectExplanation);
 
   return (
     <div className={styles.wrapper}>
@@ -51,8 +73,12 @@ export function FeedbackCard({
           {wasCorrect ? "✓" : "↺"}
         </span>
         <div>
-          <h2 className={styles.bannerTitle}>{title}</h2>
-          <p className={styles.bannerExplanation}>{explanation}</p>
+          <h2 className={styles.bannerTitle}>
+            <InlineCode text={title} />
+          </h2>
+          <p className={styles.bannerExplanation}>
+            <InlineCode text={explanation} />
+          </p>
         </div>
       </div>
 
@@ -63,25 +89,30 @@ export function FeedbackCard({
         </div>
       )}
 
-      <div className={styles.ruleCard}>
-        {articulationText.trim() && (
-          <div className={styles.articulationEcho}>
-            <p className={styles.articulationLabel}>Your reflection — never graded, just for you:</p>
-            <p className={styles.articulationText}>“{articulationText.trim()}”</p>
-          </div>
-        )}
-        <p className={styles.ruleLabel}>Key rule</p>
-        <p className={styles.ruleText}>{feedback.keyRule}</p>
-      </div>
+      {/* Modules 1-4 all author a key rule — each of their tasks teaches one
+          for the first time. Module 5 deliberately authors none: it's
+          retrieval practice over rules already covered, and restating them
+          in a card here would turn it back into instruction. */}
+      {feedback.keyRule && (
+        <div className={styles.ruleCard}>
+          <p className={styles.ruleLabel}>Key rule</p>
+          <p className={styles.ruleText}>
+            <InlineCode text={feedback.keyRule} />
+          </p>
+        </div>
+      )}
 
       {hasReplayScript(replayScript) ? (
-        <ExecutionReplay code={code} replayScript={replayScript} />
+        <ExecutionReplay code={code} replayScript={replayScript} callout={replayCallout} />
+      ) : propagationTrace && propagationTrace.length > 0 ? (
+        <PropagationReplay code={resolvedCode ?? code} trace={propagationTrace} />
       ) : (
         <div className={styles.staticCodeSection}>
           <h3 className={styles.staticCodeHeading}>The code</h3>
           <CodeBlock code={resolvedCode ?? code} />
         </div>
       )}
+      {hierarchy && <ExceptionHierarchy nodes={hierarchy} />}
     </div>
   );
 }

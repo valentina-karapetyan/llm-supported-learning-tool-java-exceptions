@@ -14,21 +14,30 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReplayStep } from "../types/content";
 import { CodeBlock } from "./CodeBlock";
+import { InlineCode } from "./InlineCode";
 import styles from "./ExecutionReplay.module.css";
 
 export interface ExecutionReplayProps {
   code: string;
   replayScript: ReplayStep[];
+  // Overrides DEFAULT_CALLOUT below — see Task.replayCallout. Deliberately
+  // just the sentence: the "⤷" glyph stays fixed in the markup so every
+  // callout keeps the same shape.
+  callout?: string;
 }
 
 const STEP_DELAY_MS = 400;
+
+// Kept free of `code spans` on purpose: it renders through InlineCode, so
+// adding backticks here would change how Modules 1-4 look.
+const DEFAULT_CALLOUT = "control jumps straight to the matching catch clause";
 
 function usesReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function ExecutionReplay({ code, replayScript }: ExecutionReplayProps) {
+export function ExecutionReplay({ code, replayScript, callout }: ExecutionReplayProps) {
   const reducedMotion = useMemo(() => usesReducedMotion(), []);
   const [revealCount, setRevealCount] = useState(reducedMotion ? replayScript.length : 0);
   const [runId, setRunId] = useState(0);
@@ -69,6 +78,14 @@ export function ExecutionReplay({ code, replayScript }: ExecutionReplayProps) {
     return map;
   }, [replayScript, revealCount]);
 
+  const lineBadgeLabels = useMemo(() => {
+    const map: Partial<Record<number, string>> = {};
+    for (const step of replayScript.slice(0, revealCount)) {
+      if (step.badgeLabel) map[step.lineNumber] = step.badgeLabel;
+    }
+    return map;
+  }, [replayScript, revealCount]);
+
   const firstHandledIndex = replayScript.findIndex((s) => s.state === "handled");
   const showJumpCallout = firstHandledIndex >= 0 && revealCount > firstHandledIndex;
   const animationDone = revealCount >= replayScript.length;
@@ -95,9 +112,14 @@ export function ExecutionReplay({ code, replayScript }: ExecutionReplayProps) {
           </button>
         )}
       </div>
-      <CodeBlock code={code} lineStates={lineStates} />
+      <CodeBlock code={code} lineStates={lineStates} lineBadgeLabels={lineBadgeLabels} />
       <div className={[styles.callout, showJumpCallout ? styles.calloutVisible : ""].join(" ")} aria-live="polite">
-        {showJumpCallout ? "⤷ control jumps straight to the matching catch block" : ""}
+        {showJumpCallout && (
+          <>
+            <span aria-hidden="true">⤷ </span>
+            <InlineCode text={callout ?? DEFAULT_CALLOUT} />
+          </>
+        )}
       </div>
     </div>
   );

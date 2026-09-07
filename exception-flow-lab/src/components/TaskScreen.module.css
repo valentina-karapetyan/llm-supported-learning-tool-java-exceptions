@@ -20,10 +20,21 @@
   font-size: 1.5rem;
 }
 
+.intro {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
 .question {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
+  /* Preserves authored line breaks (e.g. Module 4's "Required reactions"
+     bullet list) without affecting single-line questions elsewhere, which
+     contain no newlines to begin with. */
+  white-space: pre-line;
 }
 
 .stepCard {

@@ -6,6 +6,7 @@
 import type { Module } from "../types/content";
 import type { AppProgress } from "../state/progressStore";
 import { getTaskById } from "../content/modules";
+import { InlineCode } from "./InlineCode";
 import styles from "./ConceptJournal.module.css";
 
 export interface ConceptJournalProps {
@@ -46,25 +47,34 @@ export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProp
               </div>
 
               {misconceptions.length === 0 ? (
-                <p className={styles.emptyState}>Nothing recorded yet — head to the case files to get started.</p>
+                <p className={styles.emptyState}>Nothing recorded yet, head to the case files to get started.</p>
               ) : (
                 <>
                   <div className={styles.block}>
                     <p className={styles.blockLabel}>Misconceptions addressed</p>
                     <ul className={styles.list}>
                       {misconceptions.map((m) => (
-                        <li key={m}>{m}</li>
+                        <li key={m}>
+                          <InlineCode text={m} />
+                        </li>
                       ))}
                     </ul>
                   </div>
-                  <div className={styles.block}>
-                    <p className={styles.blockLabel}>Key rules</p>
-                    <ul className={styles.list}>
-                      {keyRules.map((r) => (
-                        <li key={r}>{r}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  {/* Module 5's tasks author no keyRule (it introduces no new
+                      theory), so this block would otherwise render as an
+                      empty list under a heading. */}
+                  {keyRules.length > 0 && (
+                    <div className={styles.block}>
+                      <p className={styles.blockLabel}>Key rules</p>
+                      <ul className={styles.list}>
+                        {keyRules.map((r) => (
+                          <li key={r}>
+                            <InlineCode text={r} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </>
               )}
             </div>

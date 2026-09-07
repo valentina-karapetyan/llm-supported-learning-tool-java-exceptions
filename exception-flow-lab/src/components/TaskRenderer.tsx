@@ -11,6 +11,7 @@ import { ExecutionTraceTask } from "./tasks/ExecutionTraceTask";
 import { StatementSelectionTask } from "./tasks/StatementSelectionTask";
 import { CallChainTask } from "./tasks/CallChainTask";
 import { CatchOrderTask } from "./tasks/CatchOrderTask";
+import { SingleChoiceTask } from "./tasks/SingleChoiceTask";
 import { HandlerSelectionTask } from "./tasks/HandlerSelectionTask";
 import { HandlerRefactoringTask } from "./tasks/HandlerRefactoringTask";
 
@@ -51,6 +52,14 @@ export function TaskRenderer({ task, onSubmit, disabled }: TaskRendererProps) {
     case "catch_order":
       return (
         <CatchOrderTask data={answer.data} disabled={disabled} onSubmit={(order) => onSubmit({ type: "catch_order", order })} />
+      );
+    case "single_choice":
+      return (
+        <SingleChoiceTask
+          data={answer.data}
+          disabled={disabled}
+          onSubmit={(selectedOptionId) => onSubmit({ type: "single_choice", selectedOptionId })}
+        />
       );
     case "handler_selection":
       return (

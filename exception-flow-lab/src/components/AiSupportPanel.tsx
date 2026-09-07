@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import type { LlmSupportResponse, SupportType, Task } from "../types/content";
 import { SUPPORT_TYPE_ORDER } from "../types/content";
 import { llmSupportService } from "../llm/llmSupportService";
+import { InlineCode } from "./InlineCode";
 import styles from "./AiSupportPanel.module.css";
 
 export interface AiSupportPanelProps {
@@ -86,7 +87,7 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, onB
   return (
     <div className={styles.wrapper}>
       <h2 className={styles.heading}>AI support</h2>
-      <p className={styles.subheading}>Four steps, from a light nudge to a worked example — never a grade, never a chat box.</p>
+      <p className={styles.subheading}>Four steps, from a light nudge to a worked example: never a grade, never a chat box.</p>
 
       <div className={styles.buttonRow}>
         {SUPPORT_TYPE_ORDER.map((type, index) => (
@@ -107,9 +108,17 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, onB
           const response = responses[type]!;
           return (
             <div key={type} className={styles.responseCard}>
-              <p className={styles.responseTitle}>{response.title}</p>
-              <pre className={styles.responseContent}>{response.content}</pre>
-              {response.keyRule && <p className={styles.responseKeyRule}>Key rule: {response.keyRule}</p>}
+              <p className={styles.responseTitle}>
+                <InlineCode text={response.title} />
+              </p>
+              <pre className={styles.responseContent}>
+                <InlineCode text={response.content} />
+              </pre>
+              {response.keyRule && (
+                <p className={styles.responseKeyRule}>
+                  Key rule: <InlineCode text={response.keyRule} />
+                </p>
+              )}
             </div>
           );
         })}
