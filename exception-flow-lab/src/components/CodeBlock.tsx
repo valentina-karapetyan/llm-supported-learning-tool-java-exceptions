@@ -44,7 +44,10 @@ export function CodeBlock({ code, lineStates, lineBadgeLabels, caption }: CodeBl
                   {lineNumber}
                 </span>
                 <span className={styles.lineText}>{line || " "}</span>
-                {state && (state === "skipped" || state === "throws") && (
+                {/* Every state gets a visible text badge, not just skipped/
+                    throws — build spec §17: the state must be understandable
+                    without relying only on background color. */}
+                {state && (
                   <span className={[styles.lineBadge, customBadge ? styles.lineBadgeCustom : ""].join(" ")}>
                     {customBadge ?? STATE_LABEL[state]}
                   </span>

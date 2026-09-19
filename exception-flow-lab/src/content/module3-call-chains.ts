@@ -39,7 +39,7 @@ import type { Task, TaskResponseData } from "../types/content";
 import { SUPPORT_TITLES } from "../types/content";
 
 const PROPAGATION_KEY_RULE =
-  "If a method has no matching handler, the exception propagates to its caller. Java continues up the calling chain until it finds a compatible `catch` clause. If none is found, the exception remains uncaught.";
+  "If a method has no compatible handler, the exception propagates to its caller. Java continues up the calling chain until it finds one. If none is found, the exception remains uncaught.";
 
 const FIRST_MATCH_KEY_RULE = "Propagation stops at the first compatible handler encountered on the way back through the call chain.";
 
@@ -93,7 +93,7 @@ export const module3DiagnosticTask: Task = {
   title: "Call Chains & Propagation",
   learningObjective: "Understand that an uncaught exception propagates up the call chain to its caller, continuing until a matching handler is found.",
   misconception:
-    "Assuming an exception is handled in the method where it's thrown, or that the immediate caller must contain the handler, rather than tracing propagation up through the full call chain until a matching `catch` clause is found.",
+    "Assuming an exception is handled in the method where it's thrown, or that the immediate caller must contain the handler, rather than tracing propagation up through the full call chain until a compatible handler is found.",
   code: `void start() {
     try {
         loadProfile();
@@ -134,6 +134,14 @@ void readProfileFile() throws FileNotFoundException {
     getIncorrectTitle: diagnosticIncorrectTitle,
     getIncorrectExplanation: diagnosticIncorrectExplanation,
     keyRule: PROPAGATION_KEY_RULE,
+    // First point in the module where "compatible handler" needs its own
+    // definition (build spec §5) — the term (and its near-synonyms) recurs
+    // through this module's key rules without ever being defined elsewhere.
+    // Same one-time mechanism as m2-diagnostic's — see Feedback.glossaryNote.
+    glossaryNote: {
+      term: "Compatible handler",
+      definition: "catches the thrown exception type or one of its supertypes.",
+    },
   },
   supportContent: {
     hint: {
@@ -279,7 +287,7 @@ void readFile() throws FileNotFoundException {
     },
   },
   feedback: {
-    correctTitle: "Correct: the nearest matching handler wins.",
+    correctTitle: "Correct: the nearest compatible handler wins.",
     correctExplanation: TRANSFER_CORE,
     incorrectTitle: "Check which handler is reached first.",
     incorrectExplanation: TRANSFER_CORE,

@@ -38,6 +38,17 @@ const STATUS_CLASS: Record<PropagationStep["status"], string> = {
   uncaught: styles.detailUncaught,
 };
 
+// Build spec §17: a status must be understandable without relying only on
+// colour — `throws` and `uncaught` previously shared identical styling
+// despite being semantically opposite (start of the story vs. final
+// failure), so each status gets its own icon, not just a color class.
+const STATUS_ICON: Record<PropagationStep["status"], string> = {
+  throws: "⚡",
+  propagates: "→",
+  handled: "✓",
+  uncaught: "✗",
+};
+
 export function PropagationReplay({ code, trace }: PropagationReplayProps) {
   const reducedMotion = useMemo(() => usesReducedMotion(), []);
   const [revealCount, setRevealCount] = useState(reducedMotion ? trace.length : 0);
@@ -107,6 +118,7 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
               <div className={[styles.step, visible ? styles.stepVisible : ""].join(" ")}>
                 <code className={styles.stepMethod}>{step.methodName}</code>
                 <span className={[styles.stepDetail, STATUS_CLASS[step.status]].join(" ")}>
+                  <span aria-hidden="true">{STATUS_ICON[step.status]} </span>
                   <InlineCode text={step.detail} />
                 </span>
               </div>
