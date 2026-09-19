@@ -83,7 +83,7 @@ export const diagnosticTask: Task = {
     }
 }`,
   question:
-    "Build the execution trace. Select the events that occur, in the order they happen. Events you do not select are treated as skipped.",
+    "Build the execution trace. Select the events that occur, in the order they happen. Leave an event unselected if it does not occur.",
   answer: {
     type: "execution_trace",
     data: {
@@ -189,7 +189,7 @@ export const transferTaskBaseline: Task = {
     }
 }`,
   question:
-    "Build the execution trace. Select the events that occur, in the order they happen. Events you do not select are treated as skipped.",
+    "Build the execution trace. Select the events that occur, in the order they happen. Leave an event unselected if it does not occur.",
   answer: {
     type: "execution_trace",
     data: {
@@ -296,7 +296,7 @@ export const transferTaskStretch: Task = {
     }
 }`,
   question:
-    "Build the execution trace. Select the events that occur, in the order they happen. Events you do not select are treated as skipped.",
+    "Build the execution trace. Select the events that occur, in the order they happen. Leave an event unselected if it does not occur.",
   answer: {
     type: "execution_trace",
     data: {
