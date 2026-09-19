@@ -58,7 +58,9 @@ export function ExecutionTraceTask({ data, onSubmit, disabled }: ExecutionTraceT
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.section}>
+      {/* data-tour-id markers: see GuidedTour.tsx / content/guidedTours.ts —
+          inert attributes, present regardless of which task/module this is. */}
+      <div className={styles.section} data-tour-id="trace-pool">
         <h3 className={styles.sectionTitle}>Events</h3>
         {availableIds.length === 0 ? (
           <p className={styles.emptyLabel}>Every event has been added to your trace below.</p>
@@ -80,7 +82,7 @@ export function ExecutionTraceTask({ data, onSubmit, disabled }: ExecutionTraceT
         )}
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} data-tour-id="trace-list">
         <h3 className={styles.sectionTitle}>Your execution trace</h3>
         {traceIds.length === 0 ? (
           <p className={styles.emptyLabel}>Click events above to add them here, in the order they happen.</p>
@@ -95,23 +97,27 @@ export function ExecutionTraceTask({ data, onSubmit, disabled }: ExecutionTraceT
                   <InlineCode text={cardMap.get(id)?.label ?? id} />
                 </span>
                 <div className={styles.cardControls}>
-                  <button
-                    type="button"
-                    onClick={() => moveWithinTrace(id, -1)}
-                    disabled={locked || index === 0}
-                    aria-label="Move earlier in the sequence"
-                  >
-                    ▲
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => moveWithinTrace(id, 1)}
-                    disabled={locked || index === traceIds.length - 1}
-                    aria-label="Move later in the sequence"
-                  >
-                    ▼
-                  </button>
-                  <button type="button" onClick={() => removeFromTrace(id)} disabled={locked}>
+                  <div className={styles.reorderGroup}>
+                    <button
+                      type="button"
+                      className={styles.reorderButton}
+                      onClick={() => moveWithinTrace(id, -1)}
+                      disabled={locked || index === 0}
+                      aria-label="Move earlier in the sequence"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.reorderButton}
+                      onClick={() => moveWithinTrace(id, 1)}
+                      disabled={locked || index === traceIds.length - 1}
+                      aria-label="Move later in the sequence"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                  <button type="button" className={styles.removeButton} onClick={() => removeFromTrace(id)} disabled={locked}>
                     Remove
                   </button>
                 </div>
@@ -121,10 +127,16 @@ export function ExecutionTraceTask({ data, onSubmit, disabled }: ExecutionTraceT
         )}
       </div>
 
-      <div className={styles.actions}>
+      <div className={styles.actions} data-tour-id="trace-actions">
         <button
           type="button"
           className={styles.primaryButton}
+          // Deliberately NOT gated on the pool being empty: a correct trace
+          // always leaves distractor events unselected (e.g. m1-diagnostic's
+          // correct answer is 3 of its 5 cards), so requiring every card to
+          // be moved into the trace would make a fully-correct answer
+          // impossible to submit. At least one event added is the right
+          // minimum-engagement gate for this interaction.
           disabled={locked || traceIds.length === 0}
           onClick={() => onSubmit(traceIds)}
         >

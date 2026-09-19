@@ -83,10 +83,16 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  background: var(--color-bg);
+  /* Surface + accent left border + shadow, deliberately a stronger
+     treatment than the pool's plain .eventButton below — this list is the
+     learner's actual answer, so it should read as clearly "captured"
+     rather than blend into the page background. */
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
   border-radius: var(--radius-control);
-  padding: var(--space-2);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
 }
 
 .cardLabel {
@@ -102,26 +108,61 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
-.cardControls button {
+/* Grouped into one segmented-looking control (shared border, no gap
+   between the two) so reordering visually reads as one action with two
+   directions, distinct from the separate, unrelated Remove action next
+   to it — build spec §2's "make reordering obvious". */
+.reorderGroup {
+  display: flex;
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.reorderButton {
+  border: none;
   background: var(--color-surface);
   color: var(--color-text);
-  border-radius: var(--radius-control);
-  padding: 2px 8px;
-  font-size: 0.8rem;
+  padding: 4px 10px;
+  font-size: 0.85rem;
   cursor: pointer;
   white-space: nowrap;
 }
 
-.cardControls button:hover:not(:disabled) {
-  border-color: var(--color-primary);
+.reorderButton:first-child {
+  border-right: 1px solid var(--color-border);
+}
+
+.reorderButton:hover:not(:disabled) {
+  background: var(--color-bg);
   color: var(--color-primary);
 }
 
-.cardControls button:disabled {
+.reorderButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.removeButton {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-control);
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.removeButton:hover:not(:disabled) {
+  border-color: var(--color-error);
+  color: var(--color-error-text, var(--color-error));
+}
+
+.removeButton:disabled {
   opacity: 0.35;
   cursor: default;
 }
@@ -129,7 +170,7 @@
 .stepIndex {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--color-accent);
+  color: var(--color-accent-text, var(--color-accent));
   width: 1.2rem;
   text-align: center;
 }

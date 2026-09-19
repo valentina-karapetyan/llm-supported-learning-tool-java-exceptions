@@ -1,0 +1,83 @@
+.highlight {
+  position: fixed;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  /* The classic spotlight trick: an enormous spread dims everything on the
+     page except the bordered rectangle itself (box-shadow never renders
+     under its own element), with no separate backdrop element needed. */
+  box-shadow: 0 0 0 4000px rgba(28, 28, 30, 0.4);
+  pointer-events: none;
+  z-index: 1000;
+  transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+.callout {
+  position: fixed;
+  z-index: 1001;
+  width: 300px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stepCount {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.skipButton {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.skipButton:hover {
+  color: var(--color-primary);
+}
+
+.nextButton {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-control);
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.nextButton:hover {
+  background: var(--color-primary-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlight {
+    transition: none;
+  }
+}
