@@ -18,7 +18,10 @@ export type CaseProgressStage = "task" | "feedback" | "transfer";
 const STAGES: { key: CaseProgressStage; label: string }[] = [
   { key: "task", label: "Task" },
   { key: "feedback", label: "Feedback" },
-  { key: "transfer", label: "Transfer" },
+  // "New case" rather than "Transfer" (build spec §19's plain-language
+  // mapping) — kept to two words to match "Task"/"Feedback"'s length in
+  // this compact trail; the internal `CaseProgressStage` key stays "transfer".
+  { key: "transfer", label: "New case" },
 ];
 
 /** An arbitrary labeled trail, for flows whose steps aren't
@@ -36,9 +39,13 @@ export interface CaseNavProps {
   // Takes precedence over `progressStage` if both are somehow supplied —
   // an explicit trail is always more specific than a derived one.
   trail?: CaseTrail;
+  // Overrides the default "← Case files" text — e.g. a review screen's
+  // "← Back to module summary", since `onBackToMap` there goes to the
+  // module review menu, not the case-file list.
+  backLabel?: string;
 }
 
-export function CaseNav({ onBackToMap, progressStage, trail }: CaseNavProps) {
+export function CaseNav({ onBackToMap, progressStage, trail, backLabel }: CaseNavProps) {
   const resolvedTrail: CaseTrail | undefined =
     trail ??
     (progressStage
@@ -48,7 +55,7 @@ export function CaseNav({ onBackToMap, progressStage, trail }: CaseNavProps) {
   return (
     <div className={styles.bar}>
       <button type="button" className={styles.backLink} onClick={onBackToMap}>
-        ← Case files
+        {backLabel ?? "← Case files"}
       </button>
       {resolvedTrail && (
         <p className={styles.trail} aria-label={`Progress: ${resolvedTrail.labels[resolvedTrail.currentIndex] ?? ""}`}>

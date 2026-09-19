@@ -19,7 +19,16 @@ import {
   getRetrievalQuestion,
 } from "./content/modules";
 import { screenReducer, initialScreenState, type ScreenState, type TaskStage } from "./state/screenReducer";
-import { loadProgress, recordTaskAttempt, resetProgress, shouldCollapseSupportPanel, type AppProgress, type TaskProgress } from "./state/progressStore";
+import {
+  loadProgress,
+  recordTaskAttempt,
+  recordRetrievalAnswer,
+  resetProgress,
+  shouldCollapseSupportPanel,
+  getModuleProgress,
+  type AppProgress,
+  type TaskProgress,
+} from "./state/progressStore";
 import { evaluateAnswer } from "./state/evaluateAnswer";
 import type { SupportType } from "./types/content";
 import { Welcome } from "./components/Welcome";
@@ -31,7 +40,11 @@ import { AiSupportPanel } from "./components/AiSupportPanel";
 import { RetrievalPractice } from "./components/RetrievalPractice";
 import { CompletionScreen } from "./components/CompletionScreen";
 import { ConceptJournal } from "./components/ConceptJournal";
+import { GuidedTour } from "./components/GuidedTour";
+import { ModuleReview } from "./components/ModuleReview";
+import { ReviewAnswer } from "./components/ReviewAnswer";
 import { CaseNav, type CaseProgressStage } from "./components/CaseNav";
+import { module1DiagnosticTourSteps } from "./content/guidedTours";
 import styles from "./App.module.css";
 
 // Lightweight per-case progress indicator (build spec's Case 1 revision,
@@ -47,6 +60,11 @@ export default function App() {
   const [progress, setProgress] = useState<AppProgress>(() => loadProgress());
   const [screen, dispatch] = useReducer(screenReducer, initialScreenState);
   const previousScreenRef = useRef<ScreenState>(initialScreenState);
+  // Live guided tour over Module 1's diagnostic task (build spec §2) — set
+  // when entering it fresh (handleSelectModule below), cleared when the
+  // tour finishes or is skipped. Not screen-reducer state: it's an overlay
+  // on top of the normal "task" screen, not a screen of its own.
+  const [module1TourActive, setModule1TourActive] = useState(false);
 
   function handleStart() {
     dispatch({ type: "START" });
@@ -55,11 +73,34 @@ export default function App() {
   function handleSelectModule(moduleId: string) {
     const module = getModuleById(moduleId);
     if (!module || !module.available) return;
+    // A completed module opens its review menu instead of restarting at
+    // task 1 — not_started/in_progress behavior below is unchanged.
+    if (getModuleProgress(progress, moduleId)?.state === "completed") {
+      dispatch({ type: "VIEW_MODULE_REVIEW", moduleId });
+      return;
+    }
     if (isMixedPracticeModule(module)) {
       dispatch({ type: "START_MIXED_MODULE", moduleId, taskId: module.taskIds[0] });
       return;
     }
+    // Module 1's diagnostic task gets a live guided tour overlaid on the
+    // real interface (build spec §2) instead of a separate static
+    // instruction screen — see the GuidedTour render below. Reshows on
+    // every fresh/resumed start, not just the very first time ever, rather
+    // than adding new persisted state to track "already seen".
+    if (moduleId === "module-1") {
+      setModule1TourActive(true);
+    }
     dispatch({ type: "SELECT_MODULE", moduleId, diagnosticTaskId: module.taskIds[0] });
+  }
+
+  function handleViewTaskReview(taskId: string) {
+    dispatch({ type: "VIEW_TASK_REVIEW", taskId });
+  }
+
+  function handleBackToModuleSummary() {
+    if (screen.screen !== "task_review") return;
+    dispatch({ type: "VIEW_MODULE_REVIEW", moduleId: screen.moduleId });
   }
 
   function handleTaskSubmit(submission: TaskSubmission) {
@@ -176,8 +217,12 @@ export default function App() {
   }
 
   // Fired from the Retrieval Practice screen's "Complete module" / "Complete
-  // learning lab" button.
-  function handleCompleteModule() {
+  // learning lab" button. Persists the learner's current explanation text
+  // (already reflecting any revisions) for the Concept Journal before
+  // advancing — see recordRetrievalAnswer.
+  function handleCompleteModule(retrievalAnswer: string) {
+    if (screen.screen !== "retrieval_practice") return;
+    setProgress(recordRetrievalAnswer(progress, screen.moduleId, retrievalAnswer));
     dispatch({ type: "COMPLETE_MODULE" });
   }
 
@@ -235,9 +280,20 @@ export default function App() {
       case "task": {
         const task = getTaskById(screen.taskId);
         if (!task) return null;
-        return screen.stage === "diagnostic" ? (
-          <TaskScreen task={task} stage="diagnostic" onSubmit={handleTaskSubmit} onBackToMap={handleBackToMap} />
-        ) : (
+        if (screen.stage === "diagnostic") {
+          return (
+            <>
+              <TaskScreen task={task} stage="diagnostic" onSubmit={handleTaskSubmit} onBackToMap={handleBackToMap} />
+              {/* Live guided tour (build spec §2), Module 1's diagnostic task
+                  only — highlights the real interface instead of a separate
+                  static instruction screen. */}
+              {module1TourActive && task.id === "m1-diagnostic" && (
+                <GuidedTour steps={module1DiagnosticTourSteps} onFinish={() => setModule1TourActive(false)} />
+              )}
+            </>
+          );
+        }
+        return (
           <TransferTaskFlow
             task={task}
             attempt={screen.attempt}
@@ -278,7 +334,7 @@ export default function App() {
               </button>
               {screen.stage === "diagnostic" && (
                 <button type="button" className={styles.primaryButton} onClick={handleContinueFromDiagnostic}>
-                  Continue to transfer task
+                  Try a new case
                 </button>
               )}
               {canRetry && (
@@ -288,7 +344,7 @@ export default function App() {
               )}
               {canFinish && (
                 <button type="button" className={styles.primaryButton} onClick={handleContinueToRetrieval}>
-                  Continue to retrieval practice
+                  Continue
                 </button>
               )}
             </div>
@@ -348,6 +404,10 @@ export default function App() {
         );
       }
 
+      // AI Support (build spec §9): the task's feedback stays visible in a
+      // left column instead of being navigated away from — the panel opens
+      // beside it (a right column above ~900px, stacked below it), reusing
+      // the exact same FeedbackCard props as the adjacent feedback screen.
       case "mixed_support": {
         const task = getTaskById(screen.taskId);
         const module = getModuleById(screen.moduleId);
@@ -355,14 +415,34 @@ export default function App() {
         const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
         const existingTaskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
         return (
-          <div className={styles.feedbackWrapper}>
+          <div className={styles.supportWrapper}>
             <CaseNav onBackToMap={handleBackToMap} trail={getMixedCaseTrail(module, task.id)} />
-            <AiSupportPanel
-              task={task}
-              collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
-              initialRequested={existingTaskProgress?.supportRequested ?? []}
-              onBack={handleCloseSupport}
-            />
+            <div className={styles.supportLayout}>
+              <div className={styles.supportLayoutMain}>
+                <FeedbackCard
+                  feedback={task.feedback}
+                  wasCorrect={screen.result.wasCorrect}
+                  code={task.code}
+                  replayScript={task.replayScript}
+                  replayCallout={task.replayCallout}
+                  resolvedCode={task.resolvedCode}
+                  hierarchy={task.hierarchy}
+                  propagationTrace={task.propagationTrace}
+                  answer={task.answer}
+                  response={screen.result.response}
+                />
+              </div>
+              <div className={styles.supportLayoutPanel}>
+                <AiSupportPanel
+                  key={task.id}
+                  task={task}
+                  collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
+                  initialRequested={existingTaskProgress?.supportRequested ?? []}
+                  context={{ learnerResponse: screen.result.response, wasCorrect: screen.result.wasCorrect }}
+                  onBack={handleCloseSupport}
+                />
+              </div>
+            </div>
           </div>
         );
       }
@@ -373,14 +453,34 @@ export default function App() {
         const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
         const existingTaskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
         return (
-          <div className={styles.feedbackWrapper}>
+          <div className={styles.supportWrapper}>
             <CaseNav onBackToMap={handleBackToMap} progressStage={caseProgressStage(screen.moduleId, screen.stage)} />
-            <AiSupportPanel
-              task={task}
-              collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
-              initialRequested={existingTaskProgress?.supportRequested ?? []}
-              onBack={handleCloseSupport}
-            />
+            <div className={styles.supportLayout}>
+              <div className={styles.supportLayoutMain}>
+                <FeedbackCard
+                  feedback={task.feedback}
+                  wasCorrect={screen.result.wasCorrect}
+                  code={task.code}
+                  replayScript={task.replayScript}
+                  replayCallout={task.replayCallout}
+                  resolvedCode={task.resolvedCode}
+                  hierarchy={task.hierarchy}
+                  propagationTrace={task.propagationTrace}
+                  answer={task.answer}
+                  response={screen.result.response}
+                />
+              </div>
+              <div className={styles.supportLayoutPanel}>
+                <AiSupportPanel
+                  key={task.id}
+                  task={task}
+                  collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
+                  initialRequested={existingTaskProgress?.supportRequested ?? []}
+                  context={{ learnerResponse: screen.result.response, wasCorrect: screen.result.wasCorrect }}
+                  onBack={handleCloseSupport}
+                />
+              </div>
+            </div>
           </div>
         );
       }
@@ -397,6 +497,7 @@ export default function App() {
           <div className={styles.feedbackWrapper}>
             <CaseNav onBackToMap={handleBackToMap} />
             <RetrievalPractice
+              key={module.id}
               retrievalQuestion={retrievalQuestion}
               completeLabel={isMixedPracticeModule(module) ? "Complete learning lab" : "Complete module"}
               onComplete={handleCompleteModule}
@@ -415,6 +516,41 @@ export default function App() {
             moduleProgress={moduleProgress}
             onBackToMap={handleBackToMap}
             onViewJournal={handleViewJournal}
+          />
+        );
+      }
+
+      // --- Post-completion review (build spec §1) ---
+      //
+      // Only reachable once a module's state is "completed" (see
+      // handleSelectModule) — a read-only menu of that learner's own past
+      // task screens, never feedback/AI-support/retrieval-practice states.
+
+      case "module_review": {
+        const module = getModuleById(screen.moduleId);
+        if (!module) return null;
+        const moduleProgress = getModuleProgress(progress, screen.moduleId);
+        return (
+          <ModuleReview
+            module={module}
+            taskProgress={moduleProgress?.taskProgress ?? []}
+            onSelectTask={handleViewTaskReview}
+            onBackToMap={handleBackToMap}
+          />
+        );
+      }
+
+      case "task_review": {
+        const task = getTaskById(screen.taskId);
+        const moduleProgress = getModuleProgress(progress, screen.moduleId);
+        const taskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
+        if (!task || !taskProgress) return null;
+        return (
+          <TaskScreen
+            task={task}
+            onBackToMap={handleBackToModuleSummary}
+            backLabel="← Back to module summary"
+            answerSlot={<ReviewAnswer task={task} taskProgress={taskProgress} />}
           />
         );
       }

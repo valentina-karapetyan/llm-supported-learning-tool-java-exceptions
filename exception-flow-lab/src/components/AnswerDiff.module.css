@@ -55,11 +55,11 @@
 }
 
 .rowMatch {
-  color: var(--color-success);
+  color: var(--color-success-text, var(--color-success));
 }
 
 .rowMismatch {
-  color: var(--color-error);
+  color: var(--color-error-text, var(--color-error));
 }
 
 .row.rowMatch {
@@ -82,6 +82,14 @@
   border-left: 3px solid var(--color-error);
   border-radius: var(--radius-control);
   padding: var(--space-2) var(--space-3);
+}
+
+/* Used only when a diff is shown for an answer that was actually fully
+   correct (ReviewAnswer.tsx's unconditional AnswerDiff call) — the default
+   .hint above is red/error-coded and would misread as a mistake. */
+.hintPositive {
+  background: rgba(47, 143, 91, 0.06);
+  border-left: 3px solid var(--color-success);
 }
 
 .hintText {

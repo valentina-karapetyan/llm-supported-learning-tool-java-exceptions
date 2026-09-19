@@ -20,6 +20,14 @@
 // (see RetrievalPractice.tsx) once their last task is done, so there's only
 // ever one way to reach module_completion: via COMPLETE_MODULE from
 // retrieval_practice.
+//
+// A completed module additionally unlocks `module_review` / `task_review`
+// (build spec §1) — a small, read-only menu of that learner's own past task
+// screens for the module, reachable only once ModuleProgress.state is
+// already "completed". This is deliberately not a general "jump to any
+// screen" mechanism: only task-shaped screens are ever reviewable, never
+// feedback/AI-support/retrieval-practice states, and reviewing never mutates
+// progress (see App.tsx#handleSelectModule and ModuleReview.tsx).
 
 import type { TaskResponseData } from "../types/content";
 
@@ -55,7 +63,15 @@ export type ScreenState =
   // The one-question Retrieval Practice screen, reached from either flow's
   // last task once it's done — see RetrievalPractice.tsx.
   | { screen: "retrieval_practice"; moduleId: string }
-  | { screen: "module_completion"; moduleId: string };
+  | { screen: "module_completion"; moduleId: string }
+  // Post-completion review (build spec §1). Reached only for a module whose
+  // state is already "completed" — see ModuleReview.tsx. A small menu of
+  // that learner's own past task screens for this module, never feedback/
+  // AI-support/retrieval-practice states.
+  | { screen: "module_review"; moduleId: string }
+  // One of a completed module's past tasks, shown read-only — see
+  // ReviewAnswer.tsx. Reachable only from module_review.
+  | { screen: "task_review"; moduleId: string; taskId: string };
 
 export type ScreenAction =
   | { type: "START" }
@@ -73,6 +89,15 @@ export type ScreenAction =
   // the module is otherwise done (correct, or the one retry used up).
   | { type: "SHOW_RETRIEVAL" }
   | { type: "COMPLETE_MODULE" }
+  // Enters (from module_map) or returns to (from task_review, "back to
+  // module summary") a completed module's review menu — same action, two
+  // valid sources, same pattern CLOSE_SUPPORT already uses.
+  | { type: "VIEW_MODULE_REVIEW"; moduleId: string }
+  // Opens one of a completed module's past tasks in review mode. Valid
+  // only from module_review — moduleId is read from state, not re-passed,
+  // matching how SHOW_RETRIEVAL/CONTINUE_FROM_DIAGNOSTIC/RETRY_TRANSFER
+  // already derive moduleId from state rather than trusting the caller.
+  | { type: "VIEW_TASK_REVIEW"; taskId: string }
   | { type: "VIEW_JOURNAL" }
   | { type: "BACK_TO_MAP" }
   | { type: "RESET" }
@@ -193,6 +218,18 @@ export function screenReducer(state: ScreenState, action: ScreenAction): ScreenS
     case "COMPLETE_MODULE": {
       if (state.screen !== "retrieval_practice") return invalidTransition(action, state);
       return { screen: "module_completion", moduleId: state.moduleId };
+    }
+
+    case "VIEW_MODULE_REVIEW": {
+      if (state.screen !== "module_map" && state.screen !== "task_review") {
+        return invalidTransition(action, state);
+      }
+      return { screen: "module_review", moduleId: action.moduleId };
+    }
+
+    case "VIEW_TASK_REVIEW": {
+      if (state.screen !== "module_review") return invalidTransition(action, state);
+      return { screen: "task_review", moduleId: state.moduleId, taskId: action.taskId };
     }
 
     case "VIEW_JOURNAL":
