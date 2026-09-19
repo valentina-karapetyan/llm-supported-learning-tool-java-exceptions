@@ -21,7 +21,7 @@
 .journalLink {
   background: none;
   border: none;
-  color: var(--color-accent);
+  color: var(--color-accent-text, var(--color-accent));
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
