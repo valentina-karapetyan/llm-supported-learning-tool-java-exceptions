@@ -96,7 +96,7 @@
 }
 
 .detailThrows {
-  color: var(--color-error);
+  color: var(--color-error-text, var(--color-error));
   font-weight: 600;
 }
 
@@ -105,13 +105,16 @@
 }
 
 .detailHandled {
-  color: var(--color-success);
+  color: var(--color-success-text, var(--color-success));
   font-weight: 600;
 }
 
 .detailUncaught {
-  color: var(--color-error);
+  color: var(--color-error-text, var(--color-error));
   font-weight: 600;
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-underline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {

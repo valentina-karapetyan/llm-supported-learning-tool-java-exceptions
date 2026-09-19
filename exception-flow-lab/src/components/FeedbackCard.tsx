@@ -102,6 +102,15 @@ export function FeedbackCard({
         </div>
       )}
 
+      {/* One-time term definition (build spec §3) — authored on exactly the
+          two tasks that first need it (see Feedback.glossaryNote), never
+          repeated afterward. */}
+      {feedback.glossaryNote && (
+        <p className={styles.glossaryNote}>
+          <strong>{feedback.glossaryNote.term}</strong> — {feedback.glossaryNote.definition}
+        </p>
+      )}
+
       {hasReplayScript(replayScript) ? (
         <ExecutionReplay code={code} replayScript={replayScript} callout={replayCallout} />
       ) : propagationTrace && propagationTrace.length > 0 ? (

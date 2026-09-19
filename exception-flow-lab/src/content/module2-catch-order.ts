@@ -98,6 +98,11 @@ export const module2DiagnosticTask: Task = {
       "A `catch` clause doesn't only match its exact exception type: it also matches every subclass of that type. `FileNotFoundException` is a subclass of `IOException`, which is a subclass of `Exception`, so placing `IOException` or `Exception` before `FileNotFoundException` means that earlier clause already matches a thrown `FileNotFoundException`. Because the broader `catch` clause already matches that subtype, the later specific clause can never be selected. Java therefore treats it as unreachable and rejects the code at compile time.",
     getIncorrectExplanation: diagnosticIncorrectExplanation,
     keyRule: KEY_RULE,
+    // First use of "handler" anywhere in the app (Module 1 says only "catch
+    // clause") — defined once here, per build spec §3, rather than inside
+    // KEY_RULE itself, which every other task in this file also shows
+    // verbatim and would otherwise repeat the definition each time.
+    glossaryNote: { term: "Handler", definition: "a catch clause that can receive and handle a matching exception." },
   },
   supportContent: {
     hint: {

@@ -32,7 +32,7 @@ export const module1Retrieval: RetrievalQuestion = {
   commonMisconceptions: [
     "execution continues with the next statement in the `try` block",
     "the `catch` clause runs only after the whole `try` block finishes",
-    "both the remaining normal statements and the handler execute in sequence",
+    "both the remaining normal statements and the `catch` clause execute in sequence",
   ],
 };
 
@@ -97,16 +97,15 @@ export const module5Retrieval: RetrievalQuestion = {
   id: "m5-retrieval",
   moduleId: "module-5",
   question:
-    "Imagine an exception is thrown inside a nested method call. What determines which statements are skipped, where the exception is eventually handled, and which `catch` clause should handle it?",
+    "Trace what happens when an exception is thrown deep inside a chain of method calls: from the moment it's thrown, through how far it travels, to the `catch` clause that finally handles it.",
   referenceAnswer:
-    "Throwing the exception interrupts the current normal execution path, so remaining statements on that path are skipped. If there is no compatible local handler, the exception propagates through the active callers. Exception hierarchy determines which handlers are compatible, and propagation stops at the first compatible handler encountered. Handler design should then reflect whether related exception types require the same or different reactions.",
+    "Throwing the exception interrupts the current execution path, so its remaining statements are skipped. If there's no compatible local handler, it propagates through the active callers. Exception hierarchy determines which handlers are compatible, and propagation stops at the first one encountered. Handler design should then reflect whether the exceptions involved need the same reaction or separate ones.",
   requiredConcepts: [
-    "throwing interrupts the current normal execution path",
-    "relevant remaining statements are skipped",
-    "an unhandled exception propagates through callers",
-    "exception hierarchy determines handler compatibility",
+    "throwing interrupts the current execution path, so its remaining statements are skipped",
+    "an unhandled exception propagates through the active callers",
+    "exception hierarchy determines which handlers are compatible",
     "the first compatible handler encountered handles the exception",
-    "handler specificity/design depends on the required reaction",
+    "handler design should match whether the exceptions involved need a shared or separate reaction",
   ],
   commonMisconceptions: [
     "execution resumes with skipped statements after the handler",
