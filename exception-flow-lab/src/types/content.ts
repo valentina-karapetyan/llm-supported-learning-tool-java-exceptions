@@ -58,6 +58,15 @@ export interface Feedback {
   // different explanation under one fixed headline. Falls back to
   // `incorrectTitle` when omitted.
   getIncorrectTitle?: (response: TaskResponseData) => string;
+  // A one-time glossary aside (build spec §3), shown on FeedbackCard near
+  // the Key Rule card only when present. Authored on exactly two tasks in
+  // the whole app: m2-diagnostic (the first time "handler" is used at all —
+  // Module 1 never uses the word) and m3-diagnostic (the first time
+  // "compatible handler" specifically needs defining). Not baked into
+  // `keyRule` itself, since several tasks in the same module reuse one
+  // `keyRule` string verbatim — that would repeat the definition every time
+  // instead of showing it exactly once.
+  glossaryNote?: { term: string; definition: string };
 }
 
 // --- Per-task-type answer shapes (concrete, replacing `unknown`) ---
@@ -384,21 +393,26 @@ export interface RetrievalQuestion {
   commonMisconceptions: string[];
 }
 
-/** The shape a future LLM-backed comparison will return. Not produced or
- *  consumed anywhere yet — see retrievalComparisonService.ts's placeholder
- *  implementation, which always resolves to `undefined` instead of one of
- *  these, and RetrievalPractice.tsx's static placeholder card, which is
- *  shown in its place. Defined now so that swapping in a live comparison
- *  later only means branching on a value of this shape, not redesigning the
- *  screen around it. */
-export type RetrievalVerdict = "correct" | "partially_correct" | "incorrect";
+/** The shape the live LLM-backed comparison returns (see
+ *  retrievalComparisonService.ts) — deliberately NOT a grade. There is no
+ *  overall verdict/score/pass-fail field anywhere in this shape (build spec
+ *  §12 explicitly forbids assigning one to retrieval-practice explanations):
+ *  each required concept is classified independently, and the learner sees
+ *  a formative suggestion, never a judgment on the explanation as a whole.
+ *  `retrievalComparisonService.compare()` wraps this in a `RetrievalCheckOutcome`
+ *  so "not evaluated" (no key configured) and "evaluation failed" are never
+ *  confused with each other or with a real result. */
+export type CriterionStatus = "addressed" | "partly_addressed" | "missing";
+
+export interface RetrievalCriterionAssessment {
+  concept: string; // one of the question's requiredConcepts, verbatim
+  status: CriterionStatus;
+}
 
 export interface RetrievalComparisonResult {
-  verdict: RetrievalVerdict;
-  conceptsMentioned: string[]; // subset of the question's requiredConcepts
-  conceptsMissing: string[]; // subset of the question's requiredConcepts
-  misconceptionsDetected: string[]; // subset of the question's commonMisconceptions
-  explanation: string; // short, learner-facing
+  criteria: RetrievalCriterionAssessment[]; // one entry per requiredConcepts item, same order
+  potentialInaccuracies: string[]; // subset of commonMisconceptions the learner's answer actually shows signs of
+  improvementSuggestion: string; // "What to improve" — one concise, formative suggestion
 }
 
 /** Type guard so a component can narrow `answer`/`response` pairs safely. */
