@@ -32,7 +32,7 @@
 }
 
 .trailStepCurrent {
-  color: var(--color-accent);
+  color: var(--color-accent-text, var(--color-accent));
   font-weight: 700;
 }
 
