@@ -23,6 +23,9 @@ const STATE_LABEL: Record<ReplayLineState, string> = {
   throws: "throws here",
   skipped: "skipped",
   handled: "handles it",
+  propagates: "propagates",
+  uncaught: "uncaught",
+  unreachable: "unreachable",
 };
 
 export function CodeBlock({ code, lineStates, lineBadgeLabels, caption }: CodeBlockProps) {

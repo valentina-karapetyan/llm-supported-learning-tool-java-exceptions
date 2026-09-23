@@ -88,6 +88,33 @@
   background-color: rgba(43, 36, 112, 0.4);
 }
 
+.propagates {
+  background-color: rgba(201, 156, 58, 0.25);
+}
+
+.uncaught {
+  background-color: rgba(198, 91, 91, 0.32);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.uncaught .lineBadge {
+  background: var(--color-error);
+  color: white;
+}
+
+/* Distinct from .skipped: this line is not valid Java (a compiler
+   rejection), not just a runtime branch that wasn't taken this time. */
+.unreachable {
+  background-color: rgba(198, 91, 91, 0.16);
+  opacity: 0.7;
+}
+
+.unreachable .lineBadge {
+  background: rgba(198, 91, 91, 0.45);
+  color: white;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .line {
     transition: none;

@@ -518,8 +518,8 @@ void step1() {
     },
   },
   propagationTrace: [
-    { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws" },
-    { methodName: "process()", detail: "`catch (IOException e)` is compatible: handled here", status: "handled" },
+    { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws", lineNumber: 18 },
+    { methodName: "process()", detail: "`catch (IOException e)` is compatible: handled here", status: "handled", lineNumber: 12 },
   ],
   mixedCase: { trailLabel: "Case 3", continueLabel: "Continue to Part B" },
 };

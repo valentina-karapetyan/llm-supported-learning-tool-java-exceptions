@@ -322,6 +322,7 @@ export default function App() {
               code={task.code}
               replayScript={task.replayScript}
               replayCallout={task.replayCallout}
+              replayHeading={task.replayHeading}
               resolvedCode={task.resolvedCode}
               hierarchy={task.hierarchy}
               propagationTrace={task.propagationTrace}
@@ -386,6 +387,7 @@ export default function App() {
               code={task.code}
               replayScript={task.replayScript}
               replayCallout={task.replayCallout}
+              replayHeading={task.replayHeading}
               resolvedCode={task.resolvedCode}
               hierarchy={task.hierarchy}
               propagationTrace={task.propagationTrace}
@@ -425,6 +427,7 @@ export default function App() {
                   code={task.code}
                   replayScript={task.replayScript}
                   replayCallout={task.replayCallout}
+                  replayHeading={task.replayHeading}
                   resolvedCode={task.resolvedCode}
                   hierarchy={task.hierarchy}
                   propagationTrace={task.propagationTrace}
@@ -463,6 +466,7 @@ export default function App() {
                   code={task.code}
                   replayScript={task.replayScript}
                   replayCallout={task.replayCallout}
+                  replayHeading={task.replayHeading}
                   resolvedCode={task.resolvedCode}
                   hierarchy={task.hierarchy}
                   propagationTrace={task.propagationTrace}

@@ -18,13 +18,20 @@
 //     only where the exception originates, never where it's handled.
 //   - propagationTrace: the animated "exception moves up the call chain"
 //     visualization on the Feedback screen (PropagationReplay component) —
-//     Module 3's answer to Module 1's ExecutionReplay, since propagation
-//     crosses method boundaries in a way per-line code highlighting can't
-//     show clearly. FeedbackCard prefers this over the plain-code fallback
-//     whenever a task supplies it (see that component's branch order).
+//     Module 3's answer to Module 1's ExecutionReplay, since "no handler
+//     here, keep going" is a statement about a whole method having been
+//     passed over, not a single line the way ExecutionReplay's steps are.
+//     Each step also carries a `lineNumber` into the one merged code block
+//     above (throw statement / call site / catch clause), so the same
+//     moment is visible both in the trail and highlighted in the code
+//     itself, not just in the trail alone. FeedbackCard prefers this whole
+//     visualization over the plain-code fallback whenever a task supplies
+//     it (see that component's branch order).
 //
-// No replayScript on any task here — propagation isn't a single-code-block
-// control-flow trace, so ExecutionReplay wouldn't apply.
+// No replayScript on any task here — ExecutionReplay's flat per-line script
+// still isn't the right shape for a story that spans three methods;
+// propagationTrace (above) is Module 3's own mechanism for that, not a
+// missing feature.
 //
 // The transfer task's whole point (per the Case 3 build spec) is that
 // propagation stops at the *first* compatible handler on the way back
@@ -186,9 +193,9 @@ void parseResponse() throws ParsingException {
     },
   },
   propagationTrace: [
-    { methodName: "readProfileFile()", detail: "throws `FileNotFoundException`", status: "throws" },
-    { methodName: "loadProfile()", detail: "no handler: propagates", status: "propagates" },
-    { methodName: "start()", detail: "`catch (FileNotFoundException e)` matches: handled here", status: "handled" },
+    { methodName: "readProfileFile()", detail: "throws `FileNotFoundException`", status: "throws", lineNumber: 14 },
+    { methodName: "loadProfile()", detail: "no handler: propagates", status: "propagates", lineNumber: 10 },
+    { methodName: "start()", detail: "`catch (FileNotFoundException e)` matches: handled here", status: "handled", lineNumber: 4 },
   ],
 };
 
@@ -343,8 +350,8 @@ void step2() {
     },
   },
   propagationTrace: [
-    { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws" },
-    { methodName: "process()", detail: "`catch (IOException e)` matches: handled here", status: "handled" },
+    { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws", lineNumber: 18 },
+    { methodName: "process()", detail: "`catch (IOException e)` matches: handled here", status: "handled", lineNumber: 12 },
   ],
   isTransferTask: true,
 };
@@ -488,9 +495,9 @@ void parseSettingsFile() throws MissingKeyException {
     },
   },
   propagationTrace: [
-    { methodName: "validate()", detail: "throws `ValidationException`", status: "throws" },
-    { methodName: "save()", detail: "no handler: propagates", status: "propagates" },
-    { methodName: "run()", detail: "`catch (ApplicationException e)` matches: handled here", status: "handled" },
+    { methodName: "validate()", detail: "throws `ValidationException`", status: "throws", lineNumber: 14 },
+    { methodName: "save()", detail: "no handler: propagates", status: "propagates", lineNumber: 10 },
+    { methodName: "run()", detail: "`catch (ApplicationException e)` matches: handled here", status: "handled", lineNumber: 4 },
   ],
   isTransferTask: true,
 };
