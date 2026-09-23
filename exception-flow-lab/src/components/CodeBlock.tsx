@@ -18,6 +18,24 @@ export interface CodeBlockProps {
   caption?: string;
 }
 
+// Shared by ExecutionReplay and PropagationReplay: both reveal a script one
+// step at a time and need a `{ lineNumber: value }` snapshot of everything
+// revealed so far, built fresh each time `revealCount` advances.
+export function buildRevealedLineMap<TStep, TValue>(
+  steps: TStep[],
+  revealCount: number,
+  getLineNumber: (step: TStep) => number | undefined,
+  getValue: (step: TStep) => TValue | undefined,
+): Partial<Record<number, TValue>> {
+  const map: Partial<Record<number, TValue>> = {};
+  for (const step of steps.slice(0, revealCount)) {
+    const lineNumber = getLineNumber(step);
+    const value = getValue(step);
+    if (lineNumber !== undefined && value !== undefined) map[lineNumber] = value;
+  }
+  return map;
+}
+
 const STATE_LABEL: Record<ReplayLineState, string> = {
   active: "runs",
   throws: "throws here",

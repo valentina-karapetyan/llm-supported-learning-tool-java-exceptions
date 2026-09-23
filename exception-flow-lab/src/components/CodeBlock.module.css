@@ -69,13 +69,15 @@
   background-color: rgba(15, 155, 142, 0.22);
 }
 
-.throws {
+.throws,
+.uncaught {
   background-color: rgba(198, 91, 91, 0.32);
   color: #ffffff;
   font-weight: 600;
 }
 
-.throws .lineBadge {
+.throws .lineBadge,
+.uncaught .lineBadge {
   background: var(--color-error);
   color: white;
 }
@@ -90,17 +92,6 @@
 
 .propagates {
   background-color: rgba(201, 156, 58, 0.25);
-}
-
-.uncaught {
-  background-color: rgba(198, 91, 91, 0.32);
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.uncaught .lineBadge {
-  background: var(--color-error);
-  color: white;
 }
 
 /* Distinct from .skipped: this line is not valid Java (a compiler

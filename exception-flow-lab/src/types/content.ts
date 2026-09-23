@@ -230,7 +230,10 @@ export interface CallChainTrailStep {
   isOrigin?: boolean;
 }
 
-export type PropagationStepStatus = "throws" | "propagates" | "handled" | "uncaught";
+// A structural subset of ReplayLineState, not an independent list — keeps
+// PropagationReplay's `status` assignable straight into CodeBlock's
+// lineStates without a separate mapping step.
+export type PropagationStepStatus = Extract<ReplayLineState, "throws" | "propagates" | "handled" | "uncaught">;
 
 export interface PropagationStep {
   methodName: string; // e.g. "readProfileFile()"
@@ -239,8 +242,7 @@ export interface PropagationStep {
   // 1-indexed line in `code` this step is about (e.g. the `throw` statement,
   // the call site a propagating exception passes through, or the matching
   // `catch` clause). Optional — omit for a step with no single representative
-  // line. Values here are exactly the ReplayLineState values of the same
-  // name, so PropagationReplay can assign `status` straight into lineStates.
+  // line.
   lineNumber?: number;
 }
 

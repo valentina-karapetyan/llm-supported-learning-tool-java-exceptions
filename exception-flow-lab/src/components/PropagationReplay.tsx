@@ -19,8 +19,8 @@
 // eye. A step with no `lineNumber` just doesn't highlight anything.
 
 import { useEffect, useMemo, useState } from "react";
-import type { PropagationStep, ReplayLineState } from "../types/content";
-import { CodeBlock } from "./CodeBlock";
+import type { PropagationStep } from "../types/content";
+import { buildRevealedLineMap, CodeBlock } from "./CodeBlock";
 import { InlineCode } from "./InlineCode";
 import styles from "./PropagationReplay.module.css";
 
@@ -90,14 +90,11 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
   // Optional per-line highlighting on top of the trail below — a step with
   // no `lineNumber` just contributes nothing here, same as ExecutionReplay's
   // lineStates. `status` values are exactly ReplayLineState values of the
-  // same name (see PropagationStep), so no mapping is needed.
-  const lineStates = useMemo(() => {
-    const map: Partial<Record<number, ReplayLineState>> = {};
-    for (const step of trace.slice(0, revealCount)) {
-      if (step.lineNumber !== undefined) map[step.lineNumber] = step.status;
-    }
-    return map;
-  }, [trace, revealCount]);
+  // same name (see PropagationStepStatus), so no mapping is needed.
+  const lineStates = useMemo(
+    () => buildRevealedLineMap(trace, revealCount, (s) => s.lineNumber, (s) => s.status),
+    [trace, revealCount],
+  );
 
   const animationDone = revealCount >= trace.length;
 
