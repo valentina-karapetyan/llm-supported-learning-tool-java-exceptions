@@ -166,7 +166,7 @@ export function RetrievalPractice({ retrievalQuestion, completeLabel, onComplete
             </p>
           </div>
 
-          <p className={styles.reviseHint}>Revise my explanation — edit your answer above and check again when you're ready.</p>
+          <p className={styles.reviseHint}>Revise my explanation. Edit your answer above and check again when you're ready.</p>
         </div>
       )}
 
