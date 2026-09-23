@@ -63,15 +63,22 @@ export const module4DiagnosticTask: Task = {
     { label: "AccountLockedException", depth: 1 },
   ],
   orientationNote:
-    "`processPayment()` may throw `InsufficientFundsException` or `AccountLockedException`. Each option below is a complete alternative for the missing `catch` clause(s): choose the design that best matches the requirement.",
-  question: "Both payment-related exceptions should produce the same response: `payment failed`. Choose the most appropriate handler design.",
+    "`processPayment()` may throw `InsufficientFundsException` or `AccountLockedException`. Each option below is a complete alternative for the missing `catch` clause(s).",
+  question:
+    "Required behaviour:\n`InsufficientFundsException` → `payment failed`\n`AccountLockedException` → `payment failed`\n\nWhich handler design best satisfies this requirement?",
   answer: {
     type: "handler_refactoring",
     data: {
+      // Labels are neutral letters only (build spec §6) — the full code is
+      // always shown alongside each one, and any earlier label wording like
+      // "overly general" or "duplicated handling" gave away the answer by
+      // elimination before the learner reasoned about the code at all. That
+      // interpretation now lives only in the feedback below, shown after
+      // submission.
       options: [
         {
           id: "m4d-exception",
-          label: "A: overly general: `catch (Exception e)`",
+          label: "A",
           code: `catch (Exception e) {
     System.out.println("payment failed");
 }`,
@@ -79,7 +86,7 @@ export const module4DiagnosticTask: Task = {
         },
         {
           id: "m4d-duplicated",
-          label: "B: duplicated handling: two separate `catch` clauses",
+          label: "B",
           code: `catch (InsufficientFundsException e) {
     System.out.println("payment failed");
 }
@@ -90,7 +97,7 @@ catch (AccountLockedException e) {
         },
         {
           id: "m4d-superclass",
-          label: "C: shared superclass: `catch (PaymentException e)`",
+          label: "C",
           code: `catch (PaymentException e) {
     System.out.println("payment failed");
 }`,
@@ -201,16 +208,17 @@ export const module4TransferTask: Task = {
     { label: "AccountLockedException", depth: 1 },
   ],
   orientationNote:
-    "`processPayment()` may throw `InsufficientFundsException` or `AccountLockedException`. The requirement has changed since the last case: read it carefully before choosing.",
+    "`processPayment()` may throw `InsufficientFundsException` or `AccountLockedException`. Each option below is a complete alternative for the missing `catch` clause(s). The requirement has changed since the last case.",
   question:
-    "Required reactions:\n• `InsufficientFundsException` → `try a smaller amount`\n• `AccountLockedException` → `contact support`\n\nChoose the most appropriate handler design.",
+    "Required behaviour:\n`InsufficientFundsException` → `try a smaller amount`\n`AccountLockedException` → `contact support`\n\nWhich handler design best satisfies this requirement?",
   answer: {
     type: "handler_refactoring",
     data: {
+      // Neutral letters only — see the diagnostic task's comment above.
       options: [
         {
           id: "m4t-payment",
-          label: "A: one shared handler: `catch (PaymentException e)`",
+          label: "A",
           code: `catch (PaymentException e) {
     System.out.println("payment failed");
 }`,
@@ -218,7 +226,7 @@ export const module4TransferTask: Task = {
         },
         {
           id: "m4t-exception",
-          label: "B: overly general: `catch (Exception e)`",
+          label: "B",
           code: `catch (Exception e) {
     System.out.println("payment failed");
 }`,
@@ -226,7 +234,7 @@ export const module4TransferTask: Task = {
         },
         {
           id: "m4t-broad-second",
-          label: "C: one specific, one still too broad: `catch (PaymentException e)`",
+          label: "C",
           code: `catch (InsufficientFundsException e) {
     System.out.println("try a smaller amount");
 }
@@ -237,7 +245,7 @@ catch (PaymentException e) {
         },
         {
           id: "m4t-distinct",
-          label: "D: separate handlers, each with its own message",
+          label: "D",
           code: `catch (InsufficientFundsException e) {
     System.out.println("try a smaller amount");
 }
@@ -352,16 +360,17 @@ export const module4TransferRetryTask: Task = {
     { label: "InvalidShippingAddressException", depth: 1 },
   ],
   orientationNote:
-    "`submitOrder()` may throw `OutOfStockException` or `InvalidShippingAddressException`. The requirement has changed since the last case: read it carefully before choosing.",
+    "`submitOrder()` may throw `OutOfStockException` or `InvalidShippingAddressException`. Each option below is a complete alternative for the missing `catch` clause(s). The requirement has changed since the last case.",
   question:
-    "Required reactions:\n• `OutOfStockException` → `item unavailable`\n• `InvalidShippingAddressException` → `update your address`\n\nChoose the most appropriate handler design.",
+    "Required behaviour:\n`OutOfStockException` → `item unavailable`\n`InvalidShippingAddressException` → `update your address`\n\nWhich handler design best satisfies this requirement?",
   answer: {
     type: "handler_refactoring",
     data: {
+      // Neutral letters only — see the diagnostic task's comment above.
       options: [
         {
           id: "m4r-order",
-          label: "A: one shared handler: `catch (OrderException e)`",
+          label: "A",
           code: `catch (OrderException e) {
     System.out.println("order failed");
 }`,
@@ -369,7 +378,7 @@ export const module4TransferRetryTask: Task = {
         },
         {
           id: "m4r-exception",
-          label: "B: overly general: `catch (Exception e)`",
+          label: "B",
           code: `catch (Exception e) {
     System.out.println("order failed");
 }`,
@@ -377,7 +386,7 @@ export const module4TransferRetryTask: Task = {
         },
         {
           id: "m4r-broad-second",
-          label: "C: one specific, one still too broad: `catch (OrderException e)`",
+          label: "C",
           code: `catch (OutOfStockException e) {
     System.out.println("item unavailable");
 }
@@ -388,7 +397,7 @@ catch (OrderException e) {
         },
         {
           id: "m4r-distinct",
-          label: "D: separate handlers, each with its own message",
+          label: "D",
           code: `catch (OutOfStockException e) {
     System.out.println("item unavailable");
 }

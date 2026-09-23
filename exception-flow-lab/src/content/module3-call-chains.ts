@@ -18,13 +18,20 @@
 //     only where the exception originates, never where it's handled.
 //   - propagationTrace: the animated "exception moves up the call chain"
 //     visualization on the Feedback screen (PropagationReplay component) —
-//     Module 3's answer to Module 1's ExecutionReplay, since propagation
-//     crosses method boundaries in a way per-line code highlighting can't
-//     show clearly. FeedbackCard prefers this over the plain-code fallback
-//     whenever a task supplies it (see that component's branch order).
+//     Module 3's answer to Module 1's ExecutionReplay, since "no handler
+//     here, keep going" is a statement about a whole method having been
+//     passed over, not a single line the way ExecutionReplay's steps are.
+//     Each step also carries a `lineNumber` into the one merged code block
+//     above (throw statement / call site / catch clause), so the same
+//     moment is visible both in the trail and highlighted in the code
+//     itself, not just in the trail alone. FeedbackCard prefers this whole
+//     visualization over the plain-code fallback whenever a task supplies
+//     it (see that component's branch order).
 //
-// No replayScript on any task here — propagation isn't a single-code-block
-// control-flow trace, so ExecutionReplay wouldn't apply.
+// No replayScript on any task here — ExecutionReplay's flat per-line script
+// still isn't the right shape for a story that spans three methods;
+// propagationTrace (above) is Module 3's own mechanism for that, not a
+// missing feature.
 //
 // The transfer task's whole point (per the Case 3 build spec) is that
 // propagation stops at the *first* compatible handler on the way back
@@ -39,7 +46,7 @@ import type { Task, TaskResponseData } from "../types/content";
 import { SUPPORT_TITLES } from "../types/content";
 
 const PROPAGATION_KEY_RULE =
-  "If a method has no matching handler, the exception propagates to its caller. Java continues up the calling chain until it finds a compatible `catch` clause. If none is found, the exception remains uncaught.";
+  "If a method has no compatible handler, the exception propagates to its caller. Java continues up the calling chain until it finds one. If none is found, the exception remains uncaught.";
 
 const FIRST_MATCH_KEY_RULE = "Propagation stops at the first compatible handler encountered on the way back through the call chain.";
 
@@ -93,7 +100,7 @@ export const module3DiagnosticTask: Task = {
   title: "Call Chains & Propagation",
   learningObjective: "Understand that an uncaught exception propagates up the call chain to its caller, continuing until a matching handler is found.",
   misconception:
-    "Assuming an exception is handled in the method where it's thrown, or that the immediate caller must contain the handler, rather than tracing propagation up through the full call chain until a matching `catch` clause is found.",
+    "Assuming an exception is handled in the method where it's thrown, or that the immediate caller must contain the handler, rather than tracing propagation up through the full call chain until a compatible handler is found.",
   code: `void start() {
     try {
         loadProfile();
@@ -134,6 +141,14 @@ void readProfileFile() throws FileNotFoundException {
     getIncorrectTitle: diagnosticIncorrectTitle,
     getIncorrectExplanation: diagnosticIncorrectExplanation,
     keyRule: PROPAGATION_KEY_RULE,
+    // First point in the module where "compatible handler" needs its own
+    // definition (build spec §5) — the term (and its near-synonyms) recurs
+    // through this module's key rules without ever being defined elsewhere.
+    // Same one-time mechanism as m2-diagnostic's — see Feedback.glossaryNote.
+    glossaryNote: {
+      term: "Compatible handler",
+      definition: "catches the thrown exception type or one of its supertypes.",
+    },
   },
   supportContent: {
     hint: {
@@ -178,9 +193,9 @@ void parseResponse() throws ParsingException {
     },
   },
   propagationTrace: [
-    { methodName: "readProfileFile()", detail: "throws `FileNotFoundException`", status: "throws" },
-    { methodName: "loadProfile()", detail: "no handler: propagates", status: "propagates" },
-    { methodName: "start()", detail: "`catch (FileNotFoundException e)` matches: handled here", status: "handled" },
+    { methodName: "readProfileFile()", detail: "throws `FileNotFoundException`", status: "throws", lineNumber: 14 },
+    { methodName: "loadProfile()", detail: "no handler: propagates", status: "propagates", lineNumber: 10 },
+    { methodName: "start()", detail: "`catch (FileNotFoundException e)` matches: handled here", status: "handled", lineNumber: 4 },
   ],
 };
 
@@ -279,7 +294,7 @@ void readFile() throws FileNotFoundException {
     },
   },
   feedback: {
-    correctTitle: "Correct: the nearest matching handler wins.",
+    correctTitle: "Correct: the nearest compatible handler wins.",
     correctExplanation: TRANSFER_CORE,
     incorrectTitle: "Check which handler is reached first.",
     incorrectExplanation: TRANSFER_CORE,
@@ -335,8 +350,8 @@ void step2() {
     },
   },
   propagationTrace: [
-    { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws" },
-    { methodName: "process()", detail: "`catch (IOException e)` matches: handled here", status: "handled" },
+    { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws", lineNumber: 18 },
+    { methodName: "process()", detail: "`catch (IOException e)` matches: handled here", status: "handled", lineNumber: 12 },
   ],
   isTransferTask: true,
 };
@@ -480,9 +495,9 @@ void parseSettingsFile() throws MissingKeyException {
     },
   },
   propagationTrace: [
-    { methodName: "validate()", detail: "throws `ValidationException`", status: "throws" },
-    { methodName: "save()", detail: "no handler: propagates", status: "propagates" },
-    { methodName: "run()", detail: "`catch (ApplicationException e)` matches: handled here", status: "handled" },
+    { methodName: "validate()", detail: "throws `ValidationException`", status: "throws", lineNumber: 14 },
+    { methodName: "save()", detail: "no handler: propagates", status: "propagates", lineNumber: 10 },
+    { methodName: "run()", detail: "`catch (ApplicationException e)` matches: handled here", status: "handled", lineNumber: 4 },
   ],
   isTransferTask: true,
 };

@@ -8,13 +8,22 @@
 // single-select "read already-written code and judge it" task (single_choice)
 // — a genuinely different interaction, per the Case 2 revision.
 //
-// Unlike Module 1, this isn't a runtime control-flow trace — catch clause
-// order/reachability is a static/compile-time rule (an unreachable catch
-// block is a compiler error in Java, not just bad style), so these tasks
-// have no replayScript. FeedbackCard falls back to a plain code block for
-// them, plus a separate ExceptionHierarchy panel (see `hierarchy` below) —
-// the class hierarchy is task information the learner reads, never Java
-// syntax spliced into the code or a trailing comment.
+// Unlike Module 1, catch clause order/reachability is fundamentally a
+// static/compile-time rule (an unreachable catch block is a compiler error
+// in Java, not just bad style) rather than a runtime one — but each task
+// here still gets its own ExecutionReplay-driven visualization, in whichever
+// of the two shapes actually fits its code (see Task.replayScript /
+// Task.replayHeading in types/content.ts):
+//   - m2-diagnostic and m2-transfer-retry's code genuinely compiles and
+//     runs, so their replayScript is a real runtime trace, same shape as
+//     Module 1's.
+//   - m2-transfer's whole point is code that does NOT compile (that's the
+//     bug to find), so its replayScript is a compile-time reachability
+//     check instead — heading overridden, and "unreachable" states instead
+//     of "skipped" ones, so it never implies this code actually ran.
+// Every task also keeps its separate ExceptionHierarchy panel (see
+// `hierarchy` below) — the class hierarchy is task information the learner
+// reads, never Java syntax spliced into the code or a trailing comment.
 //
 // The transfer task (m2-transfer) has a `retryVariant` (m2-transfer-retry)
 // for the one allowed retry after a wrong answer — a different question
@@ -98,6 +107,11 @@ export const module2DiagnosticTask: Task = {
       "A `catch` clause doesn't only match its exact exception type: it also matches every subclass of that type. `FileNotFoundException` is a subclass of `IOException`, which is a subclass of `Exception`, so placing `IOException` or `Exception` before `FileNotFoundException` means that earlier clause already matches a thrown `FileNotFoundException`. Because the broader `catch` clause already matches that subtype, the later specific clause can never be selected. Java therefore treats it as unreachable and rejects the code at compile time.",
     getIncorrectExplanation: diagnosticIncorrectExplanation,
     keyRule: KEY_RULE,
+    // First use of "handler" anywhere in the app (Module 1 says only "catch
+    // clause") — defined once here, per build spec §3, rather than inside
+    // KEY_RULE itself, which every other task in this file also shows
+    // verbatim and would otherwise repeat the definition each time.
+    glossaryNote: { term: "Handler", definition: "a catch clause that can receive and handle a matching exception." },
   },
   supportContent: {
     hint: {
@@ -135,9 +149,14 @@ export const module2DiagnosticTask: Task = {
 // only ever catches what's still left unmatched by the ones above it.`,
     },
   },
-  // No replayScript — catch order is a static/compile-time rule, so there's
-  // nothing here for ExecutionReplay to animate. FeedbackCard shows
-  // resolvedCode instead (see hasReplayScript in types/content.ts).
+  // `code` above has no catch clauses at all — nothing to animate over until
+  // the learner's answer fills them in. resolvedCode is the correctly-ordered
+  // result, and ExecutionReplay animates that instead of `code` whenever both
+  // are present (see FeedbackCard). This is a real runtime trace: this order
+  // compiles and runs, so a thrown FileNotFoundException genuinely does
+  // reach the first, most specific clause and stop there — the broader
+  // clauses below are "skipped" in the same sense Module 1 uses that word,
+  // not unreachable.
   resolvedCode: `void loadConfig() {
     try {
         readConfigFile(); // may throw FileNotFoundException
@@ -150,6 +169,23 @@ export const module2DiagnosticTask: Task = {
         System.out.println("unexpected error loading config");
     }
 }`,
+  replayScript: [
+    { lineNumber: 2, state: "active" }, //     try {
+    // No custom badgeLabel here (unlike Module 1's convention) — the line's
+    // own trailing comment already names the exception, and this class name
+    // is long enough that repeating it in a badge on top of that comment
+    // overflows the code block on this narrow a line. Default "throws here"
+    // label instead.
+    { lineNumber: 3, state: "throws" }, //         readConfigFile();
+    { lineNumber: 4, state: "skipped" }, //         System.out.println("config loaded");
+    { lineNumber: 5, state: "handled" }, //     } catch (FileNotFoundException e) {
+    { lineNumber: 6, state: "handled" }, //         System.out.println("config file missing");
+    { lineNumber: 7, state: "skipped" }, //     } catch (IOException e) {
+    { lineNumber: 8, state: "skipped" }, //         System.out.println("could not read config file");
+    { lineNumber: 9, state: "skipped" }, //     } catch (Exception e) {
+    { lineNumber: 10, state: "skipped" }, //         System.out.println("unexpected error loading config");
+  ],
+  replayCallout: "the most specific matching clause claims it — the broader clauses below never get a turn",
 };
 
 // --- 2. Transfer task (baseline) ---
@@ -213,6 +249,23 @@ export const module2TransferTask: Task = {
     },
     keyRule: KEY_RULE,
   },
+  // This code does NOT compile — that's the entire question. A runtime
+  // "Watch it happen" replay would claim Java actually executes this, which
+  // is false: the compiler rejects it before anything runs. So this
+  // replayScript is framed as a compile-time reachability check instead
+  // (replayHeading override below), and uses "unreachable" rather than
+  // "skipped" for `catch (SAXParseException e)` — that clause isn't a valid
+  // branch that happened not to run this time, it's invalid Java.
+  replayScript: [
+    { lineNumber: 3, state: "throws" }, //         parseXml(); — comment on this line already names the type
+    { lineNumber: 4, state: "handled", badgeLabel: "already matches SAXParseException too" }, //     } catch (SAXException e) {
+    { lineNumber: 5, state: "handled" }, //         System.out.println("XML error");
+    { lineNumber: 6, state: "unreachable" }, //     } catch (SAXParseException e) {
+    { lineNumber: 7, state: "unreachable" }, //         System.out.println("Malformed XML");
+  ],
+  replayHeading: "Watch the compiler check it",
+  replayCallout:
+    "the earlier `catch (SAXException e)` already matches everything `catch (SAXParseException e)` could — that later clause is unreachable, so Java rejects the code at compile time",
   supportContent: {
     hint: {
       supportType: "hint",
@@ -313,6 +366,20 @@ export const module2TransferRetryTask: Task = {
     },
     keyRule: KEY_RULE,
   },
+  // Unlike m2-transfer, this order is correct and this code compiles and
+  // runs, so this is a real runtime trace: catch (Exception e) is entirely
+  // legal here, it just never gets a turn for *this* thrown type, hence
+  // "skipped" rather than "unreachable" (contrast m2-transfer's replayScript
+  // above).
+  replayScript: [
+    { lineNumber: 2, state: "active" }, //     try {
+    { lineNumber: 3, state: "throws" }, //         processPayment(); — comment on this line already names the type
+    { lineNumber: 4, state: "handled" }, //     } catch (PaymentException e) {
+    { lineNumber: 5, state: "handled" }, //         System.out.println("payment failed");
+    { lineNumber: 6, state: "skipped" }, //     } catch (Exception e) {
+    { lineNumber: 7, state: "skipped" }, //         System.out.println("unexpected error");
+  ],
+  replayCallout: "`InsufficientFundsException` matches through inheritance — `PaymentException` is one of its supertypes",
   supportContent: {
     hint: {
       supportType: "hint",

@@ -30,7 +30,7 @@ export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubm
       ? isDistinctRetryVariant
         ? "One more try: here's a genuinely different case. Same rule."
         : "One more try, look at it again. Same rule as before."
-      : "Transfer task: apply the same rule to a new case.";
+      : "Try a new case: apply the same rule to a new situation.";
 
   return (
     <TaskScreen

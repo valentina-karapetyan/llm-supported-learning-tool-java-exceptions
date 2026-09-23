@@ -35,15 +35,26 @@ export interface TaskScreenProps {
   // Omitted by flows that have no diagnostic/transfer distinction (Module 5's
   // mixed cases), which supply `caseTrail` instead.
   stage?: TaskStage;
-  onSubmit: (submission: TaskSubmission) => void;
+  // Optional so a read-only review screen (see ReviewAnswer.tsx, App.tsx's
+  // task_review case) can render this screen with nothing meaningful to
+  // submit — every interactive caller still always passes a real function.
+  onSubmit?: (submission: TaskSubmission) => void;
   onBackToMap: () => void;
   eyebrow?: React.ReactNode;
   // Explicit CaseNav trail, overriding the Task → Feedback → Transfer one
   // derived from `stage` below.
   caseTrail?: CaseTrail;
+  // Overrides CaseNav's default "← Case files" back-link text — e.g.
+  // task_review uses "← Back to module summary" instead.
+  backLabel?: string;
+  // Replaces the default interactive <TaskRenderer> with arbitrary content —
+  // used by task_review to show the learner's past answer (read-only)
+  // instead of a fresh answering widget. Every other caller omits this and
+  // gets the normal interactive TaskRenderer.
+  answerSlot?: React.ReactNode;
 }
 
-export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow, caseTrail }: TaskScreenProps) {
+export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow, caseTrail, backLabel, answerSlot }: TaskScreenProps) {
   // Lightweight per-case progress indicator (build spec's Case 1 revision,
   // §10, since simplified to TASK → FEEDBACK → TRANSFER), opted into by
   // Module 1 and (per the Case 3 build) Module 3 — Module 2 deliberately
@@ -72,12 +83,12 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow, caseTr
   const showIntro = task.moduleId === "module-1";
 
   function handleAnswerSubmit(response: TaskResponseData) {
-    onSubmit({ response });
+    onSubmit?.({ response });
   }
 
   return (
     <div className={styles.wrapper}>
-      <CaseNav onBackToMap={onBackToMap} progressStage={progressStage} trail={caseTrail} />
+      <CaseNav onBackToMap={onBackToMap} progressStage={progressStage} trail={caseTrail} backLabel={backLabel} />
       {eyebrow}
       <p className={styles.caseLabel}>{task.caseLabel}</p>
       <h1 className={styles.title}>{task.title}</h1>
@@ -99,14 +110,18 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow, caseTr
           <InlineCode text={task.orientationNote} />
         </p>
       )}
-      <CodeBlock code={task.code} />
+      {/* data-tour-id: a plain marker attribute GuidedTour.tsx queries for
+          by CSS selector — inert otherwise, present regardless of module. */}
+      <div data-tour-id="task-code">
+        <CodeBlock code={task.code} />
+      </div>
       {task.hierarchy && <ExceptionHierarchy nodes={task.hierarchy} />}
       {task.callChainTrail && <CallChainTrail steps={task.callChainTrail} />}
 
       <p className={styles.question}>
         <InlineCode text={task.question} />
       </p>
-      <TaskRenderer task={task} onSubmit={handleAnswerSubmit} />
+      {answerSlot ?? <TaskRenderer task={task} onSubmit={handleAnswerSubmit} />}
     </div>
   );
 }

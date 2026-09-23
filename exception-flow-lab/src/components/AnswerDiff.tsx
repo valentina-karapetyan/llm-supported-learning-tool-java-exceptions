@@ -45,6 +45,7 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
           labelOf={labelOf}
           missingHint="These statements do execute, but you didn't select them:"
           extraHint="You selected these, but they don't execute:"
+          correctHint="You correctly selected every statement that executes:"
         />
       );
     }
@@ -54,7 +55,11 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
       const step = answer.data.steps.find((s) => s.id === response.selectedStepId);
       const correctStep = answer.data.steps.find((s) => s.id === answer.data.correctHandlerStepId);
       return (
-        <SingleChoiceDiff yourLabel={step?.methodName ?? response.selectedStepId} correctLabel={correctStep?.methodName ?? "?"} />
+        <SingleChoiceDiff
+          yourLabel={step?.methodName ?? response.selectedStepId}
+          correctLabel={correctStep?.methodName ?? "?"}
+          isCorrect={response.selectedStepId === answer.data.correctHandlerStepId}
+        />
       );
     }
 
@@ -63,7 +68,11 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
       const yourOption = answer.data.options.find((o) => o.id === response.selectedOptionId);
       const correctOption = answer.data.options.find((o) => o.id === answer.data.correctOptionId);
       return (
-        <SingleChoiceDiff yourLabel={yourOption?.label ?? response.selectedOptionId} correctLabel={correctOption?.label ?? "?"} />
+        <SingleChoiceDiff
+          yourLabel={yourOption?.label ?? response.selectedOptionId}
+          correctLabel={correctOption?.label ?? "?"}
+          isCorrect={response.selectedOptionId === answer.data.correctOptionId}
+        />
       );
     }
 
@@ -72,7 +81,11 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
       const yourOption = answer.data.options.find((o) => o.id === response.selectedOptionId);
       const correctOption = answer.data.options.find((o) => o.isCorrect);
       return (
-        <SingleChoiceDiff yourLabel={yourOption?.label ?? response.selectedOptionId} correctLabel={correctOption?.label ?? "?"} />
+        <SingleChoiceDiff
+          yourLabel={yourOption?.label ?? response.selectedOptionId}
+          correctLabel={correctOption?.label ?? "?"}
+          isCorrect={Boolean(yourOption?.isCorrect)}
+        />
       );
     }
 
@@ -81,7 +94,11 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
       const yourOption = answer.data.options.find((o) => o.id === response.selectedOptionId);
       const correctOption = answer.data.options.find((o) => o.isCorrect);
       return (
-        <SingleChoiceDiff yourLabel={yourOption?.label ?? response.selectedOptionId} correctLabel={correctOption?.label ?? "?"} />
+        <SingleChoiceDiff
+          yourLabel={yourOption?.label ?? response.selectedOptionId}
+          correctLabel={correctOption?.label ?? "?"}
+          isCorrect={Boolean(yourOption?.isCorrect)}
+        />
       );
     }
 
@@ -202,16 +219,28 @@ function SetDiff({
   labelOf,
   missingHint,
   extraHint,
+  correctHint,
 }: {
   correctIds: string[];
   yourIds: string[];
   labelOf: (id: string) => string;
   missingHint: string;
   extraHint: string;
+  // Shown instead of the two hints above when the selection was fully
+  // correct — needed for ReviewAnswer.tsx, which (unlike the live Feedback
+  // screen's `{!wasCorrect && <AnswerDiff/>}` gate) calls this unconditionally
+  // and would otherwise render nothing at all for a correct past answer.
+  correctHint: string;
 }) {
   const missing = correctIds.filter((id) => !yourIds.includes(id));
   const extra = yourIds.filter((id) => !correctIds.includes(id));
-  if (missing.length === 0 && extra.length === 0) return null;
+  if (missing.length === 0 && extra.length === 0) {
+    return (
+      <div className={styles.wrapper}>
+        <DiffHint hint={correctHint} ids={correctIds} labelOf={labelOf} positive />
+      </div>
+    );
+  }
   return (
     <div className={styles.wrapper}>
       {missing.length > 0 && <DiffHint hint={missingHint} ids={missing} labelOf={labelOf} />}
@@ -220,7 +249,16 @@ function SetDiff({
   );
 }
 
-function SingleChoiceDiff({ yourLabel, correctLabel }: { yourLabel: string; correctLabel: string }) {
+function SingleChoiceDiff({ yourLabel, correctLabel, isCorrect }: { yourLabel: string; correctLabel: string; isCorrect: boolean }) {
+  if (isCorrect) {
+    return (
+      <div className={styles.wrapper}>
+        <p className={styles.singleLine}>
+          <span className={styles.rowMatch}>✓ You picked:</span> <InlineCode text={yourLabel} />
+        </p>
+      </div>
+    );
+  }
   return (
     <div className={styles.wrapper}>
       <p className={styles.singleLine}>
@@ -233,9 +271,19 @@ function SingleChoiceDiff({ yourLabel, correctLabel }: { yourLabel: string; corr
   );
 }
 
-function DiffHint({ hint, ids, labelOf }: { hint: string; ids: string[]; labelOf: (id: string) => string }) {
+function DiffHint({
+  hint,
+  ids,
+  labelOf,
+  positive,
+}: {
+  hint: string;
+  ids: string[];
+  labelOf: (id: string) => string;
+  positive?: boolean;
+}) {
   return (
-    <div className={styles.hint}>
+    <div className={[styles.hint, positive ? styles.hintPositive : ""].join(" ")}>
       <p className={styles.hintText}>{hint}</p>
       <ul className={styles.hintList}>
         {ids.map((id) => (

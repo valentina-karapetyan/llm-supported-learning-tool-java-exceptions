@@ -18,11 +18,32 @@ export interface CodeBlockProps {
   caption?: string;
 }
 
+// Shared by ExecutionReplay and PropagationReplay: both reveal a script one
+// step at a time and need a `{ lineNumber: value }` snapshot of everything
+// revealed so far, built fresh each time `revealCount` advances.
+export function buildRevealedLineMap<TStep, TValue>(
+  steps: TStep[],
+  revealCount: number,
+  getLineNumber: (step: TStep) => number | undefined,
+  getValue: (step: TStep) => TValue | undefined,
+): Partial<Record<number, TValue>> {
+  const map: Partial<Record<number, TValue>> = {};
+  for (const step of steps.slice(0, revealCount)) {
+    const lineNumber = getLineNumber(step);
+    const value = getValue(step);
+    if (lineNumber !== undefined && value !== undefined) map[lineNumber] = value;
+  }
+  return map;
+}
+
 const STATE_LABEL: Record<ReplayLineState, string> = {
   active: "runs",
   throws: "throws here",
   skipped: "skipped",
   handled: "handles it",
+  propagates: "propagates",
+  uncaught: "uncaught",
+  unreachable: "unreachable",
 };
 
 export function CodeBlock({ code, lineStates, lineBadgeLabels, caption }: CodeBlockProps) {
@@ -44,7 +65,10 @@ export function CodeBlock({ code, lineStates, lineBadgeLabels, caption }: CodeBl
                   {lineNumber}
                 </span>
                 <span className={styles.lineText}>{line || " "}</span>
-                {state && (state === "skipped" || state === "throws") && (
+                {/* Every state gets a visible text badge, not just skipped/
+                    throws — build spec §17: the state must be understandable
+                    without relying only on background color. */}
+                {state && (
                   <span className={[styles.lineBadge, customBadge ? styles.lineBadgeCustom : ""].join(" ")}>
                     {customBadge ?? STATE_LABEL[state]}
                   </span>

@@ -8,14 +8,19 @@
 // lines within one code block — propagation crosses method boundaries,
 // which per-line highlighting inside a single snippet can't represent.
 //
-// Deliberately not built on top of ExecutionReplay/CodeBlock's lineStates —
-// that mechanism highlights lines *within* one method's execution, but
-// "no handler here, keep going" isn't a line state, it's a statement about
-// an entire method having been passed over.
+// Deliberately not built *as* ExecutionReplay — "no handler here, keep
+// going" is a statement about an entire method having been passed over, not
+// a single line, so the trail below (one entry per method, connected by
+// arrows) stays the main visualization regardless of code layout. It does
+// reuse CodeBlock's lineStates, the same mechanism ExecutionReplay uses, but
+// only as an optional add-on: a step can supply `lineNumber` to also
+// highlight the one line in Module 3's merged multi-method code block that
+// it's about, so a learner isn't left checking the trail against the code by
+// eye. A step with no `lineNumber` just doesn't highlight anything.
 
 import { useEffect, useMemo, useState } from "react";
 import type { PropagationStep } from "../types/content";
-import { CodeBlock } from "./CodeBlock";
+import { buildRevealedLineMap, CodeBlock } from "./CodeBlock";
 import { InlineCode } from "./InlineCode";
 import styles from "./PropagationReplay.module.css";
 
@@ -36,6 +41,17 @@ const STATUS_CLASS: Record<PropagationStep["status"], string> = {
   propagates: styles.detailPropagates,
   handled: styles.detailHandled,
   uncaught: styles.detailUncaught,
+};
+
+// Build spec §17: a status must be understandable without relying only on
+// colour — `throws` and `uncaught` previously shared identical styling
+// despite being semantically opposite (start of the story vs. final
+// failure), so each status gets its own icon, not just a color class.
+const STATUS_ICON: Record<PropagationStep["status"], string> = {
+  throws: "⚡",
+  propagates: "→",
+  handled: "✓",
+  uncaught: "✗",
 };
 
 export function PropagationReplay({ code, trace }: PropagationReplayProps) {
@@ -71,6 +87,15 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trace, reducedMotion, runId]);
 
+  // Optional per-line highlighting on top of the trail below — a step with
+  // no `lineNumber` just contributes nothing here, same as ExecutionReplay's
+  // lineStates. `status` values are exactly ReplayLineState values of the
+  // same name (see PropagationStepStatus), so no mapping is needed.
+  const lineStates = useMemo(
+    () => buildRevealedLineMap(trace, revealCount, (s) => s.lineNumber, (s) => s.status),
+    [trace, revealCount],
+  );
+
   const animationDone = revealCount >= trace.length;
 
   // Self-guard, same reasoning as ExecutionReplay: an empty trace has
@@ -93,7 +118,7 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
           </button>
         )}
       </div>
-      <CodeBlock code={code} />
+      <CodeBlock code={code} lineStates={lineStates} />
       <div className={styles.trace}>
         {trace.map((step, index) => {
           const visible = index < revealCount;
@@ -107,6 +132,7 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
               <div className={[styles.step, visible ? styles.stepVisible : ""].join(" ")}>
                 <code className={styles.stepMethod}>{step.methodName}</code>
                 <span className={[styles.stepDetail, STATUS_CLASS[step.status]].join(" ")}>
+                  <span aria-hidden="true">{STATUS_ICON[step.status]} </span>
                   <InlineCode text={step.detail} />
                 </span>
               </div>

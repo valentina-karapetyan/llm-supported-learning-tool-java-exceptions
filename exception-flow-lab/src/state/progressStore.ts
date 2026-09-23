@@ -19,6 +19,14 @@ export interface ModuleProgress {
   moduleId: string;
   state: "not_started" | "in_progress" | "completed";
   taskProgress: TaskProgress[];
+  // The learner's Retrieval Practice explanation for this module, recorded
+  // when they complete the module (build spec §18's "learner's final
+  // retrieval explanation" in the Concept Journal). Whatever is in the
+  // textarea at that point already reflects every revise-and-recheck along
+  // the way, so this is naturally their final answer, not just their first
+  // draft — there is no separate "first submission" ever stored to prefer
+  // over it.
+  retrievalAnswer?: string;
 }
 
 export interface AppProgress {
@@ -86,6 +94,22 @@ export function recordTaskAttempt(
 
   moduleProgress.state = moduleCompleted ? "completed" : "in_progress";
 
+  saveProgress(next);
+  return next;
+}
+
+/**
+ * Records the learner's Retrieval Practice explanation for a module,
+ * persists to localStorage, and returns the new AppProgress. Called once,
+ * when the learner completes the module (see App.tsx#handleCompleteModule)
+ * — not on every check, so this never needs to reconcile "first submission
+ * vs. revised submission": whatever they had last is simply what gets
+ * written.
+ */
+export function recordRetrievalAnswer(progress: AppProgress, moduleId: string, retrievalAnswer: string): AppProgress {
+  const next: AppProgress = { modules: progress.modules.map((m) => ({ ...m, taskProgress: [...m.taskProgress] })) };
+  const moduleProgress = getOrCreateModuleProgress(next, moduleId);
+  moduleProgress.retrievalAnswer = retrievalAnswer;
   saveProgress(next);
   return next;
 }

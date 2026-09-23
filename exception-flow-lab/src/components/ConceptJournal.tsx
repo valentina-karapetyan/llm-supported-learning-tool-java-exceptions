@@ -2,7 +2,16 @@
 //
 // Screen H. Reads directly from AppProgress + the static module/task
 // content — no separate data store, per the build spec's §10 note.
+//
+// Build spec §18: collapsible per-module cards instead of always-expanded
+// walls of text — collapsed shows just the title, state, and a short
+// takeaway; expanded shows the learner's final Retrieval Practice
+// explanation (recordRetrievalAnswer, written once when they complete the
+// module — see App.tsx#handleCompleteModule — so it's always their most
+// revised answer, never a stale first draft), the key rules, and the
+// misconceptions addressed.
 
+import { useState } from "react";
 import type { Module } from "../types/content";
 import type { AppProgress } from "../state/progressStore";
 import { getTaskById } from "../content/modules";
@@ -16,6 +25,17 @@ export interface ConceptJournalProps {
 }
 
 export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProps) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggle(moduleId: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(moduleId)) next.delete(moduleId);
+      else next.add(moduleId);
+      return next;
+    });
+  }
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.headerRow}>
@@ -36,46 +56,75 @@ export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProp
             new Set(completedTasks.map((tp) => getTaskById(tp.taskId)?.feedback.keyRule).filter((r): r is string => Boolean(r)))
           );
           const state = moduleProgress?.state ?? "not_started";
+          const stateLabel = !module.available
+            ? "Coming soon"
+            : state === "completed"
+              ? "Completed"
+              : state === "in_progress"
+                ? "In progress"
+                : "Not started";
+          // Collapsed-view takeaway: the first key rule this module produced,
+          // or the module's own short description before anything's covered.
+          const takeaway = keyRules[0] ?? module.description;
+          const isExpanded = expanded.has(module.id);
 
           return (
             <div key={module.id} className={styles.entry}>
-              <div className={styles.entryHeader}>
-                <h2 className={styles.entryTitle}>{module.title}</h2>
-                <span className={styles.entryState}>
-                  {!module.available ? "Coming soon" : state === "completed" ? "Completed" : state === "in_progress" ? "In progress" : "Not started"}
+              <button
+                type="button"
+                className={styles.entryToggle}
+                onClick={() => toggle(module.id)}
+                aria-expanded={isExpanded}
+              >
+                <span className={styles.entryToggleTop}>
+                  <span className={styles.entryTitle}>{module.title}</span>
+                  <span className={styles.entryState}>{stateLabel}</span>
                 </span>
-              </div>
+                <span className={styles.entryTakeaway}>
+                  <InlineCode text={takeaway} />
+                </span>
+                <span className={styles.entryChevron} aria-hidden="true">
+                  {isExpanded ? "▾" : "▸"}
+                </span>
+              </button>
 
-              {misconceptions.length === 0 ? (
-                <p className={styles.emptyState}>Nothing recorded yet, head to the case files to get started.</p>
-              ) : (
-                <>
-                  <div className={styles.block}>
-                    <p className={styles.blockLabel}>Misconceptions addressed</p>
-                    <ul className={styles.list}>
-                      {misconceptions.map((m) => (
-                        <li key={m}>
-                          <InlineCode text={m} />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {/* Module 5's tasks author no keyRule (it introduces no new
-                      theory), so this block would otherwise render as an
-                      empty list under a heading. */}
-                  {keyRules.length > 0 && (
-                    <div className={styles.block}>
-                      <p className={styles.blockLabel}>Key rules</p>
-                      <ul className={styles.list}>
-                        {keyRules.map((r) => (
-                          <li key={r}>
-                            <InlineCode text={r} />
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+              {isExpanded && (
+                <div className={styles.entryDetail}>
+                  {misconceptions.length === 0 ? (
+                    <p className={styles.emptyState}>Nothing recorded yet, head to the case files to get started.</p>
+                  ) : (
+                    <>
+                      {moduleProgress?.retrievalAnswer && (
+                        <div className={styles.block}>
+                          <p className={styles.blockLabel}>Your final explanation</p>
+                          <p className={styles.retrievalAnswer}>{moduleProgress.retrievalAnswer}</p>
+                        </div>
+                      )}
+                      {keyRules.length > 0 && (
+                        <div className={styles.block}>
+                          <p className={styles.blockLabel}>Key rules</p>
+                          <ul className={styles.list}>
+                            {keyRules.map((r) => (
+                              <li key={r}>
+                                <InlineCode text={r} />
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div className={styles.block}>
+                        <p className={styles.blockLabel}>Misconceptions addressed</p>
+                        <ul className={styles.list}>
+                          {misconceptions.map((m) => (
+                            <li key={m}>
+                              <InlineCode text={m} />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
                   )}
-                </>
+                </div>
               )}
             </div>
           );

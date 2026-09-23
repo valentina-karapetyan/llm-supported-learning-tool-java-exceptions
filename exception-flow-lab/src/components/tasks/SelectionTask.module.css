@@ -101,11 +101,11 @@
 }
 
 .rationaleCorrect {
-  color: var(--color-success);
+  color: var(--color-success-text, var(--color-success));
 }
 
 .rationaleIncorrect {
-  color: var(--color-error);
+  color: var(--color-error-text, var(--color-error));
 }
 
 .resultBadge {
@@ -118,11 +118,11 @@
 }
 
 .badgeCorrect {
-  color: var(--color-success);
+  color: var(--color-success-text, var(--color-success));
 }
 
 .badgeIncorrect {
-  color: var(--color-error);
+  color: var(--color-error-text, var(--color-error));
 }
 
 .actions {

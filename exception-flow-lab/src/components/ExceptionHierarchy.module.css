@@ -3,19 +3,19 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .label {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-accent);
+  color: var(--color-accent-text, var(--color-accent));
 }
 
 .list {
@@ -30,17 +30,26 @@
 .row {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
 }
 
-.arrow {
+.indent {
+  flex: 0 0 auto;
+  display: inline-block;
+}
+
+.connector {
+  flex: 0 0 auto;
+  font-family: var(--font-code);
   color: var(--color-text-muted);
+  margin-right: var(--space-2);
+  font-weight: 700;
 }
 
 .type {
   font-family: var(--font-code);
-  font-size: 0.85em;
+  font-size: 1rem;
+  font-weight: 600;
   background: rgba(43, 36, 112, 0.08);
-  padding: 1px 4px;
+  padding: 3px 10px;
   border-radius: 4px;
 }

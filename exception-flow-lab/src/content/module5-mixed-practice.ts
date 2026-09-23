@@ -97,9 +97,9 @@ void saveOrder() throws OrderException {
 void writeOrder() throws OrderException {
     throw new OrderException();
 }`,
-  orientationNote: "Follow the execution across the method calls. Determine which events actually occur.",
+  orientationNote: "Follow the execution across the method calls.",
   question:
-    "Build the execution trace. Select the events that occur, in the order they happen. Events you do not select are treated as not occurring in this execution.",
+    "Build the execution trace. Select the events that occur, in the order they happen. Leave an event unselected if it does not occur.",
   answer: {
     type: "execution_trace",
     data: {
@@ -197,10 +197,13 @@ void renderPage() throws RenderException {
 // a prefix. `CardException` is in the hierarchy but in none of the options —
 // it's there so the subtype relationship is indirect, not adjacent.
 //
-// Option labels are purely structural ("X, then Y"), never evaluative — a
-// label like Module 4's "overly general" would hand the learner the verdict
-// before they've reasoned about it, which defeats the point of a retrieval
-// module. They still read well in AnswerDiff's "you picked / correct answer".
+// Option labels are neutral letters only (A/B/C/D), same as Module 4's
+// handler_refactoring tasks (build spec §6, applied to both modules) — the
+// code block shown with each option already carries the full design, so a
+// prose label describing it would either give away the answer outright (a
+// judgment word like Module 4's old "overly general") or just restate the
+// code redundantly. `AnswerDiff`'s "you picked / correct answer" rendering
+// works fine off the bare letters.
 //
 // `chargeCard()` is declared `throws PaymentException` (stated in the
 // orientation note), which is what makes `catch (ExpiredCardException e)`
@@ -261,14 +264,18 @@ export const module5Case2: Task = {
   orientationNote:
     "`chargeCard()` is declared `throws PaymentException`. Each option below is a complete alternative for the missing `catch` clauses.",
   question:
-    "Required reactions:\n• `ExpiredCardException` → `card expired`\n• every other `PaymentException` → `payment failed`\n\nWhich handler design best matches the requirement and compiles correctly?",
+    "Required behaviour:\n`ExpiredCardException` → `card expired`\nevery other `PaymentException` → `payment failed`\n\nWhich handler design best satisfies this requirement and compiles?",
   answer: {
     type: "handler_refactoring",
     data: {
+      // Neutral letters only (build spec §6, explicitly extended to Module 5
+      // "wherever multiple code alternatives are presented") — the label
+      // used to prose-summarize each option's clause order, which just
+      // restated what the code block right below it already shows.
       options: [
         {
           id: "m5c2-general-first",
-          label: "A: `catch (PaymentException e)`, then `catch (ExpiredCardException e)`",
+          label: "A",
           code: `catch (PaymentException e) {
     System.out.println("payment failed");
 }
@@ -279,7 +286,7 @@ catch (ExpiredCardException e) {
         },
         {
           id: "m5c2-superclass-only",
-          label: "B: `catch (PaymentException e)` only",
+          label: "B",
           code: `catch (PaymentException e) {
     System.out.println("payment failed");
 }`,
@@ -287,7 +294,7 @@ catch (ExpiredCardException e) {
         },
         {
           id: "m5c2-specific-first",
-          label: "C: `catch (ExpiredCardException e)`, then `catch (PaymentException e)`",
+          label: "C",
           code: `catch (ExpiredCardException e) {
     System.out.println("card expired");
 }
@@ -298,7 +305,7 @@ catch (PaymentException e) {
         },
         {
           id: "m5c2-broad",
-          label: "D: `catch (ExpiredCardException e)`, then `catch (Exception e)`",
+          label: "D",
           code: `catch (ExpiredCardException e) {
     System.out.println("card expired");
 }
@@ -511,8 +518,8 @@ void step1() {
     },
   },
   propagationTrace: [
-    { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws" },
-    { methodName: "process()", detail: "`catch (IOException e)` is compatible: handled here", status: "handled" },
+    { methodName: "readFile()", detail: "throws `FileNotFoundException`", status: "throws", lineNumber: 18 },
+    { methodName: "process()", detail: "`catch (IOException e)` is compatible: handled here", status: "handled", lineNumber: 12 },
   ],
   mixedCase: { trailLabel: "Case 3", continueLabel: "Continue to Part B" },
 };
@@ -609,14 +616,15 @@ export const module5Case3PartB: Task = {
   orientationNote:
     "`readFile()` may throw `FileNotFoundException` or another subtype of `IOException`. The requirement has changed, and the code above is the design being replaced: in each option `start()` simply calls `process()` with no `try`/`catch` of its own, unless that option shows one.",
   question:
-    "Required reactions:\n• `FileNotFoundException` → `file missing`\n• every other `IOException` → `I/O problem`\n\nWhich redesign correctly expresses this requirement?",
+    "Required behaviour:\n`FileNotFoundException` → `file missing`\nevery other `IOException` → `I/O problem`\n\nWhich handler design best satisfies this requirement?",
   answer: {
     type: "handler_refactoring",
     data: {
+      // Neutral letters only — see Case 2's comment above.
       options: [
         {
           id: "m5c3b-split",
-          label: "A: `catch (IOException e)` in `process()`, `catch (FileNotFoundException e)` in `start()`",
+          label: "A",
           code: `void start() {
     try {
         process();
@@ -636,7 +644,7 @@ void process() throws FileNotFoundException {
         },
         {
           id: "m5c3b-general-first",
-          label: "B: both handlers in `process()`, `IOException` first",
+          label: "B",
           code: `void process() {
     try {
         readFile();
@@ -650,7 +658,7 @@ void process() throws FileNotFoundException {
         },
         {
           id: "m5c3b-specific-first",
-          label: "C: both handlers in `process()`, `FileNotFoundException` first",
+          label: "C",
           code: `void process() {
     try {
         readFile();
@@ -664,7 +672,7 @@ void process() throws FileNotFoundException {
         },
         {
           id: "m5c3b-broad",
-          label: "D: one `catch (Exception e)` in `process()`",
+          label: "D",
           code: `void process() {
     try {
         readFile();

@@ -4,12 +4,15 @@
 // ExecutionReplay visualizer directly under the key rule card, per the
 // build spec.
 //
-// ExecutionReplay only renders when a task actually has a replayScript.
-// Module 1's tasks are runtime control-flow traces, so they all have one —
-// but not every TaskType is about runtime order (e.g. Module 2's catch_order
-// tasks are about a static/compile-time ordering rule, not "what happens
-// when this runs"), so a task can reasonably omit it and just show its
-// plain code instead of an animation that wouldn't mean anything.
+// ExecutionReplay only renders when a task actually has a replayScript, and
+// it's given resolvedCode when present (falling back to code) rather than
+// always the plain, possibly pre-answer `code` — see Task.replayScript /
+// Task.resolvedCode for why a script can be either a real runtime trace or a
+// compile-time reachability check, and Task.replayHeading for how a task
+// tells ExecutionReplay which one it's showing. Module 4's design tasks
+// still have no single representative code-and-order story to animate at
+// all, so they reasonably omit replayScript entirely and just show plain
+// code instead.
 
 import type { Feedback, HierarchyNode, PropagationStep, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
 import { hasReplayScript } from "../types/content";
@@ -29,8 +32,13 @@ export interface FeedbackCardProps {
   // Per-task override for ExecutionReplay's throw -> catch callout; see
   // Task.replayCallout. Ignored by tasks with no replayScript.
   replayCallout?: string;
-  // Hand-authored "solved" code, shown instead of the plain (still-blank)
-  // `code` for tasks with no replayScript. Falls back to `code` if absent.
+  // Per-task override for ExecutionReplay's heading; see Task.replayHeading.
+  // Ignored by tasks with no replayScript.
+  replayHeading?: string;
+  // Hand-authored "solved" code. Falls back to `code` if absent. Shown for a
+  // task with no replayScript instead of the plain (possibly still-blank)
+  // `code`, and also as ExecutionReplay's own code when a task has both —
+  // see Task.resolvedCode.
   resolvedCode?: string;
   // Shown separately below the code, never spliced into it — see
   // Task.hierarchy. Optional; most tasks omit it.
@@ -49,6 +57,7 @@ export function FeedbackCard({
   code,
   replayScript,
   replayCallout,
+  replayHeading,
   resolvedCode,
   hierarchy,
   propagationTrace,
@@ -102,8 +111,17 @@ export function FeedbackCard({
         </div>
       )}
 
+      {/* One-time term definition (build spec §3) — authored on exactly the
+          two tasks that first need it (see Feedback.glossaryNote), never
+          repeated afterward. */}
+      {feedback.glossaryNote && (
+        <p className={styles.glossaryNote}>
+          <strong>{feedback.glossaryNote.term}</strong>: {feedback.glossaryNote.definition}
+        </p>
+      )}
+
       {hasReplayScript(replayScript) ? (
-        <ExecutionReplay code={code} replayScript={replayScript} callout={replayCallout} />
+        <ExecutionReplay code={resolvedCode ?? code} replayScript={replayScript} callout={replayCallout} heading={replayHeading} />
       ) : propagationTrace && propagationTrace.length > 0 ? (
         <PropagationReplay code={resolvedCode ?? code} trace={propagationTrace} />
       ) : (

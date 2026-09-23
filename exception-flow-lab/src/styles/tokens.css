@@ -12,8 +12,21 @@
   --color-error: #c65b5b; /* soft red, feedback only, never sole indicator */
   --color-success: #2f8f5b;
   --color-text: #1c1c1e;
-  --color-text-muted: #6b6b70;
+  --color-text-muted: #535357;
   --color-border: #e2e1de;
+
+  /* Darkened, text-safe variants of the four accent colors above (build
+     spec §15) — the base tokens themselves stay untouched (still used for
+     borders, background tints, buttons) since they read fine there; these
+     exist only for the handful of places an accent color is the actual text
+     color, where the base tokens fall short of WCAG AA's 4.5:1 (as low as
+     2.06:1 for --color-attention). Reference via
+     `var(--color-X-text, var(--color-X))` so a spot written before this
+     token existed still degrades gracefully. */
+  --color-accent-text: #0c7f74;
+  --color-error-text: #b65454;
+  --color-success-text: #2a8152;
+  --color-attention-text: #946827;
 
   --font-body: "Inter", system-ui, -apple-system, sans-serif;
   --font-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;

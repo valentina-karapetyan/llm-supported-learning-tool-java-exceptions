@@ -30,11 +30,11 @@
 }
 
 .bannerCorrect .bannerIcon {
-  color: var(--color-success);
+  color: var(--color-success-text, var(--color-success));
 }
 
 .bannerIncorrect .bannerIcon {
-  color: var(--color-error);
+  color: var(--color-error-text, var(--color-error));
 }
 
 .bannerTitle {
@@ -62,7 +62,7 @@
 .diffLabel {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--color-error);
+  color: var(--color-error-text, var(--color-error));
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 700;
@@ -82,7 +82,7 @@
 .ruleLabel {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--color-accent);
+  color: var(--color-accent-text, var(--color-accent));
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 700;
@@ -91,6 +91,17 @@
 .ruleText {
   margin: 0;
   font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.glossaryNote {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: 0.9rem;
+  color: var(--color-text);
   line-height: 1.5;
 }
 
