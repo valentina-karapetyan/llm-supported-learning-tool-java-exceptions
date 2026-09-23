@@ -13,7 +13,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ReplayStep } from "../types/content";
-import { CodeBlock } from "./CodeBlock";
+import { buildRevealedLineMap, CodeBlock } from "./CodeBlock";
 import { InlineCode } from "./InlineCode";
 import styles from "./ExecutionReplay.module.css";
 
@@ -73,28 +73,25 @@ export function ExecutionReplay({ code, replayScript, callout, heading }: Execut
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replayScript, reducedMotion, runId]);
 
-  const lineStates = useMemo(() => {
-    const map: Partial<Record<number, ReplayStep["state"]>> = {};
-    for (const step of replayScript.slice(0, revealCount)) {
-      map[step.lineNumber] = step.state;
-    }
-    return map;
-  }, [replayScript, revealCount]);
+  const lineStates = useMemo(
+    () => buildRevealedLineMap(replayScript, revealCount, (s) => s.lineNumber, (s) => s.state),
+    [replayScript, revealCount],
+  );
 
-  const lineBadgeLabels = useMemo(() => {
-    const map: Partial<Record<number, string>> = {};
-    for (const step of replayScript.slice(0, revealCount)) {
-      if (step.badgeLabel) map[step.lineNumber] = step.badgeLabel;
-    }
-    return map;
-  }, [replayScript, revealCount]);
+  const lineBadgeLabels = useMemo(
+    () => buildRevealedLineMap(replayScript, revealCount, (s) => s.lineNumber, (s) => s.badgeLabel),
+    [replayScript, revealCount],
+  );
 
   // "handled" is the runtime "control jumps here" moment; "unreachable" is
   // the compile-time equivalent for a script with no runtime moment at all
   // (see Task.replayScript) — whichever comes first is this script's
   // one notable moment, and only one of the two ever appears in a given
   // script.
-  const firstNotableIndex = replayScript.findIndex((s) => s.state === "handled" || s.state === "unreachable");
+  const firstNotableIndex = useMemo(
+    () => replayScript.findIndex((s) => s.state === "handled" || s.state === "unreachable"),
+    [replayScript],
+  );
   const showJumpCallout = firstNotableIndex >= 0 && revealCount > firstNotableIndex;
   const animationDone = revealCount >= replayScript.length;
 
