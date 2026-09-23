@@ -117,7 +117,7 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, con
   return (
     <div className={styles.wrapper}>
       <h2 className={styles.heading}>Need more help?</h2>
-      <p className={styles.subheading}>Pick whichever would help most right now — never a grade, never an open chat.</p>
+      <p className={styles.subheading}>Pick whichever would help most right now. Never a grade, never an open chat.</p>
 
       <div className={styles.buttonRow}>
         {PRIMARY_SUPPORT_TYPES.map((type) => (

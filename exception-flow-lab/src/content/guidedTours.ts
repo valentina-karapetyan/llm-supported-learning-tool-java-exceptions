@@ -10,7 +10,7 @@ import type { TourStep } from "../components/GuidedTour";
 export const module1DiagnosticTourSteps: TourStep[] = [
   {
     targetId: "task-code",
-    text: "Read the code below. This method runs once — that's the execution you're about to trace.",
+    text: "Read the code below. This method runs once. That's the execution you're about to trace.",
   },
   {
     targetId: "trace-pool",
@@ -19,7 +19,7 @@ export const module1DiagnosticTourSteps: TourStep[] = [
   },
   {
     targetId: "trace-list",
-    text: "It lands here, numbered. Click more events above if you think they happen too — use ▲▼ to reorder one, or Remove to take it back out.",
+    text: "It lands here, numbered. Click more events above if you think they happen too. Use ▲▼ to reorder one, or Remove to take it back out.",
   },
   {
     targetId: "trace-actions",
