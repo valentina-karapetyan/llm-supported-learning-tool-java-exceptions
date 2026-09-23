@@ -8,13 +8,18 @@
 // lines within one code block — propagation crosses method boundaries,
 // which per-line highlighting inside a single snippet can't represent.
 //
-// Deliberately not built on top of ExecutionReplay/CodeBlock's lineStates —
-// that mechanism highlights lines *within* one method's execution, but
-// "no handler here, keep going" isn't a line state, it's a statement about
-// an entire method having been passed over.
+// Deliberately not built *as* ExecutionReplay — "no handler here, keep
+// going" is a statement about an entire method having been passed over, not
+// a single line, so the trail below (one entry per method, connected by
+// arrows) stays the main visualization regardless of code layout. It does
+// reuse CodeBlock's lineStates, the same mechanism ExecutionReplay uses, but
+// only as an optional add-on: a step can supply `lineNumber` to also
+// highlight the one line in Module 3's merged multi-method code block that
+// it's about, so a learner isn't left checking the trail against the code by
+// eye. A step with no `lineNumber` just doesn't highlight anything.
 
 import { useEffect, useMemo, useState } from "react";
-import type { PropagationStep } from "../types/content";
+import type { PropagationStep, ReplayLineState } from "../types/content";
 import { CodeBlock } from "./CodeBlock";
 import { InlineCode } from "./InlineCode";
 import styles from "./PropagationReplay.module.css";
@@ -82,6 +87,18 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trace, reducedMotion, runId]);
 
+  // Optional per-line highlighting on top of the trail below — a step with
+  // no `lineNumber` just contributes nothing here, same as ExecutionReplay's
+  // lineStates. `status` values are exactly ReplayLineState values of the
+  // same name (see PropagationStep), so no mapping is needed.
+  const lineStates = useMemo(() => {
+    const map: Partial<Record<number, ReplayLineState>> = {};
+    for (const step of trace.slice(0, revealCount)) {
+      if (step.lineNumber !== undefined) map[step.lineNumber] = step.status;
+    }
+    return map;
+  }, [trace, revealCount]);
+
   const animationDone = revealCount >= trace.length;
 
   // Self-guard, same reasoning as ExecutionReplay: an empty trace has
@@ -104,7 +121,7 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
           </button>
         )}
       </div>
-      <CodeBlock code={code} />
+      <CodeBlock code={code} lineStates={lineStates} />
       <div className={styles.trace}>
         {trace.map((step, index) => {
           const visible = index < revealCount;

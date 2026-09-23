@@ -177,7 +177,13 @@ export type TaskResponseData =
 
 // --- Live control-flow visualizer (Feedback screen) ---
 
-export type ReplayLineState = "active" | "throws" | "skipped" | "handled";
+// "propagates"/"uncaught" mirror PropagationStepStatus below, for
+// PropagationReplay's optional per-line highlighting (Module 3). "unreachable"
+// is Module 2's own addition: a *compile-time* rejection (an earlier, broader
+// catch already matches) is not the same fact as "skipped" (valid code that
+// simply didn't run this branch this time) — conflating the two would tell
+// the learner a lie about which of these is even legal Java.
+export type ReplayLineState = "active" | "throws" | "skipped" | "handled" | "propagates" | "uncaught" | "unreachable";
 
 export interface ReplayStep {
   lineNumber: number; // 1-indexed line in `code`
@@ -209,8 +215,13 @@ export interface HierarchyNode {
 // Neither of these is an answer type — Module 3 answers via single_choice,
 // same as Module 2's transfer task. These just give the learner (trail,
 // pre-answer) and then the Feedback screen (trace, post-answer) a visual of
-// the call chain itself, which per-line code highlighting can't show since
-// propagation crosses method boundaries.
+// the call chain itself, which the arrows-and-methods trail below the code
+// shows regardless of line numbers — the per-method story of "who called
+// whom" doesn't live inside any single code line. `lineNumber` (optional,
+// added alongside the trail rather than instead of it) additionally
+// highlights, within Module 3's one merged multi-method code block, the
+// exact line each step is about — PropagationReplay passes it straight
+// through to CodeBlock's lineStates, same mechanism ExecutionReplay uses.
 
 export interface CallChainTrailStep {
   methodName: string; // e.g. "readProfileFile()"
@@ -225,6 +236,12 @@ export interface PropagationStep {
   methodName: string; // e.g. "readProfileFile()"
   detail: string; // e.g. "throws FileNotFoundException", "no handler — propagates"
   status: PropagationStepStatus;
+  // 1-indexed line in `code` this step is about (e.g. the `throw` statement,
+  // the call site a propagating exception passes through, or the matching
+  // `catch` clause). Optional — omit for a step with no single representative
+  // line. Values here are exactly the ReplayLineState values of the same
+  // name, so PropagationReplay can assign `status` straight into lineStates.
+  lineNumber?: number;
 }
 
 // --- Module 5 (mixed practice) only ---
@@ -261,24 +278,46 @@ export interface Task {
   feedback: Feedback;
   supportContent: Record<SupportType, LlmSupportResponse>;
   // Drives ExecutionReplay, authored by hand per task. Optional and omitted
-  // entirely for tasks that aren't runtime control-flow traces (e.g. a
-  // catch_order task tests a static/compile-time rule — there's nothing to
-  // "replay"). Use `hasReplayScript(task)` rather than checking
-  // `.length > 0` ad hoc at call sites.
+  // entirely for a task with no single representative line-by-line story to
+  // animate. Two genuinely different things can populate this, and
+  // `replayHeading`/state choice ("skipped" vs "unreachable") is how a
+  // caller tells them apart:
+  //   - A real runtime trace (Module 1, and Module 2's diagnostic/
+  //     transfer-retry over their compiling code): default heading "Watch it
+  //     happen", using "active"/"throws"/"skipped"/"handled" — this code
+  //     actually executes in this order.
+  //   - A compile-time reachability check (Module 2's transfer task, whose
+  //     whole point is code that does NOT compile): heading overridden to
+  //     something like "Watch the compiler check it", using "unreachable"
+  //     instead of "skipped" for a clause an earlier one already covers —
+  //     that clause never runs for a very different reason than "this
+  //     particular exception didn't reach it," and telling those apart
+  //     matters (see ReplayLineState).
+  // Use `hasReplayScript(task)` rather than checking `.length > 0` ad hoc at
+  // call sites.
   replayScript?: ReplayStep[];
   // Overrides the callout ExecutionReplay fades in under the code at the
-  // throw -> catch moment. The default ("control jumps straight to the
-  // matching catch clause") describes a jump inside one method, which is
-  // right for Module 1 but understates what happens when the exception
-  // crosses method boundaries first — Module 5's Case 1 names the
-  // propagation instead. Rendered through InlineCode, so `code spans` work.
+  // throw -> catch (or "here's why this is unreachable") moment. The default
+  // ("control jumps straight to the matching catch clause") describes a jump
+  // inside one method, which is right for Module 1 but understates what
+  // happens when the exception crosses method boundaries first — Module 5's
+  // Case 1 names the propagation instead — or doesn't apply at all to a
+  // compile-time check, which never "jumps" anywhere. Rendered through
+  // InlineCode, so `code spans` work.
   replayCallout?: string;
+  // Overrides ExecutionReplay's heading (default "Watch it happen"). Use
+  // this for a compile-time replayScript (see above) — the code involved
+  // never actually runs, so claiming to show it "happen" would be false.
+  replayHeading?: string;
   // The "solved" version of `code`, authored by hand, shown on the Feedback
-  // screen instead of the plain `code` for tasks with no replayScript (a
-  // runtime trace already shows the resolution via ExecutionReplay; a static
-  // task like catch_order needs this instead, or the Feedback screen would
-  // just re-show the same unfinished snippet with its "fill this in" comment
-  // still sitting there unresolved). Falls back to `code` when omitted.
+  // screen for a task with no replayScript (a runtime trace already shows
+  // the resolution via ExecutionReplay; a static task needs this instead, or
+  // the Feedback screen would just re-show the same unfinished snippet with
+  // its "fill this in" comment still sitting there unresolved) — and also
+  // as ExecutionReplay's own code when a task supplies both, since `code`
+  // itself may still be the pre-answer, not-yet-filled-in version (Module
+  // 2's diagnostic: `code` has no catch clauses at all to animate over,
+  // `resolvedCode` does). Falls back to `code` when omitted.
   resolvedCode?: string;
   // Shown below the code (see hasReplayScript comment above) as task
   // information, not Java syntax — e.g. Case 2's "which exception types are

@@ -24,6 +24,8 @@ export interface ExecutionReplayProps {
   // just the sentence: the "⤷" glyph stays fixed in the markup so every
   // callout keeps the same shape.
   callout?: string;
+  // Overrides DEFAULT_HEADING below — see Task.replayHeading.
+  heading?: string;
 }
 
 const STEP_DELAY_MS = 400;
@@ -31,13 +33,14 @@ const STEP_DELAY_MS = 400;
 // Kept free of `code spans` on purpose: it renders through InlineCode, so
 // adding backticks here would change how Modules 1-4 look.
 const DEFAULT_CALLOUT = "control jumps straight to the matching catch clause";
+const DEFAULT_HEADING = "Watch it happen";
 
 function usesReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function ExecutionReplay({ code, replayScript, callout }: ExecutionReplayProps) {
+export function ExecutionReplay({ code, replayScript, callout, heading }: ExecutionReplayProps) {
   const reducedMotion = useMemo(() => usesReducedMotion(), []);
   const [revealCount, setRevealCount] = useState(reducedMotion ? replayScript.length : 0);
   const [runId, setRunId] = useState(0);
@@ -86,8 +89,13 @@ export function ExecutionReplay({ code, replayScript, callout }: ExecutionReplay
     return map;
   }, [replayScript, revealCount]);
 
-  const firstHandledIndex = replayScript.findIndex((s) => s.state === "handled");
-  const showJumpCallout = firstHandledIndex >= 0 && revealCount > firstHandledIndex;
+  // "handled" is the runtime "control jumps here" moment; "unreachable" is
+  // the compile-time equivalent for a script with no runtime moment at all
+  // (see Task.replayScript) — whichever comes first is this script's
+  // one notable moment, and only one of the two ever appears in a given
+  // script.
+  const firstNotableIndex = replayScript.findIndex((s) => s.state === "handled" || s.state === "unreachable");
+  const showJumpCallout = firstNotableIndex >= 0 && revealCount > firstNotableIndex;
   const animationDone = revealCount >= replayScript.length;
 
   // Self-guard: an empty script has nothing to animate. Callers should
@@ -100,7 +108,7 @@ export function ExecutionReplay({ code, replayScript, callout }: ExecutionReplay
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <h3 className={styles.heading}>Watch it happen</h3>
+        <h3 className={styles.heading}>{heading ?? DEFAULT_HEADING}</h3>
         {!reducedMotion && (
           <button
             type="button"
