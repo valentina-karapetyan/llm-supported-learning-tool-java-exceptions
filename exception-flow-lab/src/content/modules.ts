@@ -65,7 +65,7 @@ export const module4: Module = {
 export const module5: Module = {
   id: "module-5",
   title: "Mixed Case Review",
-  description: "Three short cases that combine the rules from the earlier case files.",
+  description: "Three short cases that combine the rules from the earlier lessons.",
   // Every id here is one mixed case, answered once, in order. Case 3 runs
   // over two tasks (Part A, Part B) sharing one case file — the CaseNav
   // trail groups them via each task's `mixedCase.trailLabel`.
@@ -83,7 +83,7 @@ export const module5: Module = {
       "Propagation stops at the first compatible handler encountered.",
       "Handler design should match whether related exceptions need shared or different reactions.",
     ],
-    primaryActionLabel: "Finish module",
+    primaryActionLabel: "Back to lessons",
   },
 };
 

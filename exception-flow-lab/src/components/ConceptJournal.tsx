@@ -39,11 +39,14 @@ export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProp
   return (
     <div className={styles.wrapper}>
       <div className={styles.headerRow}>
-        <h1 className={styles.title}>Concept Journal</h1>
+        <h1 className={styles.title}>What I've learned</h1>
         <button type="button" className={styles.backLink} onClick={onBack}>
           ← Back
         </button>
       </div>
+      <p className={styles.lede}>
+        Your personal summary: the rules from each lesson you've done, plus your own explanation in your own words.
+      </p>
 
       <div className={styles.entries}>
         {modules.map((module) => {
@@ -91,7 +94,7 @@ export function ConceptJournal({ modules, progress, onBack }: ConceptJournalProp
               {isExpanded && (
                 <div className={styles.entryDetail}>
                   {misconceptions.length === 0 ? (
-                    <p className={styles.emptyState}>Nothing recorded yet, head to the case files to get started.</p>
+                    <p className={styles.emptyState}>Nothing here yet. Finish this lesson and its rules show up here.</p>
                   ) : (
                     <>
                       {moduleProgress?.retrievalAnswer && (

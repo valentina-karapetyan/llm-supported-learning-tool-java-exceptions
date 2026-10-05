@@ -96,7 +96,7 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
 export const module3DiagnosticTask: Task = {
   id: "m3-diagnostic",
   moduleId: "module-3",
-  caseLabel: "Case file: The Escaping Exception",
+  caseLabel: "Case: The Escaping Exception",
   title: "Call Chains & Propagation",
   learningObjective: "Understand that an uncaught exception propagates up the call chain to its caller, continuing until a matching handler is found.",
   misconception:
@@ -248,7 +248,7 @@ function transferIncorrectExplanation(response: TaskResponseData): string {
 export const module3TransferTask: Task = {
   id: "m3-transfer",
   moduleId: "module-3",
-  caseLabel: "Case file: The First Safe Landing",
+  caseLabel: "Case: The First Safe Landing",
   title: "Call Chains & Propagation: Transfer",
   learningObjective:
     "Recognize that propagation stops at the first compatible handler encountered on the way back through the call chain, not the most specific handler anywhere in the program.",
@@ -405,7 +405,7 @@ function retryIncorrectExplanation(response: TaskResponseData): string {
 export const module3TransferRetryTask: Task = {
   id: "m3-transfer-retry",
   moduleId: "module-3",
-  caseLabel: "Case file: The Skipped Layer",
+  caseLabel: "Case: The Skipped Layer",
   title: "Call Chains & Propagation: A Comparable Case",
   learningObjective: "Apply the same propagation rule, no local handler, continue to the caller, to a new hierarchy and call chain.",
   misconception:

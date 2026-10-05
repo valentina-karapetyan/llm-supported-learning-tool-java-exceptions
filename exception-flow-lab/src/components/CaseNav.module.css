@@ -11,7 +11,7 @@
   border: none;
   padding: 0;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
@@ -21,7 +21,7 @@
 
 .trail {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-muted);

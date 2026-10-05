@@ -6,7 +6,7 @@
 // at a time based on the former, updating the latter on every task
 // submission.
 
-import { useReducer, useRef, useState } from "react";
+import { useReducer, useRef, useState, type ReactNode } from "react";
 import {
   modules,
   getModuleById,
@@ -18,19 +18,20 @@ import {
   getMixedCaseTrail,
   getRetrievalQuestion,
 } from "./content/modules";
-import { screenReducer, initialScreenState, type ScreenState, type TaskStage } from "./state/screenReducer";
+import { screenReducer, initialScreenState, type ScreenState, type SubmissionResult, type TaskStage } from "./state/screenReducer";
 import {
   loadProgress,
   recordTaskAttempt,
   recordRetrievalAnswer,
   resetProgress,
+  resetModuleProgress,
   shouldCollapseSupportPanel,
   getModuleProgress,
   type AppProgress,
   type TaskProgress,
 } from "./state/progressStore";
 import { evaluateAnswer } from "./state/evaluateAnswer";
-import type { SupportType } from "./types/content";
+import type { SupportType, Task } from "./types/content";
 import { Welcome } from "./components/Welcome";
 import { ModuleMap } from "./components/ModuleMap";
 import { TaskScreen, type TaskSubmission } from "./components/TaskScreen";
@@ -44,12 +45,13 @@ import { GuidedTour } from "./components/GuidedTour";
 import { ModuleReview } from "./components/ModuleReview";
 import { ReviewAnswer } from "./components/ReviewAnswer";
 import { CaseNav, type CaseProgressStage } from "./components/CaseNav";
+import { CheckedAnswer } from "./components/CheckedAnswer";
 import { module1DiagnosticTourSteps } from "./content/guidedTours";
 import styles from "./App.module.css";
 
 // Lightweight per-case progress indicator (build spec's Case 1 revision,
 // §10), opted into by Module 1 and (per the Case 3 build) Module 3; Module 2
-// deliberately kept its plain "← Case files" link with no trail, so it's
+// deliberately kept its plain "← All lessons" link with no trail, so it's
 // not included here.
 function caseProgressStage(moduleId: string, stage: TaskStage): CaseProgressStage | undefined {
   if (moduleId !== "module-1" && moduleId !== "module-3") return undefined;
@@ -79,6 +81,12 @@ export default function App() {
       dispatch({ type: "VIEW_MODULE_REVIEW", moduleId });
       return;
     }
+    startModule(moduleId);
+  }
+
+  function startModule(moduleId: string) {
+    const module = getModuleById(moduleId);
+    if (!module || !module.available) return;
     if (isMixedPracticeModule(module)) {
       dispatch({ type: "START_MIXED_MODULE", moduleId, taskId: module.taskIds[0] });
       return;
@@ -92,6 +100,14 @@ export default function App() {
       setModule1TourActive(true);
     }
     dispatch({ type: "SELECT_MODULE", moduleId, diagnosticTaskId: module.taskIds[0] });
+  }
+
+  // Clears just this one module's saved answers and starts it over from its
+  // first task — the footer's "Reset progress" still clears everything.
+  function handleRedoModule(moduleId: string) {
+    if (!window.confirm("Redo this lesson from the start? Your saved answers for this lesson will be cleared.")) return;
+    setProgress(resetModuleProgress(progress, moduleId));
+    startModule(moduleId);
   }
 
   function handleViewTaskReview(taskId: string) {
@@ -171,19 +187,28 @@ export default function App() {
     dispatch({ type: "CONTINUE_MIXED", nextTaskId: getNextMixedCaseTask(module, task.id)?.id });
   }
 
+  function handleShowExplanation() {
+    dispatch({ type: "SHOW_EXPLANATION" });
+  }
+
   function handleRequestSupport() {
     dispatch({ type: "REQUEST_SUPPORT" });
   }
 
-  function handleCloseSupport(requestedInOrder: SupportType[]) {
-    if ((screen.screen === "ai_support" || screen.screen === "mixed_support") && requestedInOrder.length > 0) {
-      const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
-      const existing = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
-      if (existing) {
-        const staysCompleted = moduleProgress?.state === "completed";
-        setProgress(recordTaskAttempt(progress, screen.moduleId, { ...existing, supportRequested: requestedInOrder }, staysCompleted));
-      }
-    }
+  // Recorded as soon as each kind of support is unlocked (not on close),
+  // since the learner can continue straight from the open panel.
+  function handleSupportRequested(requestedInOrder: SupportType[]) {
+    if (screen.screen !== "ai_support" && screen.screen !== "mixed_support") return;
+    const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
+    const existing = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
+    if (!existing) return;
+    const staysCompleted = moduleProgress?.state === "completed";
+    setProgress(
+      recordTaskAttempt(progress, screen.moduleId, { ...existing, supportRequested: requestedInOrder }, staysCompleted)
+    );
+  }
+
+  function handleCloseSupport() {
     dispatch({ type: "CLOSE_SUPPORT" });
   }
 
@@ -216,8 +241,8 @@ export default function App() {
     dispatch({ type: "SHOW_RETRIEVAL" });
   }
 
-  // Fired from the Retrieval Practice screen's "Complete module" / "Complete
-  // learning lab" button. Persists the learner's current explanation text
+  // Fired from the Retrieval Practice screen's "Finish lesson" / "Finish the
+  // lab" button. Persists the learner's current explanation text
   // (already reflecting any revisions) for the Concept Journal before
   // advancing — see recordRetrievalAnswer.
   function handleCompleteModule(retrievalAnswer: string) {
@@ -240,6 +265,7 @@ export default function App() {
   }
 
   function handleResetProgress() {
+    if (!window.confirm("Reset progress for all lessons? This can't be undone.")) return;
     resetProgress();
     setProgress({ modules: [] });
     dispatch({ type: "RESET" });
@@ -258,7 +284,7 @@ export default function App() {
       <footer className={styles.footer}>
         <span className={styles.footerNote}>Progress is stored only on this device.</span>
         <button type="button" className={styles.resetButton} onClick={handleResetProgress}>
-          Reset progress
+          Reset all progress
         </button>
       </footer>
     </div>
@@ -304,7 +330,8 @@ export default function App() {
         );
       }
 
-      case "feedback": {
+      case "feedback":
+      case "ai_support": {
         const task = getTaskById(screen.taskId);
         if (!task) return null;
         const canFinish = screen.stage === "transfer" && (screen.result.wasCorrect || screen.result.attempt >= 2);
@@ -313,26 +340,29 @@ export default function App() {
         // this task — otherwise the retry re-serves the identical task, and
         // the button says so instead of overclaiming.
         const retryLabel = canRetry && getComparableRetryTask(task) ? "Try a comparable case" : "Try again";
-        return (
-          <div className={styles.feedbackWrapper}>
-            <CaseNav onBackToMap={handleBackToMap} progressStage={caseProgressStage(screen.moduleId, screen.stage)} />
-            <FeedbackCard
-              feedback={task.feedback}
-              wasCorrect={screen.result.wasCorrect}
-              code={task.code}
-              replayScript={task.replayScript}
-              replayCallout={task.replayCallout}
-              replayHeading={task.replayHeading}
-              resolvedCode={task.resolvedCode}
-              hierarchy={task.hierarchy}
-              propagationTrace={task.propagationTrace}
-              answer={task.answer}
-              response={screen.result.response}
+        if (screen.screen === "feedback" && screen.view === "verdict") {
+          const checked = (
+            <CheckedAnswer key={task.id} task={task} response={screen.result.response} onContinue={handleShowExplanation} />
+          );
+          return screen.stage === "diagnostic" ? (
+            <TaskScreen task={task} stage="diagnostic" onBackToMap={handleBackToMap} answerSlot={checked} />
+          ) : (
+            <TransferTaskFlow
+              task={task}
+              attempt={screen.result.attempt}
+              isDistinctRetryVariant={screen.retryIsDistinctVariant}
+              onBackToMap={handleBackToMap}
+              answerSlot={checked}
             />
-            <div className={styles.feedbackActions}>
-              <button type="button" className={styles.secondaryButton} onClick={handleRequestSupport}>
-                Explain this another way
-              </button>
+          );
+        }
+        return renderFeedbackScreen({
+          task,
+          result: screen.result,
+          supportOpen: screen.screen === "ai_support",
+          nav: <CaseNav onBackToMap={handleBackToMap} progressStage={caseProgressStage(screen.moduleId, screen.stage)} />,
+          primaryActions: (
+            <>
               {screen.stage === "diagnostic" && (
                 <button type="button" className={styles.primaryButton} onClick={handleContinueFromDiagnostic}>
                   Try a new case
@@ -345,17 +375,17 @@ export default function App() {
               )}
               {canFinish && (
                 <button type="button" className={styles.primaryButton} onClick={handleContinueToRetrieval}>
-                  Continue
+                  Continue to the final question
                 </button>
               )}
-            </div>
-          </div>
-        );
+            </>
+          ),
+        });
       }
 
       // --- Module 5's mixed-practice flow (see screenReducer.ts) ---
       //
-      // Reuses TaskScreen / FeedbackCard / AiSupportPanel unchanged; the only
+      // Reuses TaskScreen / the shared feedback screen unchanged; the only
       // differences are the CaseNav trail (Case 1 → Case 2 → Case 3 instead
       // of Task → Feedback → Transfer) and the feedback actions, which offer
       // exactly one way forward — no retry, no separate "continue to transfer
@@ -374,119 +404,34 @@ export default function App() {
         );
       }
 
-      case "mixed_feedback": {
-        const task = getTaskById(screen.taskId);
-        const module = getModuleById(screen.moduleId);
-        if (!task || !module) return null;
-        return (
-          <div className={styles.feedbackWrapper}>
-            <CaseNav onBackToMap={handleBackToMap} trail={getMixedCaseTrail(module, task.id)} />
-            <FeedbackCard
-              feedback={task.feedback}
-              wasCorrect={screen.result.wasCorrect}
-              code={task.code}
-              replayScript={task.replayScript}
-              replayCallout={task.replayCallout}
-              replayHeading={task.replayHeading}
-              resolvedCode={task.resolvedCode}
-              hierarchy={task.hierarchy}
-              propagationTrace={task.propagationTrace}
-              answer={task.answer}
-              response={screen.result.response}
-            />
-            <div className={styles.feedbackActions}>
-              <button type="button" className={styles.secondaryButton} onClick={handleRequestSupport}>
-                Explain this another way
-              </button>
-              <button type="button" className={styles.primaryButton} onClick={handleContinueMixedCase}>
-                {task.mixedCase?.continueLabel ?? "Continue"}
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      // AI Support (build spec §9): the task's feedback stays visible in a
-      // left column instead of being navigated away from — the panel opens
-      // beside it (a right column above ~900px, stacked below it), reusing
-      // the exact same FeedbackCard props as the adjacent feedback screen.
+      case "mixed_feedback":
       case "mixed_support": {
         const task = getTaskById(screen.taskId);
         const module = getModuleById(screen.moduleId);
         if (!task || !module) return null;
-        const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
-        const existingTaskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
-        return (
-          <div className={styles.supportWrapper}>
-            <CaseNav onBackToMap={handleBackToMap} trail={getMixedCaseTrail(module, task.id)} />
-            <div className={styles.supportLayout}>
-              <div className={styles.supportLayoutMain}>
-                <FeedbackCard
-                  feedback={task.feedback}
-                  wasCorrect={screen.result.wasCorrect}
-                  code={task.code}
-                  replayScript={task.replayScript}
-                  replayCallout={task.replayCallout}
-                  replayHeading={task.replayHeading}
-                  resolvedCode={task.resolvedCode}
-                  hierarchy={task.hierarchy}
-                  propagationTrace={task.propagationTrace}
-                  answer={task.answer}
-                  response={screen.result.response}
-                />
-              </div>
-              <div className={styles.supportLayoutPanel}>
-                <AiSupportPanel
-                  key={task.id}
-                  task={task}
-                  collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
-                  initialRequested={existingTaskProgress?.supportRequested ?? []}
-                  context={{ learnerResponse: screen.result.response, wasCorrect: screen.result.wasCorrect }}
-                  onBack={handleCloseSupport}
-                />
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      case "ai_support": {
-        const task = getTaskById(screen.taskId);
-        if (!task) return null;
-        const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
-        const existingTaskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === screen.taskId);
-        return (
-          <div className={styles.supportWrapper}>
-            <CaseNav onBackToMap={handleBackToMap} progressStage={caseProgressStage(screen.moduleId, screen.stage)} />
-            <div className={styles.supportLayout}>
-              <div className={styles.supportLayoutMain}>
-                <FeedbackCard
-                  feedback={task.feedback}
-                  wasCorrect={screen.result.wasCorrect}
-                  code={task.code}
-                  replayScript={task.replayScript}
-                  replayCallout={task.replayCallout}
-                  replayHeading={task.replayHeading}
-                  resolvedCode={task.resolvedCode}
-                  hierarchy={task.hierarchy}
-                  propagationTrace={task.propagationTrace}
-                  answer={task.answer}
-                  response={screen.result.response}
-                />
-              </div>
-              <div className={styles.supportLayoutPanel}>
-                <AiSupportPanel
-                  key={task.id}
-                  task={task}
-                  collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
-                  initialRequested={existingTaskProgress?.supportRequested ?? []}
-                  context={{ learnerResponse: screen.result.response, wasCorrect: screen.result.wasCorrect }}
-                  onBack={handleCloseSupport}
-                />
-              </div>
-            </div>
-          </div>
-        );
+        if (screen.screen === "mixed_feedback" && screen.view === "verdict") {
+          return (
+            <TaskScreen
+              task={task}
+              caseTrail={getMixedCaseTrail(module, task.id)}
+              onBackToMap={handleBackToMap}
+              answerSlot={
+                <CheckedAnswer key={task.id} task={task} response={screen.result.response} onContinue={handleShowExplanation} />
+              }
+            />
+          );
+        }
+        return renderFeedbackScreen({
+          task,
+          result: screen.result,
+          supportOpen: screen.screen === "mixed_support",
+          nav: <CaseNav onBackToMap={handleBackToMap} trail={getMixedCaseTrail(module, task.id)} />,
+          primaryActions: (
+            <button type="button" className={styles.primaryButton} onClick={handleContinueMixedCase}>
+              {task.mixedCase?.continueLabel ?? "Continue"}
+            </button>
+          ),
+        });
       }
 
       // Retrieval Practice: one open-recall question, shown for every module
@@ -503,7 +448,7 @@ export default function App() {
             <RetrievalPractice
               key={module.id}
               retrievalQuestion={retrievalQuestion}
-              completeLabel={isMixedPracticeModule(module) ? "Complete learning lab" : "Complete module"}
+              completeLabel={isMixedPracticeModule(module) ? "Finish the lab" : "Finish lesson"}
               onComplete={handleCompleteModule}
             />
           </div>
@@ -539,6 +484,7 @@ export default function App() {
             module={module}
             taskProgress={moduleProgress?.taskProgress ?? []}
             onSelectTask={handleViewTaskReview}
+            onRedoModule={() => handleRedoModule(module.id)}
             onBackToMap={handleBackToMap}
           />
         );
@@ -553,7 +499,7 @@ export default function App() {
           <TaskScreen
             task={task}
             onBackToMap={handleBackToModuleSummary}
-            backLabel="← Back to module summary"
+            backLabel="← Back to lesson overview"
             answerSlot={<ReviewAnswer task={task} taskProgress={taskProgress} />}
           />
         );
@@ -562,5 +508,65 @@ export default function App() {
       default:
         return null;
     }
+  }
+
+  // The explanation step of both flows' feedback, with or without the AI
+  // panel open. (Step 1, the red/green checked answer, is rendered in place
+  // on the task screen above.) The AI panel sits directly below the
+  // explanation, and the way forward is always available underneath — no
+  // need to close the panel first.
+  function renderFeedbackScreen({
+    task,
+    result,
+    supportOpen,
+    nav,
+    primaryActions,
+  }: {
+    task: Task;
+    result: SubmissionResult;
+    supportOpen: boolean;
+    nav: ReactNode;
+    primaryActions: ReactNode;
+  }) {
+    if (screen.screen === "welcome" || !("moduleId" in screen)) return null;
+    const moduleProgress = progress.modules.find((m) => m.moduleId === screen.moduleId);
+    const existingTaskProgress = moduleProgress?.taskProgress.find((t) => t.taskId === task.id);
+    return (
+      <div className={styles.feedbackWrapper}>
+        {nav}
+        <FeedbackCard
+          feedback={task.feedback}
+          wasCorrect={result.wasCorrect}
+          code={task.code}
+          replayScript={task.replayScript}
+          replayCallout={task.replayCallout}
+          replayHeading={task.replayHeading}
+          resolvedCode={task.resolvedCode}
+          hierarchy={task.hierarchy}
+          propagationTrace={task.propagationTrace}
+          answer={task.answer}
+          response={result.response}
+        />
+        {supportOpen && (
+          <AiSupportPanel
+            key={task.id}
+            task={task}
+            collapsedByDefault={shouldCollapseSupportPanel(progress, screen.moduleId)}
+            initialRequested={existingTaskProgress?.supportRequested ?? []}
+            context={{ learnerResponse: result.response, wasCorrect: result.wasCorrect }}
+            onRequested={handleSupportRequested}
+            onClose={handleCloseSupport}
+          />
+        )}
+        <div className={styles.feedbackActions}>
+          {!supportOpen && (
+            <button type="button" className={styles.secondaryButton} onClick={handleRequestSupport}>
+              Explain this another way
+            </button>
+          )}
+          {primaryActions}
+        </div>
+      </div>
+    );
   }
 }

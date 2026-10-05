@@ -18,10 +18,11 @@
 // it's about, so a learner isn't left checking the trail against the code by
 // eye. A step with no `lineNumber` just doesn't highlight anything.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { PropagationStep } from "../types/content";
 import { buildRevealedLineMap, CodeBlock } from "./CodeBlock";
 import { InlineCode } from "./InlineCode";
+import { useStepReplay } from "../hooks/useStepReplay";
 import styles from "./PropagationReplay.module.css";
 
 export interface PropagationReplayProps {
@@ -30,11 +31,6 @@ export interface PropagationReplayProps {
 }
 
 const STEP_DELAY_MS = 500;
-
-function usesReducedMotion(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 const STATUS_CLASS: Record<PropagationStep["status"], string> = {
   throws: styles.detailThrows,
@@ -55,37 +51,7 @@ const STATUS_ICON: Record<PropagationStep["status"], string> = {
 };
 
 export function PropagationReplay({ code, trace }: PropagationReplayProps) {
-  const reducedMotion = useMemo(() => usesReducedMotion(), []);
-  const [revealCount, setRevealCount] = useState(reducedMotion ? trace.length : 0);
-  const [runId, setRunId] = useState(0);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setRevealCount(trace.length);
-      return;
-    }
-    setRevealCount(0);
-    if (trace.length === 0) return;
-
-    let cancelled = false;
-    let step = 0;
-
-    const advance = () => {
-      if (cancelled) return;
-      step += 1;
-      setRevealCount(step);
-      if (step < trace.length) {
-        window.setTimeout(advance, STEP_DELAY_MS);
-      }
-    };
-    const firstTimer = window.setTimeout(advance, STEP_DELAY_MS);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(firstTimer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trace, reducedMotion, runId]);
+  const { revealCount, atStart, atEnd, goToPrevious, goToNext, replay } = useStepReplay(trace.length, STEP_DELAY_MS);
 
   // Optional per-line highlighting on top of the trail below — a step with
   // no `lineNumber` just contributes nothing here, same as ExecutionReplay's
@@ -96,7 +62,7 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
     [trace, revealCount],
   );
 
-  const animationDone = revealCount >= trace.length;
+  const currentLineNumber = revealCount > 0 ? trace[revealCount - 1]?.lineNumber : undefined;
 
   // Self-guard, same reasoning as ExecutionReplay: an empty trace has
   // nothing to animate. Callers should prefer checking
@@ -107,21 +73,26 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
     <div className={styles.wrapper}>
       <div className={styles.header}>
         <h3 className={styles.heading}>Exception propagation</h3>
-        {!reducedMotion && (
-          <button
-            type="button"
-            className={styles.replayButton}
-            onClick={() => setRunId((id) => id + 1)}
-            disabled={!animationDone}
-          >
+        <div className={styles.controls}>
+          <span className={styles.stepLabel}>
+            Step {Math.min(revealCount, trace.length)} of {trace.length}
+          </span>
+          <button type="button" className={styles.stepButton} onClick={goToPrevious} disabled={atStart} aria-label="Previous step">
+            ‹
+          </button>
+          <button type="button" className={styles.stepButton} onClick={goToNext} disabled={atEnd} aria-label="Next step">
+            ›
+          </button>
+          <button type="button" className={styles.replayButton} onClick={replay}>
             ↻ Replay
           </button>
-        )}
+        </div>
       </div>
-      <CodeBlock code={code} lineStates={lineStates} />
+      <CodeBlock code={code} lineStates={lineStates} currentLineNumber={currentLineNumber} />
       <div className={styles.trace}>
         {trace.map((step, index) => {
           const visible = index < revealCount;
+          const isCurrent = index === revealCount - 1;
           return (
             <div key={`${step.methodName}-${index}`} className={styles.traceItem}>
               {index > 0 && (
@@ -129,7 +100,11 @@ export function PropagationReplay({ code, trace }: PropagationReplayProps) {
                   ↓
                 </div>
               )}
-              <div className={[styles.step, visible ? styles.stepVisible : ""].join(" ")}>
+              <div
+                className={[styles.step, visible ? styles.stepVisible : "", isCurrent ? styles.stepCurrent : ""]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
                 <code className={styles.stepMethod}>{step.methodName}</code>
                 <span className={[styles.stepDetail, STATUS_CLASS[step.status]].join(" ")}>
                   <span aria-hidden="true">{STATUS_ICON[step.status]} </span>

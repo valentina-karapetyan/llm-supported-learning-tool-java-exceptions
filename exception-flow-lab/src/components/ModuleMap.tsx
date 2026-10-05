@@ -22,14 +22,19 @@ export function ModuleMap({ modules, progress, onSelectModule, onViewJournal }: 
     return moduleProgress?.state ?? "not_started";
   }
 
+  const completedCount = modules.filter((module) => stateFor(module.id) === "completed").length;
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.headerRow}>
-        <h1 className={styles.title}>Case files</h1>
+        <h1 className={styles.title}>Lessons</h1>
         <button type="button" className={styles.journalLink} onClick={onViewJournal}>
-          Concept Journal →
+          📒 What I've learned →
         </button>
       </div>
+      <p className={styles.progressLine}>
+        {completedCount} of {modules.length} lessons completed
+      </p>
       <div className={styles.list}>
         {modules.map((module, i) => (
           <ModuleCard

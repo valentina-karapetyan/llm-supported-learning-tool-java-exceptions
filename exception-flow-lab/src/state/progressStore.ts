@@ -99,6 +99,17 @@ export function recordTaskAttempt(
 }
 
 /**
+ * Clears one module's recorded progress (its task attempts and retrieval
+ * answer) so it can be redone from scratch, leaving every other module
+ * untouched. Persists and returns the new AppProgress.
+ */
+export function resetModuleProgress(progress: AppProgress, moduleId: string): AppProgress {
+  const next: AppProgress = { modules: progress.modules.filter((m) => m.moduleId !== moduleId) };
+  saveProgress(next);
+  return next;
+}
+
+/**
  * Records the learner's Retrieval Practice explanation for a module,
  * persists to localStorage, and returns the new AppProgress. Called once,
  * when the learner completes the module (see App.tsx#handleCompleteModule)

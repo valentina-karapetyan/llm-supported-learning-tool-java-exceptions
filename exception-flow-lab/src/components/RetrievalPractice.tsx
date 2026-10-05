@@ -8,8 +8,11 @@
 //
 // Clicking "Check my explanation" calls retrievalComparisonService, which
 // resolves to a RetrievalCheckOutcome (build spec §12/§13):
-//   - "ok": a real per-criterion comparison, rendered below. Never a grade —
-//     see RetrievalComparisonResult's doc comment in types/content.ts.
+//   - "ok": real feedback, rendered below as one card grouped by what the
+//     learner actually wrote (what's covered, what's missing, what's
+//     inaccurate, what to revise next) rather than one row per criterion —
+//     never a grade, see RetrievalComparisonResult's doc comment in
+//     types/content.ts.
 //   - "unavailable": no Gemini key configured. Expected, silent, renders the
 //     same static placeholder card this screen has always shown.
 //   - "error": a live request was actually attempted and failed (timeout,
@@ -18,22 +21,96 @@
 //     its own retry/continue card instead of silently reusing the
 //     placeholder.
 //
-// "Complete module" / "Complete learning lab" unlocks once the learner has
+// "Complete case file" / "Complete learning lab" unlocks once the learner has
 // gotten a real "ok" or "unavailable" result, or explicitly chosen to
 // continue past an "error" — still no grading, just makes sure the recall
 // step isn't skippable in one click, and that a failed request specifically
 // can't silently strand the learner either.
 
 import { useRef, useState } from "react";
-import type { RetrievalQuestion, CriterionStatus } from "../types/content";
+import type { RetrievalComparisonResult, RetrievalQuestion } from "../types/content";
 import { retrievalComparisonService, type RetrievalCheckOutcome } from "../llm/retrievalComparisonService";
 import { InlineCode } from "./InlineCode";
 import styles from "./RetrievalPractice.module.css";
 
+// Renders one RetrievalComparisonResult as grouped, learner-facing sections
+// instead of one status row per required concept — the mechanical
+// "Missing … / Missing … / Missing …" rubric list this replaced. Sections
+// that have nothing to say are omitted entirely rather than shown empty, and
+// a good answer gets an affirmation instead of a manufactured "improvement".
+function RetrievalFeedbackCard({ result }: { result: RetrievalComparisonResult }) {
+  const covered = result.criteria.filter((c) => c.status === "addressed");
+  // Concepts that still need work, most-important-first — requiredConcepts
+  // is authored in that order and criteria mirrors it 1:1.
+  const needsWork = result.criteria.filter((c) => c.status !== "addressed");
+  const nothingLeftToRevise = needsWork.length === 0 && result.inaccuracies.length === 0;
+
+  return (
+    <div className={styles.resultCard}>
+      <p className={styles.resultHeading}>Feedback on your explanation</p>
+      <p className={styles.overallFeedback}>
+        <InlineCode text={result.overallFeedback} />
+      </p>
+
+      {covered.length > 0 && (
+        <div className={styles.section}>
+          <p className={styles.sectionLabel}>What you already covered</p>
+          <ul className={styles.sectionList}>
+            {covered.map((criterion, index) => (
+              <li key={index}>
+                <InlineCode text={criterion.feedback} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {needsWork.length > 0 && (
+        <div className={styles.section}>
+          <p className={styles.sectionLabel}>What is still missing</p>
+          <ul className={styles.sectionList}>
+            {needsWork.map((criterion, index) => (
+              <li key={index}>
+                <InlineCode text={criterion.feedback} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {result.inaccuracies.length > 0 && (
+        <div className={[styles.section, styles.checkSection].join(" ")}>
+          <p className={styles.sectionLabel}>Check this idea</p>
+          <ul className={styles.sectionList}>
+            {result.inaccuracies.map((inaccuracy, index) => (
+              <li key={index}>
+                <InlineCode text={inaccuracy.correction} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {result.revisionFocus ? (
+        <div className={[styles.section, styles.revisionSection].join(" ")}>
+          <p className={styles.sectionLabel}>Revision focus</p>
+          <p className={styles.revisionText}>
+            <InlineCode text={result.revisionFocus} />
+          </p>
+        </div>
+      ) : (
+        nothingLeftToRevise && <p className={styles.allGoodText}>Your explanation covers the key points.</p>
+      )}
+
+      <p className={styles.reviseHint}>Edit your explanation above and check it again when you are ready.</p>
+    </div>
+  );
+}
+
 export interface RetrievalPracticeProps {
   retrievalQuestion: RetrievalQuestion;
-  // "Complete module" everywhere except Module 5, which uses "Complete
-  // learning lab" — passed in rather than hardcoded here so this component
+  // "Finish lesson" everywhere except Module 5, which uses "Finish the
+  // lab" — passed in rather than hardcoded here so this component
   // stays module-agnostic.
   completeLabel: string;
   // Receives the learner's current explanation text so the caller can
@@ -42,18 +119,6 @@ export interface RetrievalPracticeProps {
   // revision, so it's naturally their final answer.
   onComplete: (answer: string) => void;
 }
-
-const STATUS_ICON: Record<CriterionStatus, string> = {
-  addressed: "✓",
-  partly_addressed: "△",
-  missing: "○",
-};
-
-const STATUS_LABEL: Record<CriterionStatus, string> = {
-  addressed: "Addressed",
-  partly_addressed: "Partly addressed",
-  missing: "Missing",
-};
 
 export function RetrievalPractice({ retrievalQuestion, completeLabel, onComplete }: RetrievalPracticeProps) {
   const [answer, setAnswer] = useState("");
@@ -94,7 +159,7 @@ export function RetrievalPractice({ retrievalQuestion, completeLabel, onComplete
 
   return (
     <div className={styles.wrapper}>
-      <p className={styles.eyebrow}>Before you finish</p>
+      <p className={styles.eyebrow}>Final question</p>
       <h1 className={styles.title}>Recall it without looking back</h1>
       <p className={styles.instruction}>Answer the question in your own words. A short explanation is enough.</p>
 
@@ -128,55 +193,15 @@ export function RetrievalPractice({ retrievalQuestion, completeLabel, onComplete
         </button>
       </div>
 
-      {outcome?.status === "ok" && (
-        <div className={styles.resultCard}>
-          <p className={styles.resultHeading}>Feedback on your explanation</p>
-
-          <div className={styles.criteriaList}>
-            {outcome.result.criteria.map((criterion, index) => (
-              <div key={index} className={[styles.criterionRow, styles[`criterion_${criterion.status}`]].join(" ")}>
-                <span className={styles.criterionIcon} aria-hidden="true">
-                  {STATUS_ICON[criterion.status]}
-                </span>
-                <span className={styles.criterionText}>
-                  <span className={styles.criterionStatusLabel}>{STATUS_LABEL[criterion.status]}</span>
-                  <InlineCode text={criterion.concept} />
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {outcome.result.potentialInaccuracies.length > 0 && (
-            <div className={styles.inaccuraciesBlock}>
-              <p className={styles.blockLabel}>! Potentially inaccurate</p>
-              <ul className={styles.inaccuraciesList}>
-                {outcome.result.potentialInaccuracies.map((text, index) => (
-                  <li key={index}>
-                    <InlineCode text={text} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className={styles.improveBlock}>
-            <p className={styles.blockLabel}>What to improve</p>
-            <p className={styles.improveText}>
-              <InlineCode text={outcome.result.improvementSuggestion} />
-            </p>
-          </div>
-
-          <p className={styles.reviseHint}>Revise my explanation. Edit your answer above and check again when you're ready.</p>
-        </div>
-      )}
+      {outcome?.status === "ok" && <RetrievalFeedbackCard result={outcome.result} />}
 
       {outcome?.status === "unavailable" && (
         <div className={styles.placeholderCard}>
           <p className={styles.placeholderTitle}>AI-supported feedback placeholder</p>
           <p className={styles.placeholderText}>
             In the final version, your explanation will be compared with the predefined expected concepts for this
-            question. The system will identify addressed, partly addressed, or missing ideas and suggest one thing to
-            improve.
+            question, and you'll get feedback on what you covered, what's still missing, and anything worth
+            double-checking.
           </p>
           {/* Vite sets import.meta.env.DEV to false in a production build —
               the build study participants run — so this line disappears

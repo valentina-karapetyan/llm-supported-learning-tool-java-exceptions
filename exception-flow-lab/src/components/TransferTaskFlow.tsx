@@ -20,11 +20,14 @@ export interface TransferTaskFlowProps {
   // stay accurate instead of promising "a different case" it might not
   // deliver.
   isDistinctRetryVariant?: boolean;
-  onSubmit: (submission: TaskSubmission) => void;
+  onSubmit?: (submission: TaskSubmission) => void;
   onBackToMap: () => void;
+  // Passed through to TaskScreen — used to show the checked (red/green)
+  // answer in place of the interactive widget, keeping this screen's framing.
+  answerSlot?: React.ReactNode;
 }
 
-export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubmit, onBackToMap }: TransferTaskFlowProps) {
+export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubmit, onBackToMap, answerSlot }: TransferTaskFlowProps) {
   const eyebrowText =
     attempt > 1
       ? isDistinctRetryVariant
@@ -39,6 +42,7 @@ export function TransferTaskFlow({ task, attempt, isDistinctRetryVariant, onSubm
       onSubmit={onSubmit}
       onBackToMap={onBackToMap}
       eyebrow={<p className={styles.eyebrow}>{eyebrowText}</p>}
+      answerSlot={answerSlot}
     />
   );
 }

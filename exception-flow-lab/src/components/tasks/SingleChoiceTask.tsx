@@ -1,10 +1,7 @@
 // src/components/tasks/SingleChoiceTask.tsx
 //
-// Plain single-select: pick one option, submit. Deliberately no inline
-// reveal (unlike HandlerSelectionTask, which shows a rationale per option
-// immediately on selection) — correctness is decided and shown only on the
-// Feedback screen, so the app-wide order (answer → feedback) holds for this
-// task type too.
+// Plain single-select: pick one option, check. Correctness is shown right
+// after by CheckedAnswer, which replaces this widget on the same screen.
 
 import { useState } from "react";
 import type { SingleChoiceData } from "../../types/content";
@@ -55,7 +52,7 @@ export function SingleChoiceTask({ data, onSubmit, disabled }: SingleChoiceTaskP
           disabled={disabled || !selectedId}
           onClick={() => selectedId && onSubmit(selectedId)}
         >
-          {data.submitLabel ?? "Submit answer"}
+          {data.submitLabel ?? "Check answer"}
         </button>
       </div>
     </div>

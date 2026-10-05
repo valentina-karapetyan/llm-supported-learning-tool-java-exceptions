@@ -67,7 +67,7 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
 export const diagnosticTask: Task = {
   id: "m1-diagnostic",
   moduleId: "module-1",
-  caseLabel: "Case file: The Vanishing Line",
+  caseLabel: "Case: The Vanishing Line",
   title: "Trace the Execution",
   learningObjective:
     "Understand that a thrown exception skips the remaining statements in the same try block.",
@@ -173,7 +173,7 @@ export const diagnosticTask: Task = {
 export const transferTaskBaseline: Task = {
   id: "m1-transfer",
   moduleId: "module-1",
-  caseLabel: "Case file: The Almost-Saved Form",
+  caseLabel: "Case: The Almost-Saved Form",
   title: "Trace the Execution: Transfer",
   learningObjective: "Apply the same rule to a new scenario where something succeeds before the failure.",
   misconception:
@@ -279,7 +279,7 @@ export const transferTaskBaseline: Task = {
 export const transferTaskStretch: Task = {
   id: "m1-transfer-stretch",
   moduleId: "module-1",
-  caseLabel: "Case file: The Quiet Failure",
+  caseLabel: "Case: The Quiet Failure",
   title: "Trace the Execution: A Trickier Case",
   learningObjective: "Apply the same rule when the failing call is less obviously the risky one.",
   misconception:

@@ -1,0 +1,101 @@
+.listTitle {
+  margin: 0 0 calc(-1 * var(--space-2));
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.row {
+  width: 100%;
+  cursor: default;
+  animation: flash 320ms ease-out;
+}
+
+.rowNeutral {
+  opacity: 0.6;
+  animation: none;
+}
+
+.rowCorrect {
+  background: rgba(47, 143, 91, 0.14);
+  border: 2px solid var(--color-success);
+}
+
+.rowIncorrect {
+  background: rgba(198, 91, 91, 0.12);
+  border: 2px solid var(--color-error);
+}
+
+.marker {
+  font-weight: 700;
+}
+
+.rowCorrect .marker {
+  border-color: var(--color-success);
+  background: var(--color-success);
+  color: white;
+}
+
+.rowIncorrect .marker {
+  border-color: var(--color-error);
+  background: var(--color-error);
+  color: white;
+}
+
+.position {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.note {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  border-top: 1px dashed var(--color-border);
+  padding-top: var(--space-1);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.verdict {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.verdictCorrect {
+  color: var(--color-success-text, var(--color-success));
+}
+
+.verdictIncorrect {
+  color: var(--color-error-text, var(--color-error));
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes flash {
+  from {
+    transform: scale(0.98);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+}

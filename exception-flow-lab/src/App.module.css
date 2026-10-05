@@ -33,7 +33,7 @@
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .footerNote {
@@ -55,41 +55,11 @@
 }
 
 .feedbackWrapper {
-  max-width: 720px;
+  max-width: 800px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-}
-
-/* AI Support layout (build spec §9): keeps the task/feedback context visible
-   next to the AI panel instead of navigating away from it entirely. Wider
-   than .feedbackWrapper since it now holds two columns side by side above
-   the breakpoint; a single stacked column (task content first) below it. */
-.supportWrapper {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.supportLayout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-4);
-  align-items: start;
-}
-
-@media (min-width: 900px) {
-  .supportLayout {
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-  }
-}
-
-.supportLayoutMain,
-.supportLayoutPanel {
-  min-width: 0;
 }
 
 .feedbackActions {

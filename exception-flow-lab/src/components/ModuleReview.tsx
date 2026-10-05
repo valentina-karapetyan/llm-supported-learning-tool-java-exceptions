@@ -24,18 +24,21 @@ export interface ModuleReviewProps {
   module: Module;
   taskProgress: TaskProgress[];
   onSelectTask: (taskId: string) => void;
+  // Clears just this module's progress and starts it over (App confirms first).
+  onRedoModule: () => void;
   onBackToMap: () => void;
 }
 
 interface ReviewableTask {
   taskId: string;
   label: string;
+  wasCorrect: boolean;
 }
 
 /** Derives the review menu entirely from recorded `taskProgress` entries —
  *  no separate "what should be reviewable" state to keep in sync. For
  *  diagnostic_transfer modules this naturally yields up to 3 entries
- *  (Initial task / New case / Retry case); a module whose transfer task has
+ *  (Initial case / New case / Retry case); a module whose transfer task has
  *  no distinct `retryVariant` authored just won't have a third entry, since
  *  a same-id retry already overwrites the attempt-1 record in
  *  `recordTaskAttempt` — there's nothing separate left to show. For
@@ -45,48 +48,50 @@ interface ReviewableTask {
  *  case labels ("Mixed case 3 of 3 · Part A" / "· Part B"). */
 function getReviewableTasks(module: Module, taskProgress: TaskProgress[]): ReviewableTask[] {
   const hasEntry = (taskId: string) => taskProgress.some((tp) => tp.taskId === taskId);
+  const wasCorrect = (taskId: string) => taskProgress.find((tp) => tp.taskId === taskId)?.wasCorrect ?? false;
 
   if (isMixedPracticeModule(module)) {
     return getMixedCaseTasks(module)
       .filter((task) => hasEntry(task.id))
-      .map((task) => ({ taskId: task.id, label: task.caseLabel }));
+      .map((task) => ({ taskId: task.id, label: task.caseLabel, wasCorrect: wasCorrect(task.id) }));
   }
 
   const entries: ReviewableTask[] = [];
 
   const diagnostic = getDiagnosticTask(module);
   if (diagnostic && hasEntry(diagnostic.id)) {
-    entries.push({ taskId: diagnostic.id, label: "Initial task" });
+    entries.push({ taskId: diagnostic.id, label: "Initial case", wasCorrect: wasCorrect(diagnostic.id) });
   }
 
   const transfer = getTransferTask(module);
   if (transfer && hasEntry(transfer.id)) {
-    entries.push({ taskId: transfer.id, label: "New case" });
+    entries.push({ taskId: transfer.id, label: "New case", wasCorrect: wasCorrect(transfer.id) });
   }
 
   const retryVariant = transfer && getComparableRetryTask(transfer);
   if (retryVariant && hasEntry(retryVariant.id)) {
-    entries.push({ taskId: retryVariant.id, label: "Retry case" });
+    entries.push({ taskId: retryVariant.id, label: "Retry case", wasCorrect: wasCorrect(retryVariant.id) });
   }
 
   return entries;
 }
 
-export function ModuleReview({ module, taskProgress, onSelectTask, onBackToMap }: ModuleReviewProps) {
+export function ModuleReview({ module, taskProgress, onSelectTask, onRedoModule, onBackToMap }: ModuleReviewProps) {
   const reviewable = getReviewableTasks(module, taskProgress);
-  const heading = isMixedPracticeModule(module) ? "Review cases" : "Review tasks";
 
   return (
     <div className={styles.wrapper}>
       <CaseNav onBackToMap={onBackToMap} />
-      <p className={styles.eyebrow}>Module complete</p>
+      <p className={styles.eyebrow}>Lesson complete</p>
       <h1 className={styles.title}>{module.title}</h1>
-      <p className={styles.lede}>You've completed this case file. Revisit any of your past answers below.</p>
+      <p className={styles.lede}>
+        Open a case to see your answer and the explanation, or try it again for practice.
+      </p>
 
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>{heading}</h2>
+        <h2 className={styles.sectionTitle}>Your cases</h2>
         {reviewable.length === 0 ? (
-          <p className={styles.emptyState}>Nothing recorded yet for this module.</p>
+          <p className={styles.emptyState}>Nothing recorded yet for this lesson.</p>
         ) : (
           <div className={styles.list}>
             {reviewable.map((entry, index) => (
@@ -95,6 +100,12 @@ export function ModuleReview({ module, taskProgress, onSelectTask, onBackToMap }
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <span className={styles.label}>{entry.label}</span>
+                <span
+                  className={[styles.result, entry.wasCorrect ? styles.resultCorrect : styles.resultIncorrect].join(" ")}
+                  aria-label={entry.wasCorrect ? "answered correctly" : "answered incorrectly"}
+                >
+                  {entry.wasCorrect ? "✓" : "✗"}
+                </span>
                 <span className={styles.arrow} aria-hidden="true">
                   →
                 </span>
@@ -105,8 +116,11 @@ export function ModuleReview({ module, taskProgress, onSelectTask, onBackToMap }
       </div>
 
       <div className={styles.actions}>
+        <button type="button" className={styles.secondaryButton} onClick={onRedoModule}>
+          ↻ Redo the whole lesson
+        </button>
         <button type="button" className={styles.primaryButton} onClick={onBackToMap}>
-          Back to case files
+          Back to lessons
         </button>
       </div>
     </div>

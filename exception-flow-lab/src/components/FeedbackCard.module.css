@@ -61,7 +61,7 @@
 
 .diffLabel {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--color-error-text, var(--color-error));
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -71,6 +71,7 @@
 .ruleCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
   border-radius: var(--radius-card);
   padding: var(--space-4);
   box-shadow: var(--shadow-card);
@@ -81,10 +82,10 @@
 
 .ruleLabel {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--color-accent-text, var(--color-accent));
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   font-weight: 700;
 }
 

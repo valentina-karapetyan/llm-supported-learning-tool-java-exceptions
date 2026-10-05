@@ -56,7 +56,7 @@ export function HandlerRefactoringTask({ data, onSubmit, disabled }: HandlerRefa
           disabled={disabled || !selectedId}
           onClick={() => selectedId && onSubmit(selectedId)}
         >
-          Submit answer
+          Check answer
         </button>
       </div>
     </div>

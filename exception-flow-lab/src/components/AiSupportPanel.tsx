@@ -15,8 +15,12 @@
 // last two completed tasks in this module correctly on the first try, the
 // panel opens collapsed ("Need help? ▾") instead of expanded. It's a
 // nudge, never a lock — every button is still one click away once expanded.
+//
+// Rendered inline below the task's feedback (not in a side column): it
+// scrolls itself into view when opened, and its responses sit in their own
+// scrollable area so the support buttons stay in reach.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LlmSupportResponse, SupportType, Task } from "../types/content";
 import { llmSupportService, type SupportContext } from "../llm/llmSupportService";
 import { InlineCode } from "./InlineCode";
@@ -36,7 +40,11 @@ export interface AiSupportPanelProps {
   // walkthrough, etc. Omitted only in the (currently unreachable) case of
   // opening support with nothing submitted yet.
   context?: SupportContext;
-  onBack: (requestedInOrder: SupportType[]) => void;
+  // Fired whenever a new kind of support is unlocked, with everything
+  // unlocked so far in order — so the caller can record it right away,
+  // even if the learner continues without ever closing the panel.
+  onRequested: (requestedInOrder: SupportType[]) => void;
+  onClose: () => void;
 }
 
 type PrimarySupportType = "hint" | "step_by_step" | "similar_example";
@@ -51,7 +59,7 @@ const BUTTON_LABEL: Record<PrimarySupportType, string> = {
 
 const SIMPLIFY_LABEL = "Make this explanation simpler";
 
-export function AiSupportPanel({ task, collapsedByDefault, initialRequested, context, onBack }: AiSupportPanelProps) {
+export function AiSupportPanel({ task, collapsedByDefault, initialRequested, context, onRequested, onClose }: AiSupportPanelProps) {
   // Already having unlocked buttons from a prior visit implies the panel
   // was expanded then too, regardless of the fading heuristic.
   const [expanded, setExpanded] = useState(!collapsedByDefault || initialRequested.length > 0);
@@ -63,6 +71,18 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, con
   // that card's "Make this explanation simpler" action afterward rather
   // than inviting an endless "simpler than simple" loop.
   const [simplified, setSimplified] = useState<Set<SupportType>>(new Set());
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Partial<Record<SupportType, HTMLDivElement | null>>>({});
+  const [lastArrived, setLastArrived] = useState<SupportType | null>(null);
+
+  useEffect(() => {
+    wrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  // Bring a freshly arrived response into view inside the scroll area.
+  useEffect(() => {
+    if (lastArrived) cardRefs.current[lastArrived]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [lastArrived, responses]);
 
   // Re-fetch content for anything already unlocked on a previous visit, so
   // reopening shows it again instead of an unlocked-but-empty button.
@@ -82,7 +102,12 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, con
     try {
       const response = await llmSupportService.getSupport(task, type, context);
       setResponses((prev) => ({ ...prev, [type]: response }));
-      setRequested((prev) => (prev.includes(type) ? prev : [...prev, type]));
+      setLastArrived(type);
+      if (!requested.includes(type)) {
+        const next = [...requested, type];
+        setRequested(next);
+        onRequested(next);
+      }
     } finally {
       setLoading(null);
     }
@@ -103,20 +128,25 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, con
 
   if (!expanded) {
     return (
-      <div className={styles.wrapper}>
+      <div className={styles.wrapper} ref={wrapperRef}>
         <button type="button" className={styles.collapsedToggle} onClick={() => setExpanded(true)}>
           Need help? ▾
         </button>
-        <button type="button" className={styles.backLink} onClick={() => onBack(requested)}>
-          ← Back to feedback
+        <button type="button" className={styles.backLink} onClick={onClose}>
+          Close
         </button>
       </div>
     );
   }
 
   return (
-    <div className={styles.wrapper}>
-      <h2 className={styles.heading}>Need more help?</h2>
+    <div className={styles.wrapper} ref={wrapperRef}>
+      <div className={styles.headerRow}>
+        <h2 className={styles.heading}>Need another explanation?</h2>
+        <button type="button" className={styles.backLink} onClick={onClose}>
+          Close ✕
+        </button>
+      </div>
       <p className={styles.subheading}>Pick whichever would help most right now. Never a grade, never an open chat.</p>
 
       <div className={styles.buttonRow}>
@@ -137,7 +167,13 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, con
         {PRIMARY_SUPPORT_TYPES.filter((type) => responses[type]).map((type) => {
           const response = responses[type]!;
           return (
-            <div key={type} className={styles.responseCard}>
+            <div
+              key={type}
+              className={styles.responseCard}
+              ref={(el) => {
+                cardRefs.current[type] = el;
+              }}
+            >
               <p className={styles.responseTitle}>
                 <InlineCode text={response.title} />
               </p>
@@ -163,10 +199,6 @@ export function AiSupportPanel({ task, collapsedByDefault, initialRequested, con
           );
         })}
       </div>
-
-      <button type="button" className={styles.backLink} onClick={() => onBack(requested)}>
-        ← Back to feedback
-      </button>
     </div>
   );
 }

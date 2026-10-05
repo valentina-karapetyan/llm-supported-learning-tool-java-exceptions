@@ -38,10 +38,10 @@ export function CompletionScreen({ module, moduleProgress, onBackToMap, onViewJo
 
   return (
     <div className={styles.wrapper}>
-      <p className={styles.eyebrow}>{summary?.eyebrow ?? "Module complete"}</p>
+      <p className={styles.eyebrow}>{summary?.eyebrow ?? "Lesson complete"}</p>
       <h1 className={styles.title}>{summary?.title ?? module.title}</h1>
       <p className={styles.lede}>
-        {summary?.lede ?? "You've worked through this case file end to end. Here's what it was building toward:"}
+        {summary?.lede ?? "You've worked through this lesson end to end. Here's what it was building toward:"}
       </p>
 
       {points.length > 0 && (
@@ -56,10 +56,10 @@ export function CompletionScreen({ module, moduleProgress, onBackToMap, onViewJo
 
       <div className={styles.actions}>
         <button type="button" className={styles.secondaryButton} onClick={onViewJournal}>
-          View Concept Journal
+          See what I've learned
         </button>
         <button type="button" className={styles.primaryButton} onClick={onBackToMap}>
-          {summary?.primaryActionLabel ?? "Back to case files"}
+          {summary?.primaryActionLabel ?? "Back to lessons"}
         </button>
       </div>
     </div>
