@@ -105,7 +105,7 @@ export function CatchOrderTask({ data, onSubmit, disabled }: CatchOrderTaskProps
 
       <div className={styles.actions}>
         <button type="button" className={styles.primaryButton} onClick={() => onSubmit(order)} disabled={disabled}>
-          Submit answer
+          Check answer
         </button>
       </div>
     </div>

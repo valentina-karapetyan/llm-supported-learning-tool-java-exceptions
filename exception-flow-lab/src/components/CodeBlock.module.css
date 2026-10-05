@@ -8,7 +8,7 @@
 .caption {
   margin: 0;
   padding: var(--space-2) var(--space-3);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
@@ -47,7 +47,7 @@
 .lineBadge {
   flex: 0 0 auto;
   font-family: var(--font-body);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 1px 6px;
@@ -104,6 +104,19 @@
 .unreachable .lineBadge {
   background: rgba(198, 91, 91, 0.45);
   color: white;
+}
+
+/* The line a replay most recently revealed — layered over the cumulative
+   state background above so "just happened" reads distinctly from
+   "happened earlier in this trace". Both a border (shape) and a text-color
+   cue (not color alone), same reasoning as the state badges. */
+.lineCurrent {
+  box-shadow: inset 3px 0 0 var(--color-attention);
+}
+
+.lineCurrent .lineNumber {
+  color: var(--color-attention);
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {

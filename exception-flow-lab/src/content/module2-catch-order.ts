@@ -68,7 +68,7 @@ function diagnosticIncorrectExplanation(response: TaskResponseData): string {
 export const module2DiagnosticTask: Task = {
   id: "m2-diagnostic",
   moduleId: "module-2",
-  caseLabel: "Case file: The Unreachable Catch",
+  caseLabel: "Case: The Unreachable Catch",
   title: "Catch Order & Specificity",
   learningObjective:
     "Understand that a catch clause also matches subclasses of its declared type, and that catch clauses are checked in the order they're written, so a broader clause placed before a related, more specific one makes the specific clause unreachable.",
@@ -199,7 +199,7 @@ export const module2DiagnosticTask: Task = {
 export const module2TransferTask: Task = {
   id: "m2-transfer",
   moduleId: "module-2",
-  caseLabel: "Case file: The Ignored Format Error",
+  caseLabel: "Case: The Ignored Format Error",
   title: "Catch Order & Specificity: Transfer",
   learningObjective: "Recognize the same catch-order rule by reading already-written code, not just by arranging clauses.",
   misconception: "Assuming that listing a broader exception type before a related, more specific subtype is harmless as long as both clauses are present.",
@@ -315,7 +315,7 @@ export const module2TransferTask: Task = {
 export const module2TransferRetryTask: Task = {
   id: "m2-transfer-retry",
   moduleId: "module-2",
-  caseLabel: "Case file: The Silent Handler",
+  caseLabel: "Case: The Silent Handler",
   title: "Catch Order & Specificity: A Trickier Case",
   learningObjective: "Identify which already-correctly-ordered catch clause actually handles a thrown subtype that has no clause of its own.",
   misconception: "Assuming a `catch` clause only matches its exact exception type, so a thrown subclass with no matching clause of its own must be uncaught.",

@@ -8,6 +8,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .heading {
@@ -18,22 +20,49 @@
   letter-spacing: 0.04em;
 }
 
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stepLabel {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.stepButton {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-radius: var(--radius-control);
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stepButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.stepButton:not(:disabled):hover {
+  background: var(--color-bg);
+}
+
 .replayButton {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-primary);
   border-radius: var(--radius-control);
   padding: var(--space-1) var(--space-2);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   cursor: pointer;
 }
 
-.replayButton:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.replayButton:not(:disabled):hover {
+.replayButton:hover {
   background: var(--color-bg);
 }
 
@@ -84,6 +113,13 @@
   transform: translateY(0);
 }
 
+/* The step the trail most recently revealed — same "just happened" cue as
+   CodeBlock's .lineCurrent, so the trail and the code stay in sync. */
+.stepCurrent {
+  border-color: var(--color-attention);
+  box-shadow: 0 0 0 2px rgba(232, 163, 61, 0.35);
+}
+
 .stepMethod {
   font-family: var(--font-code);
   font-weight: 700;
@@ -91,7 +127,7 @@
 }
 
 .stepDetail {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   text-align: center;
 }
 

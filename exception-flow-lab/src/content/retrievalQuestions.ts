@@ -25,9 +25,8 @@ export const module1Retrieval: RetrievalQuestion = {
   referenceAnswer:
     "The remaining statements in the `try` block are skipped, and control transfers to the matching `catch` clause.",
   requiredConcepts: [
-    "remaining statements in the current `try` block do not continue",
-    "they are skipped",
-    "control transfers to a matching `catch` clause",
+    "the remaining statements in the `try` block are skipped, not executed",
+    "control transfers to the matching `catch` clause",
   ],
   commonMisconceptions: [
     "execution continues with the next statement in the `try` block",
@@ -43,10 +42,9 @@ export const module2Retrieval: RetrievalQuestion = {
   referenceAnswer:
     "A superclass handler also matches exceptions of its subclasses. If the superclass handler appears first, it catches the subclass exception before the more specific handler can be reached, making the later specific handler unreachable and causing a compilation error.",
   requiredConcepts: [
-    "a superclass handler can match subclass exceptions",
-    "`catch` clauses are considered in order",
-    "a general handler first can make a later specific handler unreachable",
-    "unreachable related handlers cause a compilation error",
+    "a superclass handler also matches exceptions of its subclasses",
+    "`catch` clauses are checked in order, so an earlier general handler prevents a later, more specific one from ever being reached",
+    "an unreachable `catch` clause is a compile-time error in Java",
   ],
   commonMisconceptions: [
     "Java automatically chooses the most specific handler regardless of order",
@@ -63,9 +61,8 @@ export const module3Retrieval: RetrievalQuestion = {
     "The exception propagates to the caller. It continues through the active call chain until the first compatible handler is found. If no compatible handler exists, the exception remains uncaught.",
   requiredConcepts: [
     "the exception propagates to the caller",
-    "propagation continues through the active calling chain",
-    "it stops at the first compatible handler encountered",
-    "if no compatible handler exists, it remains uncaught",
+    "propagation continues through the active calling chain until the first compatible handler is found",
+    "if no compatible handler exists anywhere in the chain, the exception remains uncaught",
   ],
   commonMisconceptions: [
     "the immediate caller automatically handles the exception",
@@ -79,12 +76,10 @@ export const module4Retrieval: RetrievalQuestion = {
   moduleId: "module-4",
   question: "When should related exceptions share one superclass `catch` clause, and when should they be handled separately?",
   referenceAnswer:
-    "Related exceptions can share a superclass handler when they require the same reaction. They should use separate subtype handlers when they require different reactions. The handler type should match the intended group of exceptions without being unnecessarily broad.",
+    "Related exceptions can share a superclass handler when they require the same reaction. They should use separate subtype handlers when they require different reactions. (It also helps to avoid duplicating identical handlers when one shared superclass handler already expresses the same intent, and to avoid unnecessarily broad handling such as an unrelated `catch (Exception e)` — useful supporting habits, but not the core of what this question is asking.)",
   requiredConcepts: [
-    "shared superclass handler when reactions are the same",
-    "separate subtype handlers when reactions differ",
-    "avoid duplicated identical handlers when a shared superclass expresses the same intent",
-    "avoid unnecessarily broad handling such as an unrelated `catch (Exception e)`",
+    "related exceptions can share a superclass handler when they require the same reaction",
+    "exceptions should be handled separately, with their own subtype handlers, when they require different reactions",
   ],
   commonMisconceptions: [
     "related exceptions should always use one superclass handler",
@@ -102,10 +97,9 @@ export const module5Retrieval: RetrievalQuestion = {
     "Throwing the exception interrupts the current execution path, so its remaining statements are skipped. If there's no compatible local handler, it propagates through the active callers. Exception hierarchy determines which handlers are compatible, and propagation stops at the first one encountered. Handler design should then reflect whether the exceptions involved need the same reaction or separate ones.",
   requiredConcepts: [
     "throwing interrupts the current execution path, so its remaining statements are skipped",
-    "an unhandled exception propagates through the active callers",
-    "exception hierarchy determines which handlers are compatible",
-    "the first compatible handler encountered handles the exception",
-    "handler design should match whether the exceptions involved need a shared or separate reaction",
+    "if there is no compatible handler locally, the exception propagates through the active callers",
+    "propagation stops at the first compatible handler, where compatibility is determined by exception type/hierarchy",
+    "handler design should reflect whether the exceptions involved need a shared or separate reaction",
   ],
   commonMisconceptions: [
     "execution resumes with skipped statements after the handler",

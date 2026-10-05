@@ -48,9 +48,39 @@ function delay(ms: number): Promise<void> {
 // same way: aborted after REQUEST_TIMEOUT_MS and retried on the same
 // schedule, rather than left to wait indefinitely.
 const TRANSIENT_STATUS_CODES = new Set([429, 503]);
+// Only used when the server doesn't tell us how long to wait (503, or a 429
+// with no parseable RetryInfo) — confirmed live that a real 429's own
+// RetryInfo.retryDelay (parsed below) is regularly several seconds, well
+// past this fixed schedule, so honoring it when present is what actually
+// clears a rate-limit hit instead of retrying straight into the same 429.
 const RETRY_DELAYS_MS = [500, 1500];
+// Cap on how long we'll actually wait even if the server asks for more —
+// keeps a caught-in-a-burst request failing fast (to the existing
+// retry/placeholder UI) rather than leaving "Checking…" spinning too long.
+const MAX_SERVER_RETRY_DELAY_MS = 10000;
 const REQUEST_TIMEOUT_MS = 15000;
 const DEFAULT_MAX_OUTPUT_TOKENS = 500;
+
+// Gemini's 429 body includes a RetryInfo detail like
+// `{"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "6s"}`
+// (fractional seconds too, e.g. "6.827074564s") — this is Google's own
+// measurement of how long the current quota window has left, so it's a far
+// better retry delay than any fixed guess. Returns undefined for anything
+// that isn't this exact shape (a 503 body, a network-level failure, or a 429
+// without RetryInfo) so the caller falls back to RETRY_DELAYS_MS.
+function parseRetryDelayMs(errorBodyText: string): number | undefined {
+  try {
+    const details = JSON.parse(errorBodyText)?.error?.details;
+    if (!Array.isArray(details)) return undefined;
+    for (const detail of details) {
+      const match = typeof detail?.retryDelay === "string" ? detail.retryDelay.match(/^([\d.]+)s$/) : null;
+      if (match) return Math.ceil(parseFloat(match[1]) * 1000);
+    }
+  } catch {
+    // Not JSON, or not the shape we expect — fall back to the fixed schedule.
+  }
+  return undefined;
+}
 
 async function generateContent({
   systemInstruction,
@@ -123,11 +153,13 @@ async function generateContent({
       return text;
     }
 
-    lastError = new Error(`Gemini request failed (${response.status}): ${await response.text()}`);
+    const errorBodyText = await response.text();
+    lastError = new Error(`Gemini request failed (${response.status}): ${errorBodyText}`);
     if (!TRANSIENT_STATUS_CODES.has(response.status) || attempt === RETRY_DELAYS_MS.length) {
       throw lastError;
     }
-    await delay(RETRY_DELAYS_MS[attempt]);
+    const serverDelayMs = parseRetryDelayMs(errorBodyText);
+    await delay(serverDelayMs !== undefined ? Math.min(serverDelayMs, MAX_SERVER_RETRY_DELAY_MS) : RETRY_DELAYS_MS[attempt]);
   }
   throw lastError;
 }

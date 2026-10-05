@@ -1,46 +1,73 @@
 // src/components/Welcome.tsx
 //
-// Screen A. Kept deliberately short — a meta label, one headline, one
-// short paragraph, three terse "how it works" lines. No bullet list of
-// reassurances; "no leaderboards / no timers" etc. either shows up as the
-// PROGRESS line below or is simply true by never appearing anywhere else.
+// Screen A. A short, friendly entry point: a headline, one sentence of what
+// this is, a tiny animated example of the core idea (an exception skipping
+// the rest of the `try` and landing in its `catch`), and three plain steps
+// describing what every lesson looks like.
 
-import { InlineCode } from "./InlineCode";
 import styles from "./Welcome.module.css";
 
 export interface WelcomeProps {
   onStart: () => void;
 }
 
-const HOW_IT_WORKS = [
-  { n: "01", label: "Method", body: "You order the events yourself before anything is revealed." },
-  { n: "02", label: "Feedback", body: "Your sequence sits beside the real one, with the rule that explains the gap. No score." },
-  { n: "03", label: "Progress", body: "Kept on this device only, and clearable at any time." },
+const STEPS = [
+  { icon: "🔍", title: "Predict", body: "Read a few lines of Java and decide what happens when something goes wrong." },
+  { icon: "🚦", title: "Check", body: "See instantly if you were right: green or red. No scores, no timer." },
+  { icon: "▶", title: "Watch", body: "Replay the exception step by step, with a plain-language explanation." },
 ];
 
 export function Welcome({ onStart }: WelcomeProps) {
   return (
     <div className={styles.wrapper}>
-      <p className={styles.meta}>Five case files · self-paced</p>
-      <h1 className={styles.title}>An exception does not politely wait its turn.</h1>
-      <p className={styles.lede}>
-        <InlineCode text="Each case file is one thing programmers get wrong about `try`/`catch`. Commit to an answer, then trace the real control flow." />
-      </p>
+      <section className={styles.hero}>
+        <div className={styles.heroText}>
+          <p className={styles.meta}>Java exceptions · 5 short lessons</p>
+          <h1 className={styles.title}>Catch me if you can.</h1>
+          <p className={styles.lede}>
+            When Java code throws an exception, the program jumps somewhere else. But where? Here you guess where it
+            lands, then watch it happen.
+          </p>
+          <button type="button" className={styles.startButton} onClick={onStart}>
+            Let's go →
+          </button>
+        </div>
 
-      <div className={styles.rows}>
-        {HOW_IT_WORKS.map((row) => (
-          <div className={styles.row} key={row.n}>
-            <p className={styles.rowLabel}>
-              {row.n} · {row.label}
-            </p>
-            <p className={styles.rowBody}>{row.body}</p>
-          </div>
+        {/* Decorative mini-replay: the throw on line 2 skips line 3 and lands in the catch. */}
+        <div className={styles.demo} aria-hidden="true">
+          <pre className={styles.code}>
+            <span className={styles.line}>
+              <span className={styles.kw}>try</span> {"{"}
+            </span>
+            <span className={[styles.line, styles.lineThrow].join(" ")}>
+              {"  "}readFile(); <span className={styles.boom}>💥</span>
+            </span>
+            <span className={[styles.line, styles.lineSkipped].join(" ")}>{"  "}print("done");</span>
+            <span className={styles.line}>
+              {"}"} <span className={styles.kw}>catch</span> (IOException e) {"{"}
+            </span>
+            <span className={[styles.line, styles.lineCatch].join(" ")}>
+              {"  "}print("caught!"); <span className={styles.landed}>✓</span>
+            </span>
+            <span className={styles.line}>{"}"}</span>
+          </pre>
+          <p className={styles.demoCaption}>Line 3 never runs. Would you have guessed?</p>
+        </div>
+      </section>
+
+      <ol className={styles.steps}>
+        {STEPS.map((step, i) => (
+          <li className={styles.step} key={step.title}>
+            <span className={styles.stepIcon}>{step.icon}</span>
+            <span className={styles.stepTitle}>
+              {i + 1}. {step.title}
+            </span>
+            <span className={styles.stepBody}>{step.body}</span>
+          </li>
         ))}
-      </div>
+      </ol>
 
-      <button type="button" className={styles.startButton} onClick={onStart}>
-        Start investigating
-      </button>
+      <p className={styles.footnote}>Your progress is saved in this browser only.</p>
     </div>
   );
 }

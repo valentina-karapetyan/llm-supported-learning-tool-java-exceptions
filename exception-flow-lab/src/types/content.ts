@@ -270,7 +270,7 @@ export interface MixedCaseMeta {
 export interface Task {
   id: string;
   moduleId: string;
-  caseLabel: string; // e.g. "Case file: The Vanishing Line"
+  caseLabel: string; // e.g. "Case: The Vanishing Line"
   title: string;
   learningObjective: string;
   misconception: string;
@@ -357,10 +357,10 @@ export interface Task {
 }
 
 /** Canonical, reused title per SupportType — content files reference this
- * instead of retyping "A nudge" / "Step by step" / etc. per task, so a
- * wording change can't drift between tasks. */
+ * instead of retyping "Think about this" / "Step by step" / etc. per task, so
+ * a wording change can't drift between tasks. */
 export const SUPPORT_TITLES: Record<SupportType, string> = {
-  hint: "A nudge",
+  hint: "Think about this",
   step_by_step: "Step by step",
   simpler_explanation: "In simple terms",
   similar_example: "A similar example",
@@ -391,11 +391,11 @@ export type ModuleFlow = "diagnostic_transfer" | "mixed_practice";
  *  new theory), so there'd be nothing to derive — and because a consolidation
  *  module's summary is a written recap, not a list of per-task rules. */
 export interface ModuleCompletionSummary {
-  eyebrow?: string; // overrides the default "Module complete"
+  eyebrow?: string; // overrides the default "Lesson complete"
   title: string;
   lede?: string;
   points: string[]; // rendered through InlineCode, same as derived key rules
-  primaryActionLabel?: string; // overrides the default "Back to case files"
+  primaryActionLabel?: string; // overrides the default "Back to lessons"
 }
 
 export interface Module {
@@ -439,21 +439,40 @@ export interface RetrievalQuestion {
  *  overall verdict/score/pass-fail field anywhere in this shape (build spec
  *  §12 explicitly forbids assigning one to retrieval-practice explanations):
  *  each required concept is classified independently, and the learner sees
- *  a formative suggestion, never a judgment on the explanation as a whole.
- *  `retrievalComparisonService.compare()` wraps this in a `RetrievalCheckOutcome`
- *  so "not evaluated" (no key configured) and "evaluation failed" are never
- *  confused with each other or with a real result. */
+ *  natural formative feedback grouped by what they actually wrote, never a
+ *  wall of repeated rubric rows and never a judgment on the explanation as a
+ *  whole. `retrievalComparisonService.compare()` wraps this in a
+ *  `RetrievalCheckOutcome` so "not evaluated" (no key configured) and
+ *  "evaluation failed" are never confused with each other or with a real
+ *  result. */
 export type CriterionStatus = "addressed" | "partly_addressed" | "missing";
 
 export interface RetrievalCriterionAssessment {
   concept: string; // one of the question's requiredConcepts, verbatim
   status: CriterionStatus;
+  // Short, natural, learner-facing sentence about this one concept — what
+  // they got right, what's still incomplete, or what the idea actually is.
+  // Never the bare status word, never rubric wording.
+  feedback: string;
+}
+
+/** One predefined commonMisconceptions item the learner's answer actually
+ *  showed signs of, paired with a natural correction. `idea` is the internal,
+ *  verbatim identifier (never rendered prominently); `correction` is what the
+ *  UI shows. */
+export interface RetrievalInaccuracy {
+  idea: string; // one of the question's commonMisconceptions, verbatim
+  correction: string; // learner-facing correction, grounded in what they wrote
 }
 
 export interface RetrievalComparisonResult {
   criteria: RetrievalCriterionAssessment[]; // one entry per requiredConcepts item, same order
-  potentialInaccuracies: string[]; // subset of commonMisconceptions the learner's answer actually shows signs of
-  improvementSuggestion: string; // "What to improve" — one concise, formative suggestion
+  inaccuracies: RetrievalInaccuracy[]; // subset of commonMisconceptions the learner's answer actually shows signs of
+  overallFeedback: string; // 1-2 sentence reaction to this specific answer — summarizes, never grades
+  // One short, concrete instruction for the single most important next
+  // change. Empty string when every required concept is addressed and no
+  // inaccuracy was found — never invented just to fill the field.
+  revisionFocus: string;
 }
 
 /** Type guard so a component can narrow `answer`/`response` pairs safely. */

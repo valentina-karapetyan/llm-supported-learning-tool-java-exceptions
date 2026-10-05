@@ -1,5 +1,5 @@
 .wrapper {
-  max-width: 640px;
+  max-width: 680px;
   margin: var(--space-6) auto;
   display: flex;
   flex-direction: column;
@@ -8,7 +8,7 @@
 
 .eyebrow {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;

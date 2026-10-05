@@ -21,6 +21,12 @@
 // ever one way to reach module_completion: via COMPLETE_MODULE from
 // retrieval_practice.
 //
+// Every feedback screen opens in two steps (`FeedbackView`): first the task
+// itself again with the learner's answer colored red/green in place
+// ("verdict"), then — after SHOW_EXPLANATION — the full explanation.
+// AI support is only offered from the explanation step, and closing it
+// always lands back there, never on the verdict again.
+//
 // A completed module additionally unlocks `module_review` / `task_review`
 // (build spec §1) — a small, read-only menu of that learner's own past task
 // screens for the module, reachable only once ModuleProgress.state is
@@ -32,6 +38,8 @@
 import type { TaskResponseData } from "../types/content";
 
 export type TaskStage = "diagnostic" | "transfer";
+
+export type FeedbackView = "verdict" | "explanation";
 
 export interface SubmissionResult {
   wasCorrect: boolean;
@@ -52,13 +60,23 @@ export type ScreenState =
   // a stretch variant to swap in) or the identical task again (Module 2,
   // which doesn't have one yet), so the copy shown can stay honest either way.
   | { screen: "task"; moduleId: string; stage: TaskStage; taskId: string; attempt: number; retryIsDistinctVariant?: boolean }
-  | { screen: "feedback"; moduleId: string; stage: TaskStage; taskId: string; result: SubmissionResult }
+  // `retryIsDistinctVariant` is carried over from the task so the verdict
+  // view can keep showing the same transfer framing as the task it replaces.
+  | {
+      screen: "feedback";
+      moduleId: string;
+      stage: TaskStage;
+      taskId: string;
+      result: SubmissionResult;
+      view: FeedbackView;
+      retryIsDistinctVariant?: boolean;
+    }
   | { screen: "ai_support"; moduleId: string; stage: TaskStage; taskId: string; result: SubmissionResult }
   // Module 5's flow. No `stage` and no `attempt`: every case is answered
   // exactly once, and which case the learner is on is simply which task is
   // being served (see getNextMixedCaseTask in content/modules.ts).
   | { screen: "mixed_case"; moduleId: string; taskId: string }
-  | { screen: "mixed_feedback"; moduleId: string; taskId: string; result: SubmissionResult }
+  | { screen: "mixed_feedback"; moduleId: string; taskId: string; result: SubmissionResult; view: FeedbackView }
   | { screen: "mixed_support"; moduleId: string; taskId: string; result: SubmissionResult }
   // The one-question Retrieval Practice screen, reached from either flow's
   // last task once it's done — see RetrievalPractice.tsx.
@@ -78,6 +96,8 @@ export type ScreenAction =
   | { type: "SELECT_MODULE"; moduleId: string; diagnosticTaskId: string }
   | { type: "START_MIXED_MODULE"; moduleId: string; taskId: string }
   | { type: "SUBMIT_TASK"; result: SubmissionResult }
+  // Verdict → explanation, on either flow's feedback screen.
+  | { type: "SHOW_EXPLANATION" }
   | { type: "REQUEST_SUPPORT" }
   | { type: "CLOSE_SUPPORT" }
   | { type: "CONTINUE_FROM_DIAGNOSTIC"; transferTaskId: string }
@@ -135,7 +155,7 @@ export function screenReducer(state: ScreenState, action: ScreenAction): ScreenS
 
     case "SUBMIT_TASK": {
       if (state.screen === "mixed_case") {
-        return { screen: "mixed_feedback", moduleId: state.moduleId, taskId: state.taskId, result: action.result };
+        return { screen: "mixed_feedback", moduleId: state.moduleId, taskId: state.taskId, result: action.result, view: "verdict" };
       }
       if (state.screen !== "task") return invalidTransition(action, state);
       return {
@@ -144,10 +164,22 @@ export function screenReducer(state: ScreenState, action: ScreenAction): ScreenS
         stage: state.stage,
         taskId: state.taskId,
         result: action.result,
+        view: "verdict",
+        retryIsDistinctVariant: state.retryIsDistinctVariant,
       };
     }
 
+    case "SHOW_EXPLANATION": {
+      if ((state.screen !== "feedback" && state.screen !== "mixed_feedback") || state.view !== "verdict") {
+        return invalidTransition(action, state);
+      }
+      return { ...state, view: "explanation" };
+    }
+
     case "REQUEST_SUPPORT": {
+      if ((state.screen === "feedback" || state.screen === "mixed_feedback") && state.view !== "explanation") {
+        return invalidTransition(action, state);
+      }
       if (state.screen === "mixed_feedback") {
         return { screen: "mixed_support", moduleId: state.moduleId, taskId: state.taskId, result: state.result };
       }
@@ -163,7 +195,7 @@ export function screenReducer(state: ScreenState, action: ScreenAction): ScreenS
 
     case "CLOSE_SUPPORT": {
       if (state.screen === "mixed_support") {
-        return { screen: "mixed_feedback", moduleId: state.moduleId, taskId: state.taskId, result: state.result };
+        return { screen: "mixed_feedback", moduleId: state.moduleId, taskId: state.taskId, result: state.result, view: "explanation" };
       }
       if (state.screen !== "ai_support") return invalidTransition(action, state);
       return {
@@ -172,6 +204,7 @@ export function screenReducer(state: ScreenState, action: ScreenAction): ScreenS
         stage: state.stage,
         taskId: state.taskId,
         result: state.result,
+        view: "explanation",
       };
     }
 

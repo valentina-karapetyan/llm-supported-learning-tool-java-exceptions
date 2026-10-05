@@ -16,6 +16,11 @@ export interface CodeBlockProps {
   // "first() THROWS" instead of the generic, more ambiguous "throws here".
   lineBadgeLabels?: Partial<Record<number, string>>;
   caption?: string;
+  // The single line a replay most recently revealed, layered over
+  // lineStates' cumulative background so a learner stepping through can tell
+  // "this just happened" from "this happened earlier in the trace" — see
+  // ExecutionReplay / PropagationReplay.
+  currentLineNumber?: number;
 }
 
 // Shared by ExecutionReplay and PropagationReplay: both reveal a script one
@@ -46,7 +51,7 @@ const STATE_LABEL: Record<ReplayLineState, string> = {
   unreachable: "unreachable",
 };
 
-export function CodeBlock({ code, lineStates, lineBadgeLabels, caption }: CodeBlockProps) {
+export function CodeBlock({ code, lineStates, lineBadgeLabels, caption, currentLineNumber }: CodeBlockProps) {
   const lines = code.split("\n");
 
   return (
@@ -59,8 +64,12 @@ export function CodeBlock({ code, lineStates, lineBadgeLabels, caption }: CodeBl
             const state = lineStates?.[lineNumber];
             const stateClass = state ? styles[state] : undefined;
             const customBadge = lineBadgeLabels?.[lineNumber];
+            const isCurrent = currentLineNumber === lineNumber;
             return (
-              <div key={lineNumber} className={[styles.line, stateClass].filter(Boolean).join(" ")}>
+              <div
+                key={lineNumber}
+                className={[styles.line, stateClass, isCurrent ? styles.lineCurrent : ""].filter(Boolean).join(" ")}
+              >
                 <span className={styles.lineNumber} aria-hidden="true">
                   {lineNumber}
                 </span>

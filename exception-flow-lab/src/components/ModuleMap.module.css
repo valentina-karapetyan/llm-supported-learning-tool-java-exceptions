@@ -19,8 +19,10 @@
 }
 
 .journalLink {
-  background: none;
-  border: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
   color: var(--color-accent-text, var(--color-accent));
   font-size: 0.9rem;
   font-weight: 600;
@@ -28,7 +30,13 @@
 }
 
 .journalLink:hover {
-  text-decoration: underline;
+  border-color: var(--color-accent);
+}
+
+.progressLine {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
 }
 
 .list {

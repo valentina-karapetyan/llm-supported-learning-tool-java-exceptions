@@ -63,7 +63,7 @@ export function StatementSelectionTask({ data, onSubmit, disabled }: StatementSe
           disabled={disabled || selected.size === 0}
           onClick={() => onSubmit([...selected])}
         >
-          Submit answer
+          Check answer
         </button>
       </div>
     </div>

@@ -745,7 +745,7 @@ void process() {
 void readFile() throws IOException {
     // implementation omitted
 }`,
-  mixedCase: { trailLabel: "Case 3", continueLabel: "See the summary" },
+  mixedCase: { trailLabel: "Case 3", continueLabel: "Continue to the final question" },
 };
 
 export const module5Tasks: Task[] = [module5Case1, module5Case2, module5Case3PartA, module5Case3PartB];

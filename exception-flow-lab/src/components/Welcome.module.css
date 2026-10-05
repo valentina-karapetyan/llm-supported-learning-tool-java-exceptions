@@ -1,86 +1,221 @@
 .wrapper {
-  max-width: 600px;
-  margin: var(--space-6) auto;
+  max-width: 900px;
+  margin: var(--space-5) auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+@media (min-width: 760px) {
+  .hero {
+    grid-template-columns: 1.1fr 1fr;
+  }
+}
+
+.heroText {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  text-align: left;
 }
 
 .meta {
   margin: 0;
   font-family: var(--font-code);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--color-accent-text, var(--color-accent));
 }
 
 .title {
-  margin: var(--space-1) 0 0;
-  font-size: 2.1rem;
-  line-height: 1.2;
-  color: var(--color-text);
+  margin: 0;
+  font-size: 2.6rem;
+  line-height: 1.1;
+  color: var(--color-primary);
 }
 
 .lede {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1.55;
-  color: var(--color-text-muted);
-}
-
-.lede code {
-  color: var(--color-text);
-}
-
-.rows {
-  margin-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 9rem 1fr;
-  gap: var(--space-3);
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.rowLabel {
-  margin: 0;
-  font-family: var(--font-code);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-muted);
-}
-
-.rowBody {
-  margin: 0;
-  font-size: 0.9rem;
   color: var(--color-text);
 }
 
 .startButton {
   align-self: flex-start;
-  margin-top: var(--space-3);
+  margin-top: var(--space-2);
   background: var(--color-primary);
   color: white;
   border: none;
   border-radius: var(--radius-control);
   padding: var(--space-3) var(--space-5);
-  font-size: 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 120ms ease;
 }
 
 .startButton:hover {
   background: var(--color-primary-hover);
+  transform: translateY(-1px);
 }
 
-@media (max-width: 480px) {
-  .row {
-    grid-template-columns: 1fr;
-    gap: var(--space-1);
+/* --- Animated mini-replay --- */
+
+.demo {
+  background: #1e1b3a;
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  box-shadow: 0 8px 24px rgba(43, 36, 112, 0.25);
+}
+
+.code {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.92rem;
+  line-height: 1.9;
+  color: #e7e5f5;
+}
+
+.line {
+  display: block;
+  padding: 0 var(--space-2);
+  border-radius: 4px;
+  white-space: pre;
+}
+
+.kw {
+  color: #b9a6ff;
+}
+
+/* 6s loop: throw flashes red → skipped line fades → catch lights up green. */
+.lineThrow {
+  animation: throwFlash 6s infinite;
+}
+
+.lineSkipped {
+  animation: skipFade 6s infinite;
+}
+
+.lineCatch {
+  animation: catchGlow 6s infinite;
+}
+
+.boom,
+.landed {
+  display: inline-block;
+  opacity: 0;
+}
+
+.boom {
+  animation: boomPop 6s infinite;
+}
+
+.landed {
+  color: #6fe0a3;
+  font-weight: 700;
+  animation: landedPop 6s infinite;
+}
+
+.demoCaption {
+  margin: var(--space-3) 0 0;
+  font-size: 0.85rem;
+  color: #c9c5e6;
+}
+
+@keyframes throwFlash {
+  0%, 10% { background: transparent; }
+  18%, 40% { background: rgba(198, 91, 91, 0.45); }
+  50%, 100% { background: transparent; }
+}
+
+@keyframes boomPop {
+  0%, 12% { opacity: 0; transform: scale(0.4); }
+  20%, 45% { opacity: 1; transform: scale(1.15); }
+  55%, 100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes skipFade {
+  0%, 30% { opacity: 1; text-decoration: none; }
+  40%, 90% { opacity: 0.35; text-decoration: line-through; }
+  100% { opacity: 1; text-decoration: none; }
+}
+
+@keyframes catchGlow {
+  0%, 45% { background: transparent; }
+  55%, 88% { background: rgba(47, 143, 91, 0.45); }
+  100% { background: transparent; }
+}
+
+@keyframes landedPop {
+  0%, 50% { opacity: 0; }
+  58%, 88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lineThrow,
+  .lineSkipped,
+  .lineCatch,
+  .boom,
+  .landed {
+    animation: none;
   }
+  .lineThrow { background: rgba(198, 91, 91, 0.45); }
+  .lineSkipped { opacity: 0.35; text-decoration: line-through; }
+  .lineCatch { background: rgba(47, 143, 91, 0.45); }
+  .boom, .landed { opacity: 1; }
+}
+
+/* --- Three steps --- */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-card);
+}
+
+.stepIcon {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+
+.stepTitle {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.stepBody {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.footnote {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
 }

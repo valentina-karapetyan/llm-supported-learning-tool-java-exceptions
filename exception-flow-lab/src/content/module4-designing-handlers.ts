@@ -45,7 +45,7 @@ const KEY_RULE =
 export const module4DiagnosticTask: Task = {
   id: "m4-diagnostic",
   moduleId: "module-4",
-  caseLabel: "Case file: The Blanket Catch",
+  caseLabel: "Case: The Blanket Catch",
   title: "Designing Handlers",
   learningObjective:
     "Recognize that when related exception types require the same reaction, a shared superclass `catch` clause expresses that intent directly, more precisely than `catch (Exception e)`, and without the duplication of one `catch` clause per subtype.",
@@ -191,7 +191,7 @@ catch (AccountLockedException e) {
 export const module4TransferTask: Task = {
   id: "m4-transfer",
   moduleId: "module-4",
-  caseLabel: "Case file: One Response Isn't Enough",
+  caseLabel: "Case: One Response Isn't Enough",
   title: "Designing Handlers: Transfer",
   learningObjective:
     "Recognize that a shared superclass handler is only appropriate when the reaction is the same; once related exception types need different reactions, separate subtype `catch` clauses become the appropriate design instead.",
@@ -344,7 +344,7 @@ catch (AccountLockedException e) {
 export const module4TransferRetryTask: Task = {
   id: "m4-transfer-retry",
   moduleId: "module-4",
-  caseLabel: "Case file: The Order That Needed Two Replies",
+  caseLabel: "Case: The Order That Needed Two Replies",
   title: "Designing Handlers: A Trickier Case",
   learningObjective: "Apply the same design rule, separate handlers when reactions differ, to a fresh hierarchy and scenario.",
   misconception: "Assuming a shared superclass `catch` clause is always the better design for related exception types, even once they need different reactions.",

@@ -16,7 +16,7 @@ import styles from "./CaseNav.module.css";
 export type CaseProgressStage = "task" | "feedback" | "transfer";
 
 const STAGES: { key: CaseProgressStage; label: string }[] = [
-  { key: "task", label: "Task" },
+  { key: "task", label: "Case" },
   { key: "feedback", label: "Feedback" },
   // "New case" rather than "Transfer" (build spec §19's plain-language
   // mapping) — kept to two words to match "Task"/"Feedback"'s length in
@@ -39,9 +39,9 @@ export interface CaseNavProps {
   // Takes precedence over `progressStage` if both are somehow supplied —
   // an explicit trail is always more specific than a derived one.
   trail?: CaseTrail;
-  // Overrides the default "← Case files" text — e.g. a review screen's
-  // "← Back to module summary", since `onBackToMap` there goes to the
-  // module review menu, not the case-file list.
+  // Overrides the default "← All lessons" text — e.g. a review screen's
+  // "← Back to lesson overview", since `onBackToMap` there goes to the
+  // module review menu, not the lesson list.
   backLabel?: string;
 }
 
@@ -55,7 +55,7 @@ export function CaseNav({ onBackToMap, progressStage, trail, backLabel }: CaseNa
   return (
     <div className={styles.bar}>
       <button type="button" className={styles.backLink} onClick={onBackToMap}>
-        {backLabel ?? "← Case files"}
+        {backLabel ?? "← All lessons"}
       </button>
       {resolvedTrail && (
         <p className={styles.trail} aria-label={`Progress: ${resolvedTrail.labels[resolvedTrail.currentIndex] ?? ""}`}>

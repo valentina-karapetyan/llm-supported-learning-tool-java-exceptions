@@ -51,7 +51,7 @@ export function CallChainTask({ data, onSubmit, disabled }: CallChainTaskProps) 
           disabled={disabled || !selectedId}
           onClick={() => selectedId && onSubmit(selectedId)}
         >
-          Submit answer
+          Check answer
         </button>
       </div>
     </div>

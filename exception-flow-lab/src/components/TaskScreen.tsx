@@ -44,8 +44,8 @@ export interface TaskScreenProps {
   // Explicit CaseNav trail, overriding the Task → Feedback → Transfer one
   // derived from `stage` below.
   caseTrail?: CaseTrail;
-  // Overrides CaseNav's default "← Case files" back-link text — e.g.
-  // task_review uses "← Back to module summary" instead.
+  // Overrides CaseNav's default "← All lessons" back-link text — e.g.
+  // task_review uses "← Back to lesson overview" instead.
   backLabel?: string;
   // Replaces the default interactive <TaskRenderer> with arbitrary content —
   // used by task_review to show the learner's past answer (read-only)
@@ -82,6 +82,12 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow, caseTr
   // the operational instruction for the trace-builder widget itself.
   const showIntro = task.moduleId === "module-1";
 
+  // Mixed Case Review's only framing sentence (build spec's polish pass) —
+  // signals that a case may combine rules from more than one earlier case
+  // file without naming which ones, so recognizing which rules apply stays
+  // the exercise.
+  const showMixedPracticeIntro = task.moduleId === "module-5";
+
   function handleAnswerSubmit(response: TaskResponseData) {
     onSubmit?.({ response });
   }
@@ -102,6 +108,7 @@ export function TaskScreen({ task, stage, onSubmit, onBackToMap, eyebrow, caseTr
           <InlineCode text="The code below needs `catch` clauses for related exception types. Arrange them into an order that results in valid Java code." />
         </p>
       )}
+      {showMixedPracticeIntro && <p className={styles.intro}>Several rules may matter here.</p>}
       {/* Generic orientation slot for any module (see Task.orientationNote) —
           new modules should prefer authoring this over adding another
           hardcoded showXIntro conditional like the one above. */}

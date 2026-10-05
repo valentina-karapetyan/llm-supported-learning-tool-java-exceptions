@@ -93,7 +93,7 @@ export function FeedbackCard({
 
       {!wasCorrect && (
         <div className={styles.diffCard}>
-          <p className={styles.diffLabel}>What was actually off</p>
+          <p className={styles.diffLabel}>Compare your trace</p>
           <AnswerDiff answer={answer} response={response} />
         </div>
       )}

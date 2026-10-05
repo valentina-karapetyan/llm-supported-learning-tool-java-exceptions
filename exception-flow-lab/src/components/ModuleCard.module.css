@@ -33,7 +33,7 @@
 
 .number {
   font-family: var(--font-code);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--color-text-muted);
 }
 
@@ -50,13 +50,13 @@
 }
 
 .description {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   color: var(--color-text-muted);
 }
 
 .status {
   font-family: var(--font-code);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-text-muted);

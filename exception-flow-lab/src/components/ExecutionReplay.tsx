@@ -11,10 +11,11 @@
 // moment, directly under the code. It's a deliberate scope cut for the
 // prototype, not an oversight — easy to upgrade later if needed.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { ReplayStep } from "../types/content";
 import { buildRevealedLineMap, CodeBlock } from "./CodeBlock";
 import { InlineCode } from "./InlineCode";
+import { useStepReplay } from "../hooks/useStepReplay";
 import styles from "./ExecutionReplay.module.css";
 
 export interface ExecutionReplayProps {
@@ -35,43 +36,8 @@ const STEP_DELAY_MS = 400;
 const DEFAULT_CALLOUT = "control jumps straight to the matching catch clause";
 const DEFAULT_HEADING = "Watch it happen";
 
-function usesReducedMotion(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 export function ExecutionReplay({ code, replayScript, callout, heading }: ExecutionReplayProps) {
-  const reducedMotion = useMemo(() => usesReducedMotion(), []);
-  const [revealCount, setRevealCount] = useState(reducedMotion ? replayScript.length : 0);
-  const [runId, setRunId] = useState(0);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setRevealCount(replayScript.length);
-      return;
-    }
-    setRevealCount(0);
-    if (replayScript.length === 0) return;
-
-    let cancelled = false;
-    let step = 0;
-
-    const advance = () => {
-      if (cancelled) return;
-      step += 1;
-      setRevealCount(step);
-      if (step < replayScript.length) {
-        window.setTimeout(advance, STEP_DELAY_MS);
-      }
-    };
-    const firstTimer = window.setTimeout(advance, STEP_DELAY_MS);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(firstTimer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replayScript, reducedMotion, runId]);
+  const { revealCount, atStart, atEnd, goToPrevious, goToNext, replay } = useStepReplay(replayScript.length, STEP_DELAY_MS);
 
   const lineStates = useMemo(
     () => buildRevealedLineMap(replayScript, revealCount, (s) => s.lineNumber, (s) => s.state),
@@ -93,7 +59,7 @@ export function ExecutionReplay({ code, replayScript, callout, heading }: Execut
     [replayScript],
   );
   const showJumpCallout = firstNotableIndex >= 0 && revealCount > firstNotableIndex;
-  const animationDone = revealCount >= replayScript.length;
+  const currentLineNumber = revealCount > 0 ? replayScript[revealCount - 1]?.lineNumber : undefined;
 
   // Self-guard: an empty script has nothing to animate. Callers should
   // prefer `hasReplayScript(task)` to decide whether to render this
@@ -106,18 +72,22 @@ export function ExecutionReplay({ code, replayScript, callout, heading }: Execut
     <div className={styles.wrapper}>
       <div className={styles.header}>
         <h3 className={styles.heading}>{heading ?? DEFAULT_HEADING}</h3>
-        {!reducedMotion && (
-          <button
-            type="button"
-            className={styles.replayButton}
-            onClick={() => setRunId((id) => id + 1)}
-            disabled={!animationDone}
-          >
+        <div className={styles.controls}>
+          <span className={styles.stepLabel}>
+            Step {Math.min(revealCount, replayScript.length)} of {replayScript.length}
+          </span>
+          <button type="button" className={styles.stepButton} onClick={goToPrevious} disabled={atStart} aria-label="Previous step">
+            ‹
+          </button>
+          <button type="button" className={styles.stepButton} onClick={goToNext} disabled={atEnd} aria-label="Next step">
+            ›
+          </button>
+          <button type="button" className={styles.replayButton} onClick={replay}>
             ↻ Replay
           </button>
-        )}
+        </div>
       </div>
-      <CodeBlock code={code} lineStates={lineStates} lineBadgeLabels={lineBadgeLabels} />
+      <CodeBlock code={code} lineStates={lineStates} lineBadgeLabels={lineBadgeLabels} currentLineNumber={currentLineNumber} />
       <div className={[styles.callout, showJumpCallout ? styles.calloutVisible : ""].join(" ")} aria-live="polite">
         {showJumpCallout && (
           <>
