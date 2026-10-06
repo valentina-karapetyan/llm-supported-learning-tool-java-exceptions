@@ -5,19 +5,62 @@
 // this one module instead of each hand-rolling a fetch — one place that
 // knows the request/response shape, the API key lookup, and the model name.
 //
-// SECURITY: VITE_GEMINI_API_KEY is inlined into the client bundle at build
-// time (that's how Vite env vars work) — anyone opening dev tools on a
-// deployed build can read it. That's the conscious tradeoff documented in
-// the README's "Live LLM API integration" section: acceptable for a
-// non-public prototype with a spending-limited key, not for a public
-// deployment. Leaving VITE_GEMINI_API_KEY unset keeps every LLM-backed
-// feature on its existing mock/placeholder behavior.
+// Two ways to reach Gemini, picked once at page load:
+//
+//   - direct: VITE_GEMINI_API_KEY is set (local `npm run dev` via
+//     .env.local). Calls Gemini straight from the browser. SECURITY: Vite
+//     inlines that key into the client bundle, so it must never be set on a
+//     public deployment — that's what the proxy mode is for.
+//   - proxy: no VITE_ key, but the learner has an access code (from a
+//     ?code=... link, remembered in localStorage). Calls the /api/gemini
+//     Vercel function, which holds the real key server-side and checks the
+//     code. See api/gemini.ts.
+//
+// With neither, every LLM-backed feature stays on its mock/placeholder
+// behavior — same as before either mode existed.
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.6-flash";
+const PROXY_ENDPOINT = "/api/gemini";
+const ACCESS_CODE_STORAGE_KEY = "exception-flow-lab-access-code";
+
+// Reads ?code=... from the URL on first load, remembers it, and strips it
+// from the address bar (so a screenshot or a copied URL doesn't carry it
+// along by accident). Storage can throw or be empty (private window,
+// blocked site data) — then the code still works for this page load.
+function readAccessCode(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const url = new URL(window.location.href);
+  const fromUrl = url.searchParams.get("code")?.trim();
+  if (fromUrl) {
+    try {
+      window.localStorage.setItem(ACCESS_CODE_STORAGE_KEY, fromUrl);
+    } catch {
+      // Not persisted — fine for this session.
+    }
+    url.searchParams.delete("code");
+    window.history.replaceState(window.history.state, "", url.toString());
+    return fromUrl;
+  }
+  try {
+    return window.localStorage.getItem(ACCESS_CODE_STORAGE_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function forgetAccessCode(): void {
+  try {
+    window.localStorage.removeItem(ACCESS_CODE_STORAGE_KEY);
+  } catch {
+    // Nothing stored to forget.
+  }
+}
+
+const ACCESS_CODE = API_KEY ? undefined : readAccessCode();
 
 export function isGeminiConfigured(): boolean {
-  return Boolean(API_KEY);
+  return Boolean(API_KEY || ACCESS_CODE);
 }
 
 interface GenerateContentOptions {
@@ -88,30 +131,41 @@ async function generateContent({
   responseSchema,
   maxOutputTokens = DEFAULT_MAX_OUTPUT_TOKENS,
 }: GenerateContentOptions): Promise<string> {
-  if (!API_KEY) {
-    throw new Error("VITE_GEMINI_API_KEY is not set");
+  let endpoint: string;
+  let headers: Record<string, string>;
+  let body: string;
+  if (API_KEY) {
+    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+    headers = { "Content-Type": "application/json" };
+    body = JSON.stringify({
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens,
+        // gemini-3.6-flash "thinks" before answering by default, and those
+        // reasoning tokens are billed against the SAME maxOutputTokens budget
+        // as the actual answer — confirmed live: a 400-token budget on the
+        // retrieval-comparison prompt spent 380 tokens on invisible thinking
+        // and left only `{\n  "` of the real JSON, hitting MAX_TOKENS and
+        // failing JSON.parse every time. None of this app's prompts need
+        // multi-step reasoning (a hint, a short explanation, a bounded
+        // classification) — disabling thinking makes the budget above go
+        // entirely to the actual answer, and is also faster/cheaper.
+        // api/gemini.ts builds the same generationConfig server-side.
+        thinkingConfig: { thinkingBudget: 0 },
+        ...(responseSchema ? { responseMimeType: "application/json", responseSchema } : {}),
+      },
+    });
+  } else if (ACCESS_CODE) {
+    // The proxy builds the Gemini request itself (model, generationConfig),
+    // so it only needs the parts that vary per call.
+    endpoint = PROXY_ENDPOINT;
+    headers = { "Content-Type": "application/json", "x-access-code": ACCESS_CODE };
+    body = JSON.stringify({ systemInstruction, prompt, responseSchema, maxOutputTokens });
+  } else {
+    throw new Error("Gemini is not configured (no VITE_GEMINI_API_KEY and no access code)");
   }
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
-  const body = JSON.stringify({
-    systemInstruction: { parts: [{ text: systemInstruction }] },
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens,
-      // gemini-3.6-flash "thinks" before answering by default, and those
-      // reasoning tokens are billed against the SAME maxOutputTokens budget
-      // as the actual answer — confirmed live: a 400-token budget on the
-      // retrieval-comparison prompt spent 380 tokens on invisible thinking
-      // and left only `{\n  "` of the real JSON, hitting MAX_TOKENS and
-      // failing JSON.parse every time. None of this app's prompts need
-      // multi-step reasoning (a hint, a short explanation, a bounded
-      // classification) — disabling thinking makes the budget above go
-      // entirely to the actual answer, and is also faster/cheaper.
-      thinkingConfig: { thinkingBudget: 0 },
-      ...(responseSchema ? { responseMimeType: "application/json", responseSchema } : {}),
-    },
-  });
 
   let lastError: Error | undefined;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
@@ -122,7 +176,7 @@ async function generateContent({
     try {
       response = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body,
         signal: timeoutController.signal,
       });
@@ -154,6 +208,11 @@ async function generateContent({
     }
 
     const errorBodyText = await response.text();
+    // The proxy rejected the stored code (mistyped, or revoked by removing
+    // it from ACCESS_CODES) — forget it, so from the next page load on this
+    // browser is back on mock/placeholder behavior instead of failing every
+    // request. Not retried: the same code won't start working.
+    if (ACCESS_CODE && response.status === 401) forgetAccessCode();
     lastError = new Error(`Gemini request failed (${response.status}): ${errorBodyText}`);
     if (!TRANSIENT_STATUS_CODES.has(response.status) || attempt === RETRY_DELAYS_MS.length) {
       throw lastError;

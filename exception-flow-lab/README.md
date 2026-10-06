@@ -83,14 +83,19 @@ Both LLM-backed touchpoints are wired to Google's Gemini API (free-tier `gemini-
 - `src/llm/llmSupportService.ts` — `liveLlmSupportService` asks Gemini to rephrase/personalize a task's authored `supportContent[supportType]` for that task's actual code. It's explicitly instructed to never introduce a Java fact beyond what's already authored and never grade the learner's answer; `title` and `keyRule` pass through unchanged, only the free-form `content` prose is regenerated. On any failure it returns the authored content itself, same as `mockLlmSupportService`.
 - `src/llm/retrievalComparisonService.ts` — `liveRetrievalComparisonService` sends the learner's answer plus the question's authored `referenceAnswer`/`requiredConcepts`/`commonMisconceptions` to Gemini, constrained (via `responseSchema`) to return JSON matching `RetrievalComparisonResult`. It's instructed to only compare against the given reference material, never invent correctness criteria. On any failure it resolves to `undefined`, same as `placeholderRetrievalComparisonService`.
 
-Both go through the shared `src/llm/geminiClient.ts` wrapper. To enable them: copy `.env.example` to `.env.local` and set `VITE_GEMINI_API_KEY` (free key at https://aistudio.google.com/apikey). Leave it unset to keep both features on their mock/placeholder behavior — nothing else changes.
+Both go through the shared `src/llm/geminiClient.ts` wrapper, which reaches Gemini in one of two ways (picked once at page load). With neither configured, both features stay on their mock/placeholder behavior and nothing else changes.
 
-**This still puts the API key directly in frontend code shipped to users** — `VITE_*` env vars are inlined into the client bundle at build time, so the key is readable by anyone who opens dev tools on a deployed build. That's a conscious, accepted tradeoff for this thesis prototype, not an oversight:
+**Local development (direct).** Copy `.env.example` to `.env.local` and set `VITE_GEMINI_API_KEY` (free key at https://aistudio.google.com/apikey). The browser calls Gemini directly. `VITE_*` env vars are inlined into the client bundle, so this key is readable in dev tools: never set it on a public deployment.
 
-- (a) **current approach** — restrict the key's spending limit in Google AI Studio and only run this as a non-public prototype deployment (e.g. a local demo or a study run on a controlled URL), or
-- (b) **if it ever needs to go properly public** — add a minimal backend proxy that holds the key server-side instead, so it never reaches the client bundle.
+**Deployed on Vercel (proxy + access code).** `api/gemini.ts` is a Vercel serverless function that holds the key server-side and forwards requests to Gemini. Set these in the Vercel project's environment variables (no `VITE_` prefix, so they never reach the browser):
 
-If you switch to (b) later, only `geminiClient.ts` needs to change (point it at your proxy instead of Gemini directly) — `llmSupportService.ts` and `retrievalComparisonService.ts` are unaffected.
+- `GEMINI_API_KEY`: the Gemini key.
+- `ACCESS_CODES`: comma-separated codes, e.g. `pilot-a,pilot-b`. Requests without a valid code are rejected (and with no codes configured, all are).
+- `GEMINI_MODEL` (optional): defaults to `gemini-3.6-flash`.
+
+Testers get a link with a code, e.g. `https://<your-app>.vercel.app/?code=pilot-a`. The app remembers the code in `localStorage` and strips it from the address bar. Visitors without a code get the mock/placeholder behavior. A rejected code (mistyped, or revoked by removing it from `ACCESS_CODES` and redeploying) is forgotten on that browser. Note that on Gemini's free tier the daily quota is shared by everyone using the deployment, and Google may use free-tier prompts to improve its products.
+
+`npm run dev` doesn't run Vercel functions, so locally use the direct mode above (or `vercel dev` to exercise the proxy).
 
 ## Resetting progress
 
