@@ -93,10 +93,13 @@ export function AnswerDiff({ answer, response }: AnswerDiffProps) {
       if (response.type !== "handler_refactoring") return null;
       const yourOption = answer.data.options.find((o) => o.id === response.selectedOptionId);
       const correctOption = answer.data.options.find((o) => o.isCorrect);
+      // Option labels are bare letters (build spec §6), so "You picked: C /
+      // Correct answer: D" alone tells the learner nothing — always show the
+      // code behind each letter, side by side.
       return (
-        <SingleChoiceDiff
-          yourLabel={yourOption?.label ?? response.selectedOptionId}
-          correctLabel={correctOption?.label ?? "?"}
+        <CodeChoiceDiff
+          yours={{ label: yourOption?.label ?? response.selectedOptionId, code: yourOption?.code ?? "" }}
+          correct={{ label: correctOption?.label ?? "?", code: correctOption?.code ?? "" }}
           isCorrect={Boolean(yourOption?.isCorrect)}
         />
       );
@@ -267,6 +270,44 @@ function SingleChoiceDiff({ yourLabel, correctLabel, isCorrect }: { yourLabel: s
       <p className={styles.singleLine}>
         <span className={styles.rowMatch}>✓ Correct answer:</span> <InlineCode text={correctLabel} />
       </p>
+    </div>
+  );
+}
+
+interface CodeChoice {
+  label: string;
+  code: string;
+}
+
+function CodeChoiceDiff({ yours, correct, isCorrect }: { yours: CodeChoice; correct: CodeChoice; isCorrect: boolean }) {
+  if (isCorrect) {
+    return (
+      <div className={styles.wrapper}>
+        <div className={styles.column}>
+          <p className={[styles.columnTitle, styles.rowMatch].join(" ")}>✓ Your answer ({yours.label})</p>
+          <pre className={[styles.codeChoice, styles.codeChoiceMatch].join(" ")}>
+            <code>{yours.code}</code>
+          </pre>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className={styles.wrapper}>
+      <div className={styles.columns}>
+        <div className={styles.column}>
+          <p className={[styles.columnTitle, styles.rowMismatch].join(" ")}>✗ Your answer ({yours.label})</p>
+          <pre className={[styles.codeChoice, styles.codeChoiceMismatch].join(" ")}>
+            <code>{yours.code}</code>
+          </pre>
+        </div>
+        <div className={styles.column}>
+          <p className={[styles.columnTitle, styles.rowMatch].join(" ")}>✓ Correct answer ({correct.label})</p>
+          <pre className={[styles.codeChoice, styles.codeChoiceMatch].join(" ")}>
+            <code>{correct.code}</code>
+          </pre>
+        </div>
+      </div>
     </div>
   );
 }

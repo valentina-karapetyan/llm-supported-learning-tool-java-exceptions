@@ -118,3 +118,26 @@
   font-size: 0.9rem;
   font-weight: 600;
 }
+
+/* handler_refactoring: the code behind each lettered option, side by side.
+   Same dark code styling as the option itself (SelectionTask's .optionCode). */
+.codeChoice {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 0.85rem;
+  background: #1c1c22;
+  color: #e4e4ec;
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  border-left: 3px solid transparent;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.codeChoiceMatch {
+  border-left-color: var(--color-success);
+}
+
+.codeChoiceMismatch {
+  border-left-color: var(--color-error);
+}

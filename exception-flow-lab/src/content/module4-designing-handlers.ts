@@ -25,11 +25,10 @@
 //     "the better" design, it's the right design only when the reaction is
 //     shared too.
 //
-// Not a runtime control-flow trace (no replayScript) and not a static
-// ordering rule either (no ExceptionHierarchy-only + catch_order shape like
-// Module 2) — the learner picks a complete handler design, and FeedbackCard
-// falls back to a plain resolvedCode block, same as Module 2's single_choice
-// tasks.
+// The learner picks a complete handler design; the Feedback screen then
+// replays one concrete run of the correct design (replayScript over
+// resolvedCode, same runtime-trace shape as Modules 1-2), so the learner sees
+// which clause actually catches the thrown exception and what it prints.
 
 import type { Task, TaskResponseData } from "../types/content";
 import { SUPPORT_TITLES } from "../types/content";
@@ -174,6 +173,18 @@ catch (AccountLockedException e) {
         System.out.println("payment failed");
     }
 }`,
+  // A real runtime trace over resolvedCode (same shape as Module 2's
+  // diagnostic). One concrete run: `AccountLockedException` is thrown and the
+  // shared superclass clause catches it. `InsufficientFundsException` would
+  // land in exactly the same clause, which is the whole point here.
+  replayScript: [
+    { lineNumber: 2, state: "active" }, //     try {
+    { lineNumber: 3, state: "throws", badgeLabel: "throws AccountLockedException" }, //         processPayment();
+    { lineNumber: 4, state: "handled" }, //     } catch (PaymentException e) {
+    { lineNumber: 5, state: "handled" }, //         System.out.println("payment failed");
+  ],
+  replayCallout:
+    "`AccountLockedException` is a `PaymentException`, so this one shared clause catches it. `InsufficientFundsException` would land in the very same clause and get the same message",
 };
 
 // --- 2. Transfer task (baseline) ---
@@ -330,6 +341,19 @@ catch (AccountLockedException e) {
         System.out.println("contact support");
     }
 }`,
+  // Runtime trace over resolvedCode: `AccountLockedException` is thrown, so
+  // the first clause doesn't match and control reaches the second one, with
+  // its own, different message.
+  replayScript: [
+    { lineNumber: 2, state: "active" }, //     try {
+    { lineNumber: 3, state: "throws", badgeLabel: "throws AccountLockedException" }, //         processPayment();
+    { lineNumber: 4, state: "skipped" }, //     } catch (InsufficientFundsException e) {
+    { lineNumber: 5, state: "skipped" }, //         System.out.println("try a smaller amount");
+    { lineNumber: 6, state: "handled" }, //     } catch (AccountLockedException e) {
+    { lineNumber: 7, state: "handled" }, //         System.out.println("contact support");
+  ],
+  replayCallout:
+    "`AccountLockedException` doesn't match `catch (InsufficientFundsException e)`, so it reaches its own clause and gets its own message: `contact support`",
   isTransferTask: true,
 };
 
@@ -482,6 +506,17 @@ catch (InvalidShippingAddressException e) {
         System.out.println("update your address");
     }
 }`,
+  // Runtime trace over resolvedCode, same shape as m4-transfer's.
+  replayScript: [
+    { lineNumber: 2, state: "active" }, //     try {
+    { lineNumber: 3, state: "throws", badgeLabel: "throws InvalidShippingAddressException" }, //         submitOrder();
+    { lineNumber: 4, state: "skipped" }, //     } catch (OutOfStockException e) {
+    { lineNumber: 5, state: "skipped" }, //         System.out.println("item unavailable");
+    { lineNumber: 6, state: "handled" }, //     } catch (InvalidShippingAddressException e) {
+    { lineNumber: 7, state: "handled" }, //         System.out.println("update your address");
+  ],
+  replayCallout:
+    "`InvalidShippingAddressException` doesn't match `catch (OutOfStockException e)`, so it reaches its own clause and gets its own message: `update your address`",
   isTransferTask: true,
 };
 

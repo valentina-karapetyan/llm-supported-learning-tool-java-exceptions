@@ -9,10 +9,8 @@
 // always the plain, possibly pre-answer `code` — see Task.replayScript /
 // Task.resolvedCode for why a script can be either a real runtime trace or a
 // compile-time reachability check, and Task.replayHeading for how a task
-// tells ExecutionReplay which one it's showing. Module 4's design tasks
-// still have no single representative code-and-order story to animate at
-// all, so they reasonably omit replayScript entirely and just show plain
-// code instead.
+// tells ExecutionReplay which one it's showing. A task with no replayScript
+// and no propagationTrace just shows its resolvedCode as plain code.
 
 import type { Feedback, HierarchyNode, PropagationStep, ReplayStep, TaskAnswerData, TaskResponseData } from "../types/content";
 import { hasReplayScript } from "../types/content";
@@ -93,7 +91,9 @@ export function FeedbackCard({
 
       {!wasCorrect && (
         <div className={styles.diffCard}>
-          <p className={styles.diffLabel}>Compare your trace</p>
+          <p className={styles.diffLabel}>
+            {answer.type === "execution_trace" ? "Compare your trace" : answer.type === "catch_order" ? "Compare your order" : "Compare your answer"}
+          </p>
           <AnswerDiff answer={answer} response={response} />
         </div>
       )}
