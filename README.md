@@ -6,6 +6,8 @@ Learners work through short code cases, predict what the code does, and get feed
 
 Built as part of the thesis *LLM-Supported Learning Tool Addressing Java Exception Handling Misconceptions*.
 
+**Live demo:** [llm-supported-learning-tool-java-ex.vercel.app](https://llm-supported-learning-tool-java-ex.vercel.app/) (LLM features are disabled in the public version)
+
 ![Lesson overview](docs/screenshots/lessons.png)
 
 ## Lessons
@@ -52,26 +54,7 @@ npm run preview    # serve the production build
 
 Two features use Google's Gemini API: the AI support panel and the feedback on retrieval questions. Without an API key, the app falls back to predefined content and works normally.
 
-**Local development**
-
-```bash
-cp .env.example .env.local
-# then set VITE_GEMINI_API_KEY in .env.local
-```
-
-A free key is available at [aistudio.google.com/apikey](https://aistudio.google.com/apikey). This key ends up in the client bundle, so use it only locally.
-
-**Deployment (Vercel)**
-
-`api/gemini.ts` is a serverless proxy that keeps the key on the server. Set these environment variables in the Vercel project:
-
-| Variable | Description |
-|----------|-------------|
-| `GEMINI_API_KEY` | Gemini API key |
-| `ACCESS_CODES` | Comma-separated access codes, e.g. `pilot-a,pilot-b` |
-| `GEMINI_MODEL` | Optional, defaults to `gemini-3.6-flash` |
-
-Testers open the app with `?code=<access-code>` in the URL. Visitors without a valid code get the predefined content.
+To try them locally, copy `.env.example` to `.env.local` and add a free key from [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 
 ## Project structure
 
