@@ -6,7 +6,7 @@ Learners work through short code cases, predict what the code does, and get feed
 
 Built as part of the thesis *LLM-Supported Learning Tool Addressing Java Exception Handling Misconceptions*.
 
-**Live demo:** [llm-supported-learning-tool-java-ex.vercel.app](https://llm-supported-learning-tool-java-ex.vercel.app/) (LLM features are disabled in the public version)
+**Live demo:** [llm-supported-learning-tool-java-ex.vercel.app](https://llm-supported-learning-tool-java-ex.vercel.app/) (LLM features require an access code; without one, the app uses predefined content)
 
 ![Lesson overview](docs/screenshots/lessons.png)
 
